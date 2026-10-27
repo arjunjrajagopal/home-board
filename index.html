@@ -294,6 +294,8 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-item.done .bx { background: var(--good); border-color: var(--good); color: var(--bg); }
 .ph-chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .ph-chip { min-height: 44px; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
+.ph-chip[data-ph-shop] { color: #3f78d6; border-color: #3f78d6; }
+.ph-chip[data-ph-shop][aria-pressed="true"] { background: #3f78d6; color: #fff; }
 .ph-chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 .ph-add input[type="text"] { min-height: 56px; font-size: 20px; font-weight: 600; border: 2px solid var(--ink); border-radius: 14px; padding: 8px 12px; background: var(--surface); color: var(--ink); width: 100%; }
 .ph-err { color: var(--bad); font-weight: 700; font-size: 15px; }
@@ -960,7 +962,7 @@ function interpretMessage(S, text) {
 }
 
 /* ---------- Groceries ---------- */
-var GROC_VENDORS = { 'blinkit': 'Blinkit', 'zepto': 'Zepto', 'instamart': 'Instamart', 'swiggy instamart': 'Instamart', 'bigbasket': 'BigBasket', 'big basket': 'BigBasket', 'bb': 'BigBasket', 'amazon fresh': 'Amazon Fresh', 'amazon': 'Amazon', 'flipkart': 'Flipkart', 'flipkart minutes': 'Flipkart Minutes', 'jiomart': 'JioMart', 'dmart': 'DMart', 'milkbasket': 'Milkbasket', 'country delight': 'Country Delight', 'mother dairy': 'Mother Dairy', 'licious': 'Licious', 'kirana': 'Kirana', 'sabzi': 'Sabzi', 'sabzi wala': 'Sabzi wala', 'sabziwala': 'Sabzi wala', 'sabzi mandi': 'Sabzi mandi', 'dairy': 'Dairy', 'chemist': 'Chemist', 'pharmacy': 'Pharmacy', 'pharmeasy': 'PharmEasy', '1mg': '1mg', 'supermarket': 'Supermarket', 'market': 'Market', 'grofers': 'Blinkit' };
+var GROC_VENDORS = { 'blinkit': 'Blinkit', 'zepto': 'Zepto', 'instamart': 'Instamart', 'swiggy instamart': 'Instamart', 'bigbasket': 'BigBasket', 'big basket': 'BigBasket', 'bb': 'BigBasket', 'amazon fresh': 'Amazon Fresh', 'amazon': 'Amazon', 'flipkart': 'Flipkart', 'flipkart minutes': 'Flipkart Minutes', 'jiomart': 'JioMart', 'dmart': 'DMart', 'milkbasket': 'Milkbasket', 'milk basket': 'Milkbasket', 'gopala': 'Gopala', 'country delight': 'Country Delight', 'mother dairy': 'Mother Dairy', 'licious': 'Licious', 'kirana': 'Kirana', 'sabzi': 'Sabzi', 'sabzi wala': 'Sabzi wala', 'sabziwala': 'Sabzi wala', 'sabzi mandi': 'Sabzi mandi', 'dairy': 'Dairy', 'chemist': 'Chemist', 'pharmacy': 'Pharmacy', 'pharmeasy': 'PharmEasy', '1mg': '1mg', 'supermarket': 'Supermarket', 'market': 'Market', 'grofers': 'Blinkit' };
 var GROC_WORDS = /^(groceries|grocery|grocery list|shopping|shopping list|order|to order|to buy|buy|need|needed|required|list)$/;
 function titleCase(t) { return t.replace(/\b([a-z])/gi, function (c) { return c.toUpperCase(); }); }
 function splitItems(body) {
@@ -1617,7 +1619,7 @@ function renderPhone() {
   }
   h += '</section>';
 
-  var shops = ['Blinkit', 'Zepto', 'Instamart', 'BigBasket', 'Sabzi wala', 'Dairy'];
+  var shops = ['Blinkit', 'Instamart', 'BigBasket', 'Milkbasket', 'Gopala', 'Dairy'];
   h += '<section class="ph-card ph-add"><div class="ph-h"><span aria-hidden="true">➕</span>Add to order</div><div class="ph-chips" role="group" aria-label="Day">' +
     ['today', 'tomorrow'].map(function (d) { return '<button class="ph-chip" data-ph-day="' + d + '" aria-pressed="' + (phDay === d) + '">' + (d === 'today' ? 'Today' : 'Tomorrow') + '</button>'; }).join('') + '</div>' +
     '<div class="ph-chips" role="group" aria-label="Shop">' + shops.map(function (v) { return '<button class="ph-chip" data-ph-shop="' + esc(v) + '" aria-pressed="' + (phShop === v) + '">' + esc(v) + '</button>'; }).join('') + '</div>' +
@@ -1650,7 +1652,7 @@ function renderGroceries() {
   });
   h += '</div>';
   h += '<div class="card"><h3>Add items</h3><div><label for="groc-vendor">Where from</label><input type="text" id="groc-vendor" list="groc-vendors" autocomplete="off" placeholder="e.g. Blinkit"><datalist id="groc-vendors">' +
-    ['Blinkit', 'Zepto', 'Instamart', 'BigBasket', 'Sabzi wala', 'Dairy'].map(function (v) { return '<option value="' + v + '">'; }).join('') + '</datalist></div>' +
+    ['Blinkit', 'Instamart', 'BigBasket', 'Milkbasket', 'Gopala', 'Dairy'].map(function (v) { return '<option value="' + v + '">'; }).join('') + '</datalist></div>' +
     '<div><label for="groc-items">Items (commas or new lines)</label><textarea id="groc-items" rows="3" placeholder="Carrot, Dahi, Gobi"></textarea></div>' +
     '<div class="otp-form"><div><label for="groc-date">Order for</label><input type="date" id="groc-date" min="' + TODAY + '" value="' + tomorrow() + '"></div>' +
     '<div><label for="groc-by">Sent by</label><input type="text" id="groc-by" autocomplete="off" value="' + esc(S.lastBy || '') + '" placeholder="Name"></div></div>' +
