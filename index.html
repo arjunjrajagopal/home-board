@@ -1,0 +1,1595 @@
+<title>Home Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow column, tab bar under the title, one panel at a time.
+   Colour carries state only (person dots, good/warn/bad pills); everything else stays neutral. */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --ink: #1b2430;
+  --muted: #5b6676;
+  --line: #dde2ea;
+  --accent: #2a4d8f;
+  --accent-ink: #ffffff;
+  --good: #25693a;
+  --good-bg: #e3f2e6;
+  --warn: #8f5200;
+  --warn-bg: #fcefd6;
+  --bad: #a8261e;
+  --bad-bg: #fae6e4;
+  --soft: #eceff4;
+  --hl-bg: #fcf0b8;
+  --p1: #0d9488;
+  --p2: #d97706;
+  --p3: #7c3aed;
+  --p4: #db2777;
+  --font-display: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151b;
+    --surface: #1a2029;
+    --ink: #e8ecf2;
+    --muted: #9aa5b5;
+    --line: #2b3340;
+    --accent: #86abf2;
+    --accent-ink: #0f1520;
+    --good: #7ad193;
+    --good-bg: #16301d;
+    --warn: #f2bd62;
+    --warn-bg: #3a2c10;
+    --bad: #ff9088;
+    --bad-bg: #3b1a18;
+    --soft: #232b36;
+    --hl-bg: #4a3f12;
+    --p1: #2dd4bf;
+    --p2: #fbbf24;
+    --p3: #a78bfa;
+    --p4: #f472b6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151b;
+  --surface: #1a2029;
+  --ink: #e8ecf2;
+  --muted: #9aa5b5;
+  --line: #2b3340;
+  --accent: #86abf2;
+  --accent-ink: #0f1520;
+  --good: #7ad193;
+  --good-bg: #16301d;
+  --warn: #f2bd62;
+  --warn-bg: #3a2c10;
+  --bad: #ff9088;
+  --bad-bg: #3b1a18;
+  --soft: #232b36;
+  --hl-bg: #4a3f12;
+  --p1: #2dd4bf;
+  --p2: #fbbf24;
+  --p3: #a78bfa;
+  --p4: #f472b6;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
+  padding-block: 16px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 { font-size: 28px; line-height: 1.1; }
+h2 { font-size: 19px; }
+h3 { font-size: 15px; }
+p { margin: 0; }
+.dateline { color: var(--muted); font-family: var(--font-mono); font-size: 13px; margin-top: 4px; }
+.proto { color: var(--muted); font-size: 13px; margin-top: 6px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.tabs { display: flex; overflow-x: auto; scrollbar-width: none; gap: 2px; background: var(--soft); padding: 4px; border-radius: 12px; }
+.tab { flex: 1 0 auto; padding-left: 11px !important; padding-right: 11px !important; border: 0; background: transparent; padding: 9px 0; border-radius: 9px; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; min-width: 0; }
+@media (min-width: 480px) { .tab { font-size: 13px; } }
+.eink-frame { width: 100%; overflow: hidden; border: 1px solid var(--line, #888); border-radius: 6px; background: #fff; }
+.eink { width: 800px; height: 480px; transform-origin: 0 0; background: #fff; color: #000; padding: 16px; display: flex; flex-direction: column; gap: 12px; font-family: system-ui, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.1; }
+.eink * { box-sizing: border-box; }
+.ek-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 4px solid #000; padding-bottom: 8px; }
+.ek-date { font-size: 34px; font-weight: 800; letter-spacing: .02em; }
+.ek-upd { font-size: 18px; font-weight: 600; }
+.ek-body { flex: 1; display: grid; grid-template-columns: 1fr 296px; gap: 14px; min-height: 0; }
+.ek-left { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.ek-person { display: flex; align-items: center; justify-content: space-between; border: 3px solid #000; border-radius: 6px; padding: 10px 16px; height: 92px; }
+.ek-person .nm { font-size: 34px; font-weight: 800; }
+.ek-person .rl { font-size: 18px; font-weight: 600; margin-top: 4px; }
+.ek-person .st { text-align: right; }
+.ek-person .big { font-size: 40px; font-weight: 800; }
+.ek-person .sm { font-size: 18px; font-weight: 600; margin-top: 4px; }
+.ek-person.alert { background: #000; color: #fff; }
+.ek-person.change { border-width: 7px; }
+.ek-person.off { border-style: dashed; }
+.ek-person.off .big { font-size: 32px; }
+.ek-otp { flex: 1; border: 3px solid #000; border-radius: 6px; padding: 8px 16px; min-height: 0; overflow: hidden; }
+.ek-h { font-size: 18px; font-weight: 800; letter-spacing: .08em; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 4px; }
+.ek-orow { display: flex; justify-content: space-between; align-items: baseline; height: 40px; border-bottom: 1px solid #000; }
+.ek-orow:last-child { border-bottom: 0; }
+.ek-orow .who { font-size: 22px; font-weight: 700; }
+.ek-orow .who small { font-size: 15px; font-weight: 600; }
+.ek-orow .cd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 38px; font-weight: 800; letter-spacing: .1em; }
+.ek-more { font-size: 16px; font-weight: 700; padding-top: 4px; }
+.ek-none { font-size: 22px; font-weight: 600; padding-top: 8px; }
+.ek-groc { border: 3px solid #000; border-radius: 6px; padding: 8px 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.ek-day { font-size: 15px; font-weight: 800; letter-spacing: .12em; height: 26px; margin-top: 4px; display: flex; align-items: center; justify-content: center; border: 2px solid #000; border-radius: 3px; }
+.ek-gv { font-size: 17px; font-weight: 800; letter-spacing: .12em; height: 28px; margin-top: 2px; display: flex; align-items: flex-end; padding-bottom: 2px; border-bottom: 3px solid #000; }
+.ek-grow { font-size: 24px; font-weight: 700; height: 36px; border-bottom: 1px solid #000; display: flex; align-items: flex-end; padding-bottom: 4px; }
+.ek-grow.blank { border-bottom: 1px dashed #000; height: 38px; }
+
+.otp { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.otp-code { font-family: var(--font-mono); font-size: 30px; font-weight: 500; letter-spacing: .08em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.otp.used { opacity: .6; }
+.otp.used .otp-code { text-decoration: line-through; }
+.otp-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 380px) { .otp-form { grid-template-columns: 1fr; } }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+
+.panel { display: flex; flex-direction: column; gap: 14px; }
+.panel[hidden] { display: none; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.row.between { justify-content: space-between; }
+.grow { flex: 1; min-width: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--pc, var(--muted)); flex: none; }
+.person-name { font-weight: 700; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--soft); color: var(--muted); white-space: nowrap; }
+.pill.good { background: var(--good-bg); color: var(--good); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.bad { background: var(--bad-bg); color: var(--bad); }
+.pill.extra { background: var(--accent); color: var(--accent-ink); }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 8px 12px; cursor: pointer; font-weight: 500; font-size: 14px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.sm { padding: 5px 10px; font-size: 13px; }
+.btn[aria-pressed="true"] { background: var(--soft); border-color: var(--muted); }
+.btn.link { border: 0; background: transparent; color: var(--accent); padding: 4px 0; text-decoration: underline; }
+
+textarea, input[type="date"], input[type="text"], input[type="tel"], select { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 9px; padding: 9px 10px; }
+textarea { resize: vertical; min-height: 76px; }
+label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 11px; font-size: 13px; cursor: pointer; }
+
+.result { border-left: 4px solid var(--accent); padding-left: 12px; display: flex; flex-direction: column; gap: 8px; }
+.result.bad { border-left-color: var(--bad); }
+.bubble-q { color: var(--muted); font-size: 13px; }
+
+.list { display: flex; flex-direction: column; gap: 0; }
+.list > div { padding: 9px 0; border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: baseline; }
+.list > div:first-child { border-top: 0; padding-top: 0; }
+.when { font-family: var(--font-mono); font-size: 13px; color: var(--muted); width: 74px; flex: none; }
+
+/* calendar */
+.cal-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; font-size: 12px; color: var(--muted); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cell { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; min-height: 58px; padding: 4px 3px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; min-width: 0; }
+.cell.blank { border: 0; background: transparent; cursor: default; }
+.cell.today { border-color: var(--accent); border-width: 2px; }
+.cell.sel { background: var(--soft); }
+.cell .n { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cell .hol { font-size: 9px; line-height: 1.1; color: var(--warn); text-align: center; overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
+.dots { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
+.pd { width: 9px; height: 9px; border-radius: 50%; background: var(--pc); }
+.pd.absent { background: transparent; border: 2px solid var(--bad); }
+.pd.late { box-shadow: 0 0 0 2px var(--warn); }
+.pd.extra { box-shadow: 0 0 0 2px var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); align-items: center; }
+.legend .pd { display: inline-block; vertical-align: middle; margin-right: 4px; --pc: var(--muted); }
+
+/* count */
+.big { font-family: var(--font-display); font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 6px; border-top: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 13px; border-top: 0; }
+td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.scroll-x { overflow-x: auto; }
+.days { display: inline-flex; gap: 2px; }
+.days span { font-size: 11px; width: 22px; text-align: center; padding: 2px 0; border-radius: 5px; background: var(--soft); color: var(--muted); }
+.days span.on { background: var(--accent); color: var(--accent-ink); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#cal-week h2 { font-size: 16px; text-align: center; }
+.wk td { padding: 10px 6px; }
+.wk td:first-child { width: 96px; }
+.wk tr.wk-today td { background: var(--soft); }
+.wk-line + .wk-line { margin-top: 8px; }
+.wk-line.grey { color: var(--muted); }
+.wk-red { color: var(--bad); font-weight: 700; }
+.wk-hl { background: var(--hl-bg); padding: 1px 4px; border-radius: 4px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.wk-conf { display: block; font-size: 12px; color: var(--muted); }
+.hol-table { min-width: 460px; }
+.hol-table td, .hol-table th { min-width: 150px; }
+.hol-table td:first-child, .hol-table th:first-child { min-width: 112px; }
+.hol-table td > * + * { margin-top: 6px; }
+.hol-table select, .hol-table input { font-size: 13px; padding: 7px 8px; }
+.sub-l { margin: 0; font-size: 12px; }
+.warn-t { color: var(--warn); font-size: 12px; }
+.note { background: var(--warn-bg); color: var(--warn); padding: 8px 10px; border-radius: 8px; font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { .tab, .btn, .chip, .cell { transition: background .12s, border-color .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Home Board</h1>
+    <p class="dateline" id="dateline"></p>
+    <p class="proto">Prototype. The holiday dates are samples to check, and nothing here is connected to WhatsApp yet.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-tab="today" aria-selected="true">Today</button>
+    <button class="tab" role="tab" data-tab="message" aria-selected="false">Message</button>
+    <button class="tab" role="tab" data-tab="calendar" aria-selected="false">Calendar</button>
+    <button class="tab" role="tab" data-tab="holidays" aria-selected="false">Holidays</button>
+    <button class="tab" role="tab" data-tab="otps" aria-selected="false">OTPs</button>
+    <button class="tab" role="tab" data-tab="groceries" aria-selected="false">Groceries</button>
+    <button class="tab" role="tab" data-tab="display" aria-selected="false">Display</button>
+    <button class="tab" role="tab" data-tab="count" aria-selected="false">Count</button>
+    <button class="tab" role="tab" data-tab="people" aria-selected="false">People</button>
+  </nav>
+
+  <section class="panel" id="p-today"></section>
+
+  <section class="panel" id="p-message" hidden>
+    <div class="card">
+      <h2>Paste a message</h2>
+      <p class="muted small">Type or paste what someone sent on WhatsApp. Updates are shown back to you before they are applied.</p>
+      <div>
+        <label for="msg">Message</label>
+        <textarea id="msg" placeholder="e.g. Deepak cancelled today"></textarea>
+      </div>
+      <div>
+        <label for="by">Sent by</label>
+        <input type="text" id="by" autocomplete="off" placeholder="Who sent this?">
+      </div>
+      <div class="row">
+        <button class="btn primary" id="send">Read message</button>
+      </div>
+      <div class="chips" id="examples"></div>
+    </div>
+    <div id="msg-result"></div>
+    <div class="card">
+      <h2>Message log</h2>
+      <div class="list" id="log"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-calendar" hidden>
+    <div class="card">
+      <div class="row between">
+        <div class="row" role="group" aria-label="Calendar view">
+          <button class="btn sm" data-view="month" aria-pressed="false">Month</button>
+          <button class="btn sm" data-view="week" aria-pressed="true">Week</button>
+        </div>
+        <div class="grow" style="max-width:240px">
+          <label for="cal-filter" class="sr">Show</label>
+          <select id="cal-filter"></select>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="cal-month" hidden>
+    <div class="card">
+      <div class="row between">
+        <button class="btn sm" id="prev" aria-label="Previous month">Prev</button>
+        <h2 id="cal-title"></h2>
+        <button class="btn sm" id="next" aria-label="Next month">Next</button>
+      </div>
+      <div class="cal-head" id="cal-head"></div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="legend">
+        <span><span class="pd" style="--pc:var(--muted)"></span>Coming</span>
+        <span><span class="pd absent"></span>Not coming</span>
+        <span><span class="pd late" style="--pc:var(--muted)"></span>Time changed</span>
+        <span><span class="pd extra" style="--pc:var(--muted)"></span>Extra day</span>
+      </div>
+    </div>
+    <div class="card" id="cal-detail"></div>
+    </div>
+    <div class="panel" id="cal-week">
+      <div class="card">
+        <div class="row between">
+          <button class="btn sm" id="wprev" aria-label="Previous week">Prev</button>
+          <h2 id="wk-title"></h2>
+          <button class="btn sm" id="wnext" aria-label="Next week">Next</button>
+        </div>
+        <div class="row"><button class="btn sm" id="wtoday">This week</button></div>
+        <table class="wk" id="wk-table"></table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-otps" hidden></section>
+
+  <section class="panel" id="p-groceries" hidden></section>
+
+  <section class="panel" id="p-display" hidden></section>
+
+  <section class="panel" id="p-holidays" hidden>
+    <div class="card">
+      <h2>Public holidays</h2>
+      <p class="muted small" id="hol-note"></p>
+      <div class="scroll-x"><table class="hol-table" id="hol-table"></table></div>
+    </div>
+    <div class="card">
+      <h2>Tally</h2>
+      <p class="muted small">Counts every holiday in the list, including upcoming ones.</p>
+      <div class="scroll-x"><table id="hol-tally"></table></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-count" hidden>
+    <div class="card">
+      <h2>Days come</h2>
+      <div>
+        <label for="c-person">Person</label>
+        <select id="c-person"></select>
+      </div>
+      <div class="row">
+        <div class="grow"><label for="c-from">From</label><input type="date" id="c-from"></div>
+        <div class="grow"><label for="c-to">To</label><input type="date" id="c-to"></div>
+      </div>
+    </div>
+    <div class="card" id="c-result"></div>
+  </section>
+
+  <section class="panel" id="p-people" hidden>
+    <div class="card">
+      <h2>Standing schedules</h2>
+      <div class="scroll-x"><table id="people-table"></table></div>
+    </div>
+    <div class="card">
+      <h3>Start again</h3>
+      <p class="muted small">Entries are saved in this browser only. This removes every entry and restores the two people and the holiday list.</p>
+      <div class="row"><button class="btn" id="reset">Clear all entries</button></div>
+    </div>
+  </section>
+</div>
+
+<script id="logic">
+/* The real date, unless a test or a link such as ?today=2026-10-27 sets it. */
+var TODAY = (function () {
+  try { if (typeof __TODAY !== 'undefined') return __TODAY; } catch (e) { }
+  try { var m = /[?&]today=(\d{4}-\d{2}-\d{2})/.exec(location.search); if (m) return m[1]; } catch (e) { }
+  try { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); } catch (e) { }
+  return '2026-10-27';
+})();
+var DAYN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+var DAYFULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+var MONN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+var MONFULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+function pd(s) { var a = s.split('-').map(Number); return new Date(Date.UTC(a[0], a[1] - 1, a[2])); }
+function fd(d) { return d.toISOString().slice(0, 10); }
+function addDays(s, n) { var d = pd(s); d.setUTCDate(d.getUTCDate() + n); return fd(d); }
+function dow(s) { return pd(s).getUTCDay(); }
+function daysBetween(a, b) { return Math.round((pd(b) - pd(a)) / 864e5); }
+function labelDate(s) { var d = pd(s); return DAYN[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MONN[d.getUTCMonth()]; }
+function monthStart(s) { return s.slice(0, 8) + '01'; }
+function mkDate(day, mon) { var y = pd(TODAY).getUTCFullYear(); return fd(new Date(Date.UTC(y, mon, day))); }
+
+function sampleState() {
+  return {
+    people: [
+      { id: 'kamal', name: 'Kamal', role: 'Driver', days: [1, 2, 3, 4, 5, 6], time: '09:15', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 1 },
+      { id: 'deepak', name: 'Deepak', role: 'Therapist', days: [1, 2, 3, 4, 5, 6], time: '17:45', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 2 }
+    ],
+    holidayFrom: '2026-10-01',
+    holidays: [
+      { date: '2026-10-02', name: 'Gandhi Jayanti' },
+      { date: '2026-10-20', name: 'Dussehra' },
+      { date: '2026-11-08', name: 'Diwali' },
+      { date: '2026-11-24', name: 'Guru Nanak Jayanti' },
+      { date: '2026-12-25', name: 'Christmas' }
+    ],
+    exceptions: [],
+    attendance: {},
+    holidayPlans: {},
+    otps: [],
+    otpHide: false,
+    groceries: [],
+    messages: [],
+    nextId: 10
+  };
+}
+
+function holidayOn(S, date) {
+  for (var i = 0; i < S.holidays.length; i++) if (S.holidays[i].date === date) return S.holidays[i];
+  return null;
+}
+function personById(S, id) {
+  for (var i = 0; i < S.people.length; i++) if (S.people[i].id === id) return S.people[i];
+  return null;
+}
+
+/* Holiday plans: what each person does on each public holiday. No plan means their standing rule applies. */
+function planFor(S, p, date) {
+  return (S.holidayPlans && S.holidayPlans[date + '|' + p.id]) || null;
+}
+function modeOf(S, p, date) {
+  var pl = planFor(S, p, date);
+  return pl && pl.mode ? pl.mode : (p.holidays ? 'off' : 'working');
+}
+function planPhrase(pl) {
+  if (!pl) return '';
+  if (pl.mode === 'sub') return ', substitute day off ' + (pl.subDate ? 'on ' + labelDate(pl.subDate) : '(date to be set)');
+  if (pl.mode === 'pay') return ', extra day-off pay';
+  return '';
+}
+/* Keep the substitute day off in step with the plan: one absence on the chosen date, tagged with the holiday it replaces. */
+function syncSub(S, holDate, pid) {
+  S.exceptions = S.exceptions.filter(function (e) { return !(e.subFor === holDate && e.personId === pid); });
+  var pl = S.holidayPlans[holDate + '|' + pid];
+  if (pl && pl.mode === 'sub' && pl.subDate) {
+    var clash = S.exceptions.some(function (e) { return e.personId === pid && e.date === pl.subDate; });
+    if (!clash) S.exceptions.push({ id: 'e' + (S.nextId++), personId: pid, date: pl.subDate, kind: 'absent', time: null, subFor: holDate });
+  }
+}
+function holidayTally(S, p) {
+  var t = { listed: 0, off: 0, working: 0, sub: 0, subUndated: 0, pay: 0, noWork: 0 };
+  S.holidays.forEach(function (h) {
+    if (!(h.date >= p.start && p.days.indexOf(dow(h.date)) >= 0)) { t.noWork++; return; }
+    t.listed++;
+    var pl = planFor(S, p, h.date), mode = modeOf(S, p, h.date);
+    if (mode === 'off') { t.off++; return; }
+    t.working++;
+    if (mode === 'sub') { t.sub++; if (!pl.subDate) t.subUndated++; }
+    if (mode === 'pay') t.pay++;
+  });
+  return t;
+}
+
+/* Usual arrival time for a date: a weekday-specific time if the person has one, otherwise the default. */
+function timeFor(p, date) {
+  return (p.times && p.times[dow(date)]) || p.time;
+}
+function describeTimes(p) {
+  if (!p.times) return p.time;
+  var groups = {}, order = [];
+  [1, 2, 3, 4, 5, 6, 0].forEach(function (n) {
+    if (p.days.indexOf(n) < 0) return;
+    var t = p.times[n] || p.time;
+    if (!groups[t]) { groups[t] = []; order.push(t); }
+    groups[t].push(DAYN[n]);
+  });
+  return order.map(function (t) { var g = groups[t]; return (g.length > 1 ? g[0] + '–' + g[g.length - 1] : g[0]) + ' ' + t; }).join(', ');
+}
+
+/* What is the plan for this person on this date: standing schedule first, then reported changes. */
+function dayStatus(S, p, date) {
+  var hol = holidayOn(S, date);
+  var ex = S.exceptions.filter(function (e) { return e.personId === p.id && e.date === date; });
+  var absent = ex.filter(function (e) { return e.kind === 'absent'; })[0];
+  var extra = ex.filter(function (e) { return e.kind === 'extra'; })[0];
+  var late = ex.filter(function (e) { return e.kind === 'late'; })[0];
+  var weekdayOk = date >= p.start && p.days.indexOf(dow(date)) >= 0;
+  var holidayOff = weekdayOk && !!hol && modeOf(S, p, date) === 'off';
+  var scheduled = weekdayOk && !holidayOff;
+  if (absent) {
+    return { state: scheduled ? 'absent' : 'off', expected: false, scheduled: scheduled, holidayOff: holidayOff, hol: hol, cancelled: scheduled, label: scheduled ? (absent.subFor ? 'Substitute day off' : 'Not coming') : (holidayOff ? 'Public holiday' : 'Day off'), sub: absent.subFor || null, time: null };
+  }
+  if (extra && !scheduled) {
+    return { state: 'extra', expected: true, scheduled: false, holidayOff: holidayOff, hol: hol, cancelled: false, label: 'Extra day', time: extra.time || timeFor(p, date) };
+  }
+  if (!scheduled) {
+    return { state: 'off', expected: false, scheduled: false, holidayOff: holidayOff, hol: hol, cancelled: false, label: holidayOff ? 'Public holiday' : 'Day off', time: null };
+  }
+  if (late) {
+    return { state: 'late', expected: true, scheduled: true, holidayOff: false, hol: hol, cancelled: false, label: 'Time changed', time: late.time };
+  }
+  return { state: 'working', expected: true, scheduled: true, holidayOff: false, hol: hol, cancelled: false, label: 'Coming', time: timeFor(p, date) };
+}
+
+/* Did they come? Confirmed if someone said so, otherwise assumed from the plan (past and today only). */
+function attendanceOf(S, p, date) {
+  var v = S.attendance[p.id + '|' + date];
+  var st = dayStatus(S, p, date);
+  if (v === 'came') return { came: true, confirmed: true, st: st };
+  if (v === 'missed') return { came: false, confirmed: true, st: st };
+  if (date <= TODAY) return { came: st.expected, confirmed: false, st: st };
+  return { came: null, confirmed: false, st: st };
+}
+
+/* Every calendar day in the range lands in exactly one bucket, so the numbers always add up. */
+function countDays(S, p, from, to) {
+  var end = to > TODAY ? TODAY : to;
+  var c = { from: from, to: end, calendarDays: 0, confirmedCame: 0, assumedCame: 0, confirmedMissed: 0, cancelled: 0, holidayOff: 0, notScheduled: 0, beforeStart: 0, extras: 0, total: 0 };
+  if (end < from) return c;
+  for (var d = from; d <= end; d = addDays(d, 1)) {
+    c.calendarDays++;
+    var a = attendanceOf(S, p, d);
+    if (a.confirmed && a.came) { c.confirmedCame++; if (a.st.state === 'extra') c.extras++; }
+    else if (a.confirmed && !a.came) { c.confirmedMissed++; }
+    else if (a.st.expected) { c.assumedCame++; if (a.st.state === 'extra') c.extras++; }
+    else if (d < p.start) { c.beforeStart++; }
+    else if (a.st.cancelled) { c.cancelled++; }
+    else if (a.st.holidayOff) { c.holidayOff++; }
+    else { c.notScheduled++; }
+  }
+  c.total = c.confirmedCame + c.assumedCame;
+  return c;
+}
+
+var WD = { sun: 0, sunday: 0, mon: 1, monday: 1, tue: 2, tues: 2, tuesday: 2, wed: 3, wednesday: 3, thu: 4, thur: 4, thurs: 4, thursday: 4, fri: 5, friday: 5, sat: 6, saturday: 6 };
+var MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+var MONRE = '(jan|feb|mar|apr|may|jun|jul|aug|sept|sep|oct|nov|dec)[a-z]*';
+
+function resolveDate(t) {
+  var m;
+  if (/\bday after tomorrow\b/.test(t)) return { date: addDays(TODAY, 2), explicit: true };
+  if (/\btomorrow\b/.test(t)) return { date: addDays(TODAY, 1), explicit: true };
+  if (/\byesterday\b/.test(t)) return { date: addDays(TODAY, -1), explicit: true };
+  if (/\btoday\b|\btonight\b|\bthis morning\b/.test(t)) return { date: TODAY, explicit: true };
+  m = t.match(new RegExp('\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+' + MONRE + '\\b'));
+  if (m) return { date: mkDate(+m[1], MON[m[2]]), explicit: true };
+  m = t.match(new RegExp('\\b' + MONRE + '\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b'));
+  if (m) return { date: mkDate(+m[3], MON[m[1]]), explicit: true };
+  m = t.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tues|tue|wed|thurs|thur|thu|fri|sat)\b/);
+  if (m) {
+    var want = WD[m[1]];
+    for (var i = 1; i <= 7; i++) if (dow(addDays(TODAY, i)) === want) {
+      var date = addDays(TODAY, i), alt = null;
+      if (new RegExp('\\bnext\\s+' + m[1] + '\\b').test(t) && date <= addDays(mondayOf(TODAY), 6)) alt = addDays(date, 7);
+      return { date: date, explicit: true, alt: alt };
+    }
+  }
+  return { date: TODAY, explicit: false };
+}
+
+function resolveRange(t) {
+  var s = t.replace(/[?.!]+\s*$/, '');
+  if (/\blast month\b/.test(s)) {
+    var d = pd(monthStart(TODAY)); d.setUTCMonth(d.getUTCMonth() - 1);
+    var f = fd(d); var e = addDays(monthStart(TODAY), -1);
+    return [f, e];
+  }
+  if (/\bthis month\b/.test(s) && !/since/.test(s)) return [monthStart(TODAY), TODAY];
+  var m = s.match(/since\s+(.*)$/);
+  if (m) {
+    var rest = m[1];
+    if (new RegExp('\\b' + MONRE + '\\b').test(rest)) return [resolveDate(rest).date, TODAY];
+    var dm = rest.match(/(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?/);
+    if (dm) return [TODAY.slice(0, 8) + ('0' + dm[1]).slice(-2), TODAY];
+    var rd = resolveDate(rest);
+    if (rd.explicit) return [rd.date, TODAY];
+  }
+  return [monthStart(TODAY), TODAY];
+}
+
+function findPerson(S, t) {
+  var i, p;
+  for (i = 0; i < S.people.length; i++) { p = S.people[i]; if (new RegExp('\\b' + p.name.toLowerCase() + '\\b').test(t)) return p; }
+  var alias = { driver: /\bdriver\b/, therapist: /\b(therapist|therapy)\b/, nanny: /\bnanny\b/, chef: /\b(chef|cook)\b/, cleaner: /\b(cleaner|maid)\b/ };
+  for (i = 0; i < S.people.length; i++) {
+    p = S.people[i]; var re = alias[p.role.toLowerCase()];
+    if (re && re.test(t)) return p;
+  }
+  return null;
+}
+
+function parseTime(t) {
+  var m = t.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
+  var h, mi;
+  if (m) {
+    h = +m[1]; mi = m[2] ? +m[2] : 0;
+    if (m[3] === 'pm' && h < 12) h += 12;
+    if (m[3] === 'am' && h === 12) h = 0;
+  } else {
+    m = t.match(/\b(\d{1,2}):(\d{2})\b/) || t.match(/\bat\s+(\d{1,2})\b/);
+    if (!m) return null;
+    h = +m[1]; mi = m[2] ? +m[2] : 0;
+    if (h >= 1 && h <= 6) h += 12;
+  }
+  if (h > 23 || mi > 59) return null;
+  return ('0' + h).slice(-2) + ':' + ('0' + mi).slice(-2);
+}
+
+function statusText(S, p, date, st) {
+  var when = labelDate(date);
+  var hol = st.hol ? ' (' + st.hol.name + ')' : '';
+  var reported = S.exceptions.some(function (e) { return e.personId === p.id && e.date === date; });
+  if (st.state === 'working') return p.name + ' (' + p.role + ') is due on ' + when + ' at ' + st.time + '. ' + (st.hol ? 'Working on a public holiday (' + st.hol.name + ')' + planPhrase(planFor(S, p, date)) + '. ' : '') + (reported ? '' : 'No change has been reported.');
+  if (st.state === 'late') return p.name + ' (' + p.role + ') is coming on ' + when + ' at ' + st.time + ' (time changed).';
+  if (st.state === 'extra') return p.name + ' (' + p.role + ') is coming on ' + when + ' at ' + st.time + ' as an extra day.';
+  if (st.state === 'absent') {
+    var subName = '';
+    if (st.sub) { var sh = holidayOn(S, st.sub); subName = sh ? sh.name : labelDate(st.sub); }
+    return p.name + ' (' + p.role + ') is not coming on ' + when + '. ' + (st.sub ? 'This is a substitute day off for ' + subName + '.' : 'A day off was reported.');
+  }
+  if (st.holidayOff) return p.name + ' (' + p.role + ') is off on ' + when + ': public holiday' + hol + '. Nothing else has been reported.';
+  return p.name + ' (' + p.role + ') is not scheduled on ' + when + '. Nothing has been reported.';
+}
+
+function countLines(c) {
+  var out = [];
+  if (c.confirmedCame) out.push(c.confirmedCame + ' confirmed');
+  if (c.assumedCame) out.push(c.assumedCame + ' assumed (nobody said otherwise)');
+  return out.join(', ');
+}
+function countSentence(p, c) {
+  var days = c.total === 1 ? 'day' : 'days';
+  return p.name + ' has come ' + c.total + ' ' + days + ' from ' + labelDate(c.from) + ' to ' + labelDate(c.to) + '.';
+}
+function countOffParts(c) {
+  var o = [];
+  if (c.holidayOff) o.push(c.holidayOff + ' public holiday' + (c.holidayOff > 1 ? 's' : ''));
+  if (c.notScheduled) o.push(c.notScheduled + ' not scheduled');
+  if (c.cancelled) o.push(c.cancelled + ' cancelled');
+  if (c.confirmedMissed) o.push(c.confirmedMissed + ' confirmed missed');
+  if (c.beforeStart) o.push(c.beforeStart + ' before start date');
+  return o;
+}
+
+function fmt12(t) {
+  var a = t.split(':'), h = +a[0], ap = h >= 12 ? 'pm' : 'am', h12 = h % 12 || 12;
+  return h12 + (a[1] === '00' ? '' : ':' + a[1]) + ap;
+}
+function longDate(s) { var d = pd(s); return DAYFULL[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MONFULL[d.getUTCMonth()]; }
+function mondayOf(s) { return addDays(s, -((dow(s) + 6) % 7)); }
+
+/* One plain sentence for one person on one day, for the week view.
+   parts: [{t, k}] where k is 'red' (a cancellation), 'hl' (a changed arrangement) or '' (plain).
+   grey: true when the person is simply not working that day (regular day off, public holiday, not started). */
+function daySentence(S, p, date) {
+  var n = p.name, st = dayStatus(S, p, date), hol = st.hol, pl = planFor(S, p, date);
+  var weekdayOk = date >= p.start && p.days.indexOf(dow(date)) >= 0;
+  var pre = hol ? 'Public Holiday (' + hol.name + ') - ' : '';
+  var head = n + ' ', body = '', kind = '', grey = false;
+  var at = st.time ? fmt12(st.time) : '';
+  if (date < p.start) {
+    head = n + ' not started yet (starts ' + longDate(p.start) + ')'; grey = true;
+  } else if (st.state === 'working') {
+    if (hol) {
+      var mode = modeOf(S, p, date);
+      head = pre + n + ' '; kind = 'hl';
+      if (mode === 'sub' && pl) body = 'working, starting ' + at + ', but has been given ' + (pl.subDate ? longDate(pl.subDate) + ' off in lieu' : 'a day off in lieu (date to be set)');
+      else if (mode === 'pay') body = 'working, starting ' + at + ', and will receive extra day-off pay';
+      else body = 'working, starting ' + at;
+    } else body = 'scheduled to start ' + at;
+  } else if (st.state === 'late') {
+    head = pre + n + ' '; kind = 'hl';
+    body = 'now starting at ' + at + ' (usually ' + fmt12(timeFor(p, date)) + ')';
+  } else if (st.state === 'extra') {
+    head = (hol ? pre : '') + n + ' '; kind = 'hl';
+    body = hol ? 'working an extra day, starting ' + at : 'extra day, starting at ' + at;
+  } else if (st.state === 'absent') {
+    if (st.sub) {
+      var sh = holidayOn(S, st.sub);
+      kind = 'hl';
+      body = 'day off in lieu of ' + (sh ? sh.name + ' (' + longDate(st.sub) + ')' : longDate(st.sub));
+    } else { kind = 'red'; body = 'cancelled'; }
+  } else {
+    grey = true;
+    head = (st.holidayOff ? pre + n + ' not working' : (hol ? pre + n + ' day off' : n + ' day off'));
+  }
+  var parts = [];
+  if (head) parts.push({ t: head, k: '' });
+  if (body) parts.push({ t: body, k: kind });
+  if (hol && pl && pl.note && weekdayOk) parts.push({ t: ' (Note: ' + pl.note + ')', k: '' });
+  var out = { text: parts.map(function (x) { return x.t; }).join(''), parts: parts, grey: grey, conf: '' };
+  var a = attendanceOf(S, p, date);
+  if (a.confirmed) out.conf = a.came ? 'Confirmed came' : 'Confirmed did not come';
+  return out;
+}
+
+/* Stand-in for the AI step: simple rules that turn one English message into a structured update or a question. */
+function interpretOne(S, text, forced, noQuestion) {
+  var t = text.toLowerCase().replace(/[’']/g, "'").trim();
+  var p = forced || findPerson(S, t);
+  var isQ = !noQuestion && (/\?\s*$/.test(t) || /^(how many|how much|is |are |does |did |will |when |was |has |have |can )/.test(t));
+  var d, time, st;
+  if (isQ) {
+    if (!p) return { type: 'unknown', msg: 'I could not tell which person this is about. Include a name or a role such as the driver.' };
+    if (/how many (days|times)|number of days|(days|times) .*(come|came|worked|attended|here)/.test(t)) {
+      var r = resolveRange(t);
+      var c = countDays(S, p, r[0], r[1]);
+      return { type: 'answer', personId: p.id, count: c, text: countSentence(p, c) };
+    }
+    var qd = resolveDate(t);
+    d = qd.date;
+    st = dayStatus(S, p, d);
+    var qtext = statusText(S, p, d, st);
+    if (qd.alt) qtext += ' If you meant ' + labelDate(qd.alt) + ' instead: ' + statusText(S, p, qd.alt, dayStatus(S, p, qd.alt));
+    return { type: 'answer', personId: p.id, text: qtext };
+  }
+  if (!p) return { type: 'unknown', msg: 'I could not tell which person this is about. Include a name or a role such as the driver.' };
+  var dd = resolveDate(t);
+  d = dd.date;
+  if (/(didn't|did not|never|hasn't|has not|failed to|wasn't)\s+(come|turn up|show|arrive|here)/.test(t) || /\bno.?show\b/.test(t) && /\b(yesterday|was)\b/.test(t)) {
+    return { type: 'update', kind: 'missed', personId: p.id, date: d, summary: p.name + ' did not come on ' + labelDate(d) };
+  }
+  if (/\b(came|arrived|turned up|reached|was here|has come|is here)\b/.test(t)) {
+    return { type: 'update', kind: 'came', personId: p.id, date: d, summary: p.name + ' came on ' + labelDate(d) };
+  }
+  if (/(cancel|not coming|won't come|will not come|isn't coming|is not coming|not come|can't come|cannot come|not working|isn't working|won't work|will not work|day off|\boff\b|on leave|\bleave\b|absent|holiday|no show)/.test(t)) {
+    return { type: 'update', kind: 'absent', personId: p.id, date: d, summary: p.name + ' is not coming on ' + labelDate(d) };
+  }
+  time = parseTime(t);
+  if (/\b(extra|also coming|will work|will be working|is working|working|can come|will come|coming on|coming in on|will be in on)\b/.test(t) && dd.explicit) {
+    st = dayStatus(S, p, d);
+    if (st.scheduled) {
+      if (time) return { type: 'update', kind: 'late', personId: p.id, date: d, time: time, summary: '' };
+      return { type: 'info', msg: p.name + ' is already due on ' + labelDate(d) + ' at ' + st.time + ', so nothing changes.' };
+    }
+    return { type: 'update', kind: 'extra', personId: p.id, date: d, time: time || timeFor(p, d), summary: '' };
+  }
+  if (time) {
+    return { type: 'update', kind: 'late', personId: p.id, date: d, time: time, summary: p.name + ' is coming on ' + labelDate(d) + ' at ' + time };
+  }
+  return { type: 'unknown', msg: 'I could not tell what changed. Try something like "Deepak cancelled today" or "Deepak is coming at 11:15".' };
+}
+
+function summarize(S, r) {
+  var p = personById(S, r.personId), n = p ? p.name : r.personId, w = labelDate(r.date);
+  if (r.kind === 'absent') return n + ' is not coming on ' + w;
+  if (r.kind === 'late') return n + ' is coming on ' + w + ' at ' + r.time;
+  if (r.kind === 'extra') return n + ' is coming on ' + w + ' as an extra day, at ' + r.time;
+  if (r.kind === 'came') return n + ' came on ' + w;
+  return n + ' did not come on ' + w;
+}
+function swapAlt(S, r) {
+  var d = r.date; r.date = r.alt; r.alt = d; r.summary = summarize(S, r);
+}
+
+/* One person, one clause. Adds the alternative date for "next <weekday>" and the summary line. */
+function interpret(S, text, forced, noQuestion) {
+  var r = interpretOne(S, text, forced, noQuestion);
+  if (r.type === 'update') {
+    var dd = resolveDate(text.toLowerCase());
+    r.alt = dd.alt && dd.date === r.date ? dd.alt : null;
+    r.summary = summarize(S, r);
+  }
+  return r;
+}
+
+function findPeople(S, t) {
+  var out = [];
+  S.people.forEach(function (p) { if (new RegExp('\\b' + p.name.toLowerCase() + '\\b').test(t)) out.push(p); });
+  if (!out.length) { var one = findPerson(S, t); if (one) out.push(one); }
+  return out;
+}
+var CUE = /(cancel|not coming|\boff\b|leave|absent|holiday|coming|come|came|arriv|work|late|start|extra|\bat \d|\d\s*(am|pm)|no.?show)/;
+function splitClauses(text) {
+  var parts = text.split(/\s*(?:;|,|\bbut\b|\bhowever\b|\bwhile\b|\bthen\b|\.\s+(?=[A-Za-z]))\s*/i);
+  var out = [];
+  parts.forEach(function (part) {
+    var sub = part.split(/\s+and\s+/i), cur = sub[0];
+    for (var i = 1; i < sub.length; i++) {
+      if (CUE.test(cur.toLowerCase()) && CUE.test(sub[i].toLowerCase())) { out.push(cur); cur = sub[i]; }
+      else cur += ' and ' + sub[i];
+    }
+    out.push(cur);
+  });
+  return out.map(function (x) { return x.replace(/[.\s]+$/, '').trim(); }).filter(Boolean);
+}
+
+/* A whole message: a question gets an answer; anything else becomes a list of updates, one per person and clause. */
+function interpretMessage(S, text) {
+  var t = text.trim(), low = t.toLowerCase();
+  var otp = readOtp(S, t);
+  if (otp) return otp;
+  var ga = groceryAnswer(S, t);
+  if (ga) return ga;
+  var gro = readGroceries(S, t);
+  if (gro) return gro;
+  var isQ = /\?\s*$/.test(low) || /^(how many|how much|is |are |does |did |will |when |was |has |have |can )/.test(low);
+  if (isQ) return interpretOne(S, t);
+  var all = findPeople(S, low);
+  if (!all.length) return { type: 'unknown', msg: 'I could not tell which person this is about. Include a name or a role such as the driver.' };
+  var items = [], notes = [], unclear = [], carry = null;
+  splitClauses(t).forEach(function (c) {
+    var ppl = findPeople(S, c.toLowerCase());
+    if (!ppl.length) ppl = carry || all.slice(0, 1);
+    carry = ppl;
+    var got = false;
+    ppl.forEach(function (p) {
+      var r = interpret(S, c, p, true);
+      if (r.type === 'update') {
+        var dup = items.some(function (x) { return x.personId === r.personId && x.date === r.date && x.kind === r.kind; });
+        if (!dup) items.push(r);
+        got = true;
+      } else if (r.type === 'info') { if (notes.indexOf(r.msg) < 0) notes.push(r.msg); got = true; }
+    });
+    if (!got) unclear.push(c);
+  });
+  if (!items.length && !notes.length) return { type: 'unknown', msg: 'I could not tell what changed. Try something like "Kamal cancelled today" or "Kamal is coming at 11:15".' };
+  return { type: 'updates', items: items, notes: notes, unclear: unclear };
+}
+
+/* ---------- Groceries ---------- */
+var GROC_VENDORS = { 'blinkit': 'Blinkit', 'zepto': 'Zepto', 'instamart': 'Instamart', 'swiggy instamart': 'Instamart', 'bigbasket': 'BigBasket', 'big basket': 'BigBasket', 'bb': 'BigBasket', 'amazon fresh': 'Amazon Fresh', 'amazon': 'Amazon', 'flipkart': 'Flipkart', 'flipkart minutes': 'Flipkart Minutes', 'jiomart': 'JioMart', 'dmart': 'DMart', 'milkbasket': 'Milkbasket', 'country delight': 'Country Delight', 'mother dairy': 'Mother Dairy', 'licious': 'Licious', 'kirana': 'Kirana', 'sabzi': 'Sabzi', 'sabzi wala': 'Sabzi wala', 'sabziwala': 'Sabzi wala', 'sabzi mandi': 'Sabzi mandi', 'dairy': 'Dairy', 'chemist': 'Chemist', 'pharmacy': 'Pharmacy', 'pharmeasy': 'PharmEasy', '1mg': '1mg', 'supermarket': 'Supermarket', 'market': 'Market', 'grofers': 'Blinkit' };
+var GROC_WORDS = /^(groceries|grocery|grocery list|shopping|shopping list|order|to order|to buy|buy|need|needed|required|list)$/;
+function titleCase(t) { return t.replace(/\b([a-z])/gi, function (c) { return c.toUpperCase(); }); }
+function splitItems(body) {
+  return body.split(/\s*(?:[,;\n]|&|\+|\band\b)\s*/i).map(function (x) {
+    x = x.replace(/^\s*(?:[-•*]|\d+[.)])\s*/, '').replace(/^and\s+/i, '').replace(/[.!\s]+$/, '').trim();
+    return x ? x.charAt(0).toUpperCase() + x.slice(1) : '';
+  }).filter(function (x) { return x && x.length <= 40; }).slice(0, 30);
+}
+var GROC_DATE = /\b(?:(?:for|on|by)\s+)?(day after tomorrow|tomorrow|today|(?:next\s+)?(?:sunday|monday|tuesday|wednesday|thursday|friday|saturday))\b/i;
+function tomorrow() { return addDays(TODAY, 1); }
+/* Pull a day word out of a message. Returns the text without it, and the date if one was named. */
+function takeGroceryDate(text) {
+  var m = text.match(GROC_DATE);
+  if (!m) return { text: text, date: null };
+  var d = resolveDate(m[1].toLowerCase().replace(/^next\s+/, ''));
+  var rest = text.replace(GROC_DATE, ' ').replace(/\s{2,}/g, ' ').replace(/\s+([,:;])/g, '$1').replace(/[:\-,\s]+$/, '').replace(/^[:\-,\s]+/, '').trim();
+  return { text: rest, date: d.explicit ? d.date : null };
+}
+function dayLabel(d) { return d <= TODAY ? 'Today' : d === tomorrow() ? 'Tomorrow' : labelDate(d); }
+function openGroceries(S) { return (S.groceries || []).filter(function (g) { return !g.done; }); }
+function purgeGroceries(S) { S.groceries = (S.groceries || []).filter(function (g) { return !g.done || g.doneOn === TODAY; }); }
+/* Open items by day (overdue ones count as Today), then by shop. */
+function groceryDays(S) {
+  var days = {}, keys = [];
+  openGroceries(S).forEach(function (g) {
+    var d = g.forDate && g.forDate > TODAY ? g.forDate : TODAY;
+    if (!days[d]) { days[d] = {}; keys.push(d); }
+    var k = g.vendor || ''; (days[d][k] = days[d][k] || []).push(g);
+  });
+  keys.sort();
+  return keys.map(function (d) {
+    return { date: d, label: dayLabel(d), groups: Object.keys(days[d]).map(function (k) { return { vendor: k, items: days[d][k] }; }) };
+  });
+}
+function groceryDup(S, vendor, item, date) {
+  var v = (vendor || '').toLowerCase(), i = item.toLowerCase(), d = date || tomorrow();
+  d = d < TODAY ? TODAY : d;
+  return openGroceries(S).some(function (g) { var gd = g.forDate && g.forDate > TODAY ? g.forDate : TODAY; return (g.vendor || '').toLowerCase() === v && g.item.toLowerCase() === i && gd === d; });
+}
+function vendorFromText(t) {
+  var k = t.toLowerCase().replace(/\s+/g, ' ').replace(/[.!]+$/, '').replace(/^the\s+/, '').replace(/\s+list$/, '').trim();
+  return GROC_VENDORS[k] !== undefined ? GROC_VENDORS[k] : null;
+}
+/* "Blinkit: Carrot, Dahi, Gobi" adds to a list. "Blinkit ordered" or "Ordered: Carrot" ticks things off. */
+function readGroceries(S, text) {
+  var t = text.trim().replace(/^\s*[-•*]\s*/, '');
+  if (!t || /\?\s*$/.test(t)) return null;
+  var low = t.toLowerCase(), m, vendor = null, body = null, v;
+
+  var dd = takeGroceryDate(t), want = dd.date, tl = dd.text.toLowerCase();
+
+  // remove / cancel / clear
+  var rm = tl.match(/^(?:please\s+)?(?:remove|delete|cancel|drop|cross off|take off|no need(?: for)?|do not need|don'?t need|clear)\s+(.+?)[.!]?$/);
+  if (rm && !findPeople(S, tl).length) {
+    var rest0 = rm[1].replace(/^(?:the|all|everything on the|everything from the)\s+/, '').trim(), vFilter = null, namePart = rest0, openAll = openGroceries(S);
+    var dayOfR = function (g) { return g.forDate && g.forDate > TODAY ? g.forDate : TODAY; };
+    var fm = rest0.match(/^(.+?)\s+(?:from|off|on)\s+(?:the\s+)?(.+?)$/);
+    if (fm && vendorFromText(fm[2]) !== null) { namePart = fm[1]; vFilter = vendorFromText(fm[2]); }
+    var cm = rest0.match(/^(?:([a-z0-9 ]+?)\s*:\s*)?(.+)$/);
+    if (!fm && cm && cm[1] && vendorFromText(cm[1]) !== null) { vFilter = vendorFromText(cm[1]); namePart = cm[2]; }
+    var wholeList = /^(?:everything|all|(?:the\s+)?(?:grocery|groceries|shopping)\s+list|(?:grocery|groceries|shopping)(?:\s+list)?|list)$/.test(namePart.trim());
+    var vOnly = vendorFromText(namePart);
+    var pool = openAll.filter(function (g) { return (vFilter === null || g.vendor === vFilter) && (!want || dayOfR(g) === (want < TODAY ? TODAY : want)); });
+    var hit = [], missing = [];
+    if (wholeList) hit = pool;
+    else if (vOnly !== null && vFilter === null) hit = openAll.filter(function (g) { return g.vendor === vOnly && (!want || dayOfR(g) === (want < TODAY ? TODAY : want)); });
+    else {
+      var plain = function (x) { x = x.toLowerCase().trim(); return x.length > 3 ? x.replace(/(?:es|s)$/, '') : x; };
+      splitItems(namePart).forEach(function (nm) {
+        var found = pool.filter(function (g) { return plain(g.item) === plain(nm); });
+        if (found.length) hit = hit.concat(found); else missing.push(nm);
+      });
+    }
+    var seenId = {}; hit = hit.filter(function (g) { if (seenId[g.id]) return false; seenId[g.id] = 1; return true; });
+    if (!hit.length) return { type: 'unknown', msg: 'Nothing on the grocery list matches that, so nothing was removed.' };
+    var desc = hit.length > 6 && wholeList ? hit.length + ' items' : hit.map(function (g) { return g.item + ' (' + (g.vendor || 'Other') + ', ' + dayLabel(dayOfR(g)).toLowerCase() + ')'; }).join(', ');
+    return { type: 'updates', notes: missing.length ? ['Not on the list: ' + missing.join(', ') + '.'] : [], unclear: [], items: [{ type: 'update', kind: 'grocery-remove', ids: hit.map(function (g) { return g.id; }), summary: 'Remove from the grocery list: ' + desc }] };
+  }
+  m = tl.match(/^(?:(.+?)\s+)?(?:ordered|order placed|order done|placed)(?:\s*[:\-]\s*(.+))?$/) || tl.match(/^(?:ordered|order placed)\s*[:\-]?\s*(.+)$/);
+  if (m) {
+    var open = openGroceries(S), picked = [], what = '', dayOf = function (g) { return g.forDate && g.forDate > TODAY ? g.forDate : TODAY; };
+    var two = m.length === 3, left = two ? m[1] : null, rest = two ? m[2] : m[1];
+    var byVendor = function (ven) {
+      var pool = open.filter(function (g) { return g.vendor === ven; });
+      var day = want ? (want < TODAY ? TODAY : want) : pool.map(dayOf).sort()[0];
+      return pool.filter(function (g) { return dayOf(g) === day; });
+    };
+    if (left && (v = vendorFromText(left)) !== null) { picked = byVendor(v); what = 'the ' + v + ' list'; }
+    else if (rest && !left) {
+      var vv = vendorFromText(rest);
+      if (vv !== null) { picked = byVendor(vv); what = 'the ' + vv + ' list'; }
+      else {
+        var names = splitItems(rest).map(function (x) { return x.toLowerCase(); }), got = {};
+        picked = open.slice().sort(function (a, b) { return dayOf(a) < dayOf(b) ? -1 : 1; }).filter(function (g) {
+          var k = g.item.toLowerCase(); if (names.indexOf(k) < 0 || got[k]) return false;
+          if (want && dayOf(g) !== (want < TODAY ? TODAY : want)) return false;
+          got[k] = 1; return true;
+        });
+        what = picked.map(function (g) { return g.item; }).join(', ');
+      }
+    }
+    if (picked.length) {
+      var dts = {}; picked.forEach(function (g) { dts[dayOf(g)] = 1; });
+      var multi = openGroceries(S).some(function (g) { return dayOf(g) !== dayOf(picked[0]); });
+      return { type: 'updates', notes: [], unclear: [], items: [{ type: 'update', kind: 'grocery-done', ids: picked.map(function (g) { return g.id; }), summary: 'Mark as ordered: ' + what + (multi ? ' for ' + dayLabel(dayOf(picked[0])).toLowerCase() : '') + ' (' + picked.length + (picked.length === 1 ? ' item' : ' items') + ')' }] };
+    }
+    return null;
+  }
+  t = dd.text;
+  if (!t) return null;
+  low = t.toLowerCase();
+
+  m = t.match(/^([^:\n]{2,30}?)\s*(?::|\s[-–—]\s)\s*([\s\S]+)$/);
+  if (m) {
+    var l = m[1].trim(), ll = l.toLowerCase().replace(/\s+/g, ' ');
+    if (GROC_VENDORS[ll] !== undefined) { vendor = GROC_VENDORS[ll]; body = m[2]; }
+    else if (GROC_WORDS.test(ll)) { vendor = ''; body = m[2]; }
+    else if (!findPeople(S, ll).length && !/\d/.test(l) && !CUE.test(ll) && splitItems(m[2]).length >= 2) { vendor = titleCase(l); body = m[2]; }
+  }
+  if (body === null) {
+    m = low.match(/^(?:please\s+)?(?:order|buy|need|add)\s+(.+?)(?:\s+(?:from|on|via|at|to|in)\s+(?:the\s+)?([a-z0-9 ]+?))?[.!]?$/);
+    if (m && !findPeople(S, low).length && !CUE.test(m[1])) {
+      var ven = m[2] ? vendorFromText(m[2]) : '';
+      var stripped = t.replace(/^(?:please\s+)?(?:order|buy|need|add)\s+/i, '').replace(/[.!\s]+$/, '');
+      if (ven === null) ven = '';
+      else if (m[2]) stripped = stripped.replace(/\s+(?:from|on|via|at|to|in)\s+(?:the\s+)?[A-Za-z0-9 ]+?$/i, '');
+      vendor = ven; body = stripped;
+    }
+  }
+  if (body === null) return null;
+  var all = splitItems(body);
+  if (!all.length) return null;
+  var forDate = want && want >= TODAY ? want : tomorrow();
+  var seen = {}, fresh = all.filter(function (x) { var k = x.toLowerCase(); if (seen[k] || groceryDup(S, vendor, x, forDate)) return false; seen[k] = 1; return true; });
+  var skipped = all.filter(function (x) { return groceryDup(S, vendor, x, forDate); });
+  if (!fresh.length) return { type: 'unknown', msg: 'Nothing new. ' + (all.length === 1 ? 'That item is' : 'Those items are') + ' already on the ' + (vendor || 'grocery') + ' list for ' + dayLabel(forDate).toLowerCase() + '.' };
+  return { type: 'updates', notes: skipped.length ? ['Already on the list, skipped: ' + skipped.join(', ') + '.'] : [], unclear: [], items: [{ type: 'update', kind: 'grocery', vendor: vendor, list: fresh, forDate: forDate, summary: 'Add ' + fresh.length + (fresh.length === 1 ? ' item' : ' items') + ' to the ' + (vendor || 'grocery') + ' list for ' + dayLabel(forDate).toLowerCase() + ': ' + fresh.join(', ') }] };
+}
+function groceryAnswer(S, text) {
+  var t = text.trim();
+  if (!/\?\s*$/.test(t) && !/^(what|which|show|list)\b/i.test(t)) return null;
+  if (!/(grocer|to order|need to (?:order|buy)|order list|shopping list|what.*(?:order|buy))/i.test(t)) return null;
+  var days = groceryDays(S);
+  if (!days.length) return { type: 'answer', text: 'Nothing is waiting to be ordered.' };
+  return { type: 'answer', text: days.map(function (d) {
+    return d.label + ': ' + d.groups.map(function (x) { return (x.vendor || 'Other') + ' (' + x.items.map(function (i) { return i.item; }).join(', ') + ')'; }).join('; ');
+  }).join('. ') + '.' };
+}
+
+/* ---------- OTPs ---------- */
+function maskDigits(t) { return t.replace(/\d{4,8}/g, '••••'); }
+
+var OTP_BLOCK = /(\bbank\b|\bupi\b|\bcard\b|credit|debit|a\/c|\bacct\b|account|\btxn\b|transaction|net.?banking|paytm|phonepe|gpay|google pay|\bkyc\b|aadhaar|\blogin\b|log in|sign.?in|password|payment|\bpay\b|₹|\brs\.?\s?\d|\binr\s?\d|\bemi\b|insurance|\bdemat\b|\bmutual fund)/i;
+var BRANDS = { amazon: 'Amazon', flipkart: 'Flipkart', swiggy: 'Swiggy', zomato: 'Zomato', blinkit: 'Blinkit', zepto: 'Zepto', bigbasket: 'BigBasket', instamart: 'Instamart', dunzo: 'Dunzo', myntra: 'Myntra', meesho: 'Meesho', nykaa: 'Nykaa', ajio: 'Ajio', pharmeasy: 'PharmEasy', '1mg': '1mg', milkbasket: 'Milkbasket', dtdc: 'DTDC', delhivery: 'Delhivery', bluedart: 'Blue Dart', 'blue dart': 'Blue Dart', shadowfax: 'Shadowfax', 'ecom express': 'Ecom Express', 'urban company': 'Urban Company', ola: 'Ola', uber: 'Uber', rapido: 'Rapido' };
+var OTP_ROLES = ['courier', 'security', 'guard', 'gate', 'visitor', 'plumber', 'electrician', 'carpenter', 'technician', 'cook', 'maid'];
+var OTP_STOP = ['your', 'the', 'my', 'a', 'an', 'order', 'delivery', 'this', 'that', 'it', 'you', 'verification', 'otp', 'code'];
+
+function otpSource(t) {
+  var low = t.toLowerCase(), k;
+  for (k in BRANDS) if (new RegExp('\\b' + k + '\\b').test(low)) return BRANDS[k];
+  for (var i = 0; i < OTP_ROLES.length; i++) if (new RegExp('\\b' + OTP_ROLES[i] + '\\b').test(low)) return OTP_ROLES[i].charAt(0).toUpperCase() + OTP_ROLES[i].slice(1);
+  var m = t.match(/\b(?:from|for|by)\s+([A-Za-z][A-Za-z0-9&.'-]*(?:\s+[A-Za-z][A-Za-z0-9&.'-]*){0,2})/);
+  if (m && OTP_STOP.indexOf(m[1].split(/\s+/)[0].toLowerCase()) < 0) return m[1].replace(/[.\s]+$/, '');
+  return /\bdelivery\b/i.test(t) ? 'Delivery' : 'Unknown sender';
+}
+function otpCode(t) {
+  var m = t.match(/(?:otp|code|pin|passcode|one.?time[a-z ]*)[^0-9]{0,24}(\d{4,8})\b/i);
+  if (m) return m[1];
+  var all = t.match(/\b\d{4,8}\b/g) || [];
+  var nonYear = all.filter(function (x) { return !/^(19|20)\d\d$/.test(x); });
+  return (nonYear[0] || all[0] || null);
+}
+/* Is this message a one-time code for a delivery, gate or visitor? Bank and payment codes are refused. */
+function readOtp(S, text) {
+  var t = text.trim();
+  if (/\?\s*$/.test(t)) return null;
+  var looksOtp = /\b(otp|one.?time|passcode|pin)\b/i.test(t) || (/\bcode\b/i.test(t) && /\b(delivery|visitor|gate|courier|order|guard|security)\b/i.test(t));
+  var code = otpCode(t);
+  if (!looksOtp || !code) return null;
+  if (OTP_BLOCK.test(t)) {
+    return { type: 'unknown', sensitive: true, msg: 'Not saved. This looks like a bank, card, payment or account code. Never share these codes with anyone, and do not keep them here. This board is only for delivery, gate and visitor codes.' };
+  }
+  var source = otpSource(t);
+  return { type: 'updates', sensitive: true, notes: [], unclear: [], items: [{ type: 'update', kind: 'otp', code: code, source: source, alt: null, summary: 'Save the OTP from ' + source }] };
+}
+function purgeOtps(S) { S.otps = (S.otps || []).filter(function (o) { return o.date === TODAY; }); }
+
+/* Apply a confirmed update. Returns what is needed to undo it. */
+function applyResult(S, r) {
+  if (r.kind === 'grocery') {
+    if (!S.groceries) S.groceries = [];
+    var ids = [];
+    r.list.forEach(function (x) {
+      var fdt = r.forDate && r.forDate >= TODAY ? r.forDate : tomorrow();
+      if (groceryDup(S, r.vendor, x, fdt)) return;
+      var gid = 'g' + (S.nextId++);
+      S.groceries.push({ id: gid, item: x, vendor: r.vendor || '', by: r.by || '', date: TODAY, forDate: fdt, done: false });
+      ids.push(gid);
+    });
+    return { kind: 'grocery', ids: ids };
+  }
+  if (r.kind === 'grocery-remove') {
+    var gone = (S.groceries || []).filter(function (g) { return r.ids.indexOf(g.id) >= 0; });
+    S.groceries = S.groceries.filter(function (g) { return r.ids.indexOf(g.id) < 0; });
+    return { kind: 'grocery-remove', removed: gone };
+  }
+  if (r.kind === 'grocery-done') {
+    var did = [];
+    (S.groceries || []).forEach(function (g) { if (r.ids.indexOf(g.id) >= 0 && !g.done) { g.done = true; g.doneOn = TODAY; did.push(g.id); } });
+    return { kind: 'grocery-done', ids: did };
+  }
+  if (r.kind === 'otp') {
+    if (!S.otps) S.otps = [];
+    var dup = S.otps.some(function (o) { return o.code === r.code && o.source === r.source && o.date === TODAY; });
+    if (dup) return { kind: 'otp', noop: true };
+    var oid = 'o' + (S.nextId++);
+    S.otps.push({ id: oid, code: r.code, source: r.source, date: TODAY, at: r.at || '', by: r.by || '', used: false });
+    return { kind: 'otp', otpId: oid };
+  }
+  var undo = { kind: r.kind, personId: r.personId, date: r.date };
+  if (r.kind === 'came' || r.kind === 'missed') {
+    var key = r.personId + '|' + r.date;
+    undo.key = key; undo.prev = S.attendance[key] || null;
+    S.attendance[key] = r.kind;
+    return undo;
+  }
+  var prev = S.exceptions.filter(function (e) { return e.personId === r.personId && e.date === r.date; });
+  S.exceptions = S.exceptions.filter(function (e) { return !(e.personId === r.personId && e.date === r.date); });
+  var id = 'e' + (S.nextId++);
+  S.exceptions.push({ id: id, personId: r.personId, date: r.date, kind: r.kind, time: r.time || null });
+  undo.addedId = id; undo.prevList = prev;
+  return undo;
+}
+function undoMany(S, list) {
+  (Array.isArray(list) ? list : [list]).slice().reverse().forEach(function (u) { undoResult(S, u); });
+}
+function undoResult(S, u) {
+  if (u.kind === 'grocery') { S.groceries = (S.groceries || []).filter(function (g) { return u.ids.indexOf(g.id) < 0; }); return; }
+  if (u.kind === 'grocery-remove') { S.groceries = (S.groceries || []).concat(u.removed || []); return; }
+  if (u.kind === 'grocery-done') { (S.groceries || []).forEach(function (g) { if (u.ids.indexOf(g.id) >= 0) { g.done = false; delete g.doneOn; } }); return; }
+  if (u.kind === 'otp') { if (u.otpId) S.otps = S.otps.filter(function (o) { return o.id !== u.otpId; }); return; }
+  if (u.key) {
+    if (u.prev) S.attendance[u.key] = u.prev; else delete S.attendance[u.key];
+    return;
+  }
+  S.exceptions = S.exceptions.filter(function (e) { return e.id !== u.addedId; }).concat(u.prevList || []);
+}
+</script>
+
+<script id="ui">
+var S, pending = null, calY = +TODAY.slice(0, 4), calM = +TODAY.slice(5, 7) - 1, calSel = TODAY, calFilter = 'all', calView = 'week', weekStart = mondayOf(TODAY);
+var LS = 'homeboard-proto-v3';
+var EXAMPLES = ['Kamal cancelled today', 'Driver is coming at 11:15 tomorrow', 'Deepak came today', 'Deepak not coming on Friday', 'Is Kamal off next Sunday?', 'How many days has Kamal come since the 1st?'];
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function load() {
+  try { var r = localStorage.getItem(LS); if (r) { var o = JSON.parse(r); if (o && o.people && o.exceptions) { if (!o.holidayPlans) o.holidayPlans = {}; if (!o.otps) o.otps = []; if (!o.groceries) o.groceries = []; o.groceries.forEach(function (g) { if (!g.forDate) g.forDate = addDays(g.date || TODAY, 1); }); return o; } } } catch (e) { }
+  return sampleState();
+}
+function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) { } }
+function pc(p) { return 'var(--p' + p.color + ')'; }
+
+function pillFor(st) {
+  var cls = 'pill', txt = st.label;
+  if (st.state === 'working') { cls += ' good'; txt = 'Coming ' + st.time; }
+  else if (st.state === 'late') { cls += ' warn'; txt = 'Coming ' + st.time; }
+  else if (st.state === 'extra') { cls += ' extra'; txt = 'Extra day ' + st.time; }
+  else if (st.state === 'absent') { cls += ' bad'; txt = st.label; }
+  return '<span class="' + cls + '">' + esc(txt) + '</span>';
+}
+
+function setTab(name) {
+  document.querySelectorAll('.tab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
+  ['today', 'message', 'calendar', 'holidays', 'otps', 'groceries', 'display', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
+  if (name === 'count') renderCount();
+  if (name === 'display') { renderDisplay(); }
+}
+
+function renderToday() {
+  var h = '<div class="card"><h2>Today</h2><div class="list">';
+  S.people.forEach(function (p) {
+    var a = attendanceOf(S, p, TODAY), st = a.st;
+    var note;
+    if (a.confirmed) note = a.came ? 'Confirmed: came' : 'Confirmed: did not come';
+    else if (st.expected) note = 'Assumed from the plan. Nobody has confirmed.';
+    else note = st.hol && st.holidayOff ? st.hol.name : 'Nothing expected today';
+    var rep = S.exceptions.filter(function (e) { return e.personId === p.id && e.date === TODAY; }).length ? ' Change reported.' : '';
+    if (st.hol && st.expected) { var tpl = planFor(S, p, TODAY); rep += esc(' Working on ' + st.hol.name + planPhrase(tpl) + '.' + (tpl && tpl.note ? ' ' + tpl.note : '')); }
+    h += '<div style="flex-direction:column;align-items:stretch;gap:8px">' +
+      '<div class="row between"><div class="row"><span class="dot" style="--pc:' + pc(p) + '"></span><span class="person-name">' + esc(p.name) + '</span><span class="muted small">' + esc(p.role) + '</span></div>' + pillFor(st) + '</div>' +
+      '<div class="row between"><span class="small muted">' + esc(note) + rep + '</span><span class="row">' +
+      '<button class="btn sm" data-act="came" data-pid="' + p.id + '" aria-pressed="' + (a.confirmed && a.came) + '">Came</button>' +
+      '<button class="btn sm" data-act="missed" data-pid="' + p.id + '" aria-pressed="' + (a.confirmed && !a.came) + '">Did not come</button>' +
+      (a.confirmed ? '<button class="btn sm link" data-act="clear" data-pid="' + p.id + '">Clear</button>' : '') +
+      '</span></div></div>';
+  });
+  h += '</div></div>';
+  var waiting = (S.otps || []).filter(function (o) { return o.date === TODAY && !o.used; });
+  if (waiting.length) {
+    h += '<div class="card"><div class="row between"><h2>OTPs waiting</h2><span class="pill warn">' + waiting.length + '</span></div><div class="list">' +
+      waiting.map(function (o) { return '<div><span class="when">' + esc(o.at ? fmt12(o.at) : '') + '</span><span class="grow">' + esc(o.source) + (o.by ? ' <span class="muted">· sent by ' + esc(o.by) + '</span>' : '') + '</span><span class="mono"><b>' + (S.otpHide ? '••••' : esc(o.code)) + '</b></span></div>'; }).join('') +
+      '</div><div><button class="btn sm" data-tab="otps">Open OTPs</button></div></div>';
+  }
+  var gd = groceryDays(S);
+  if (gd.length) {
+    h += '<div class="card"><div class="row between"><h2>To order</h2><span class="pill warn">' + openGroceries(S).length + '</span></div><div class="list">';
+    gd.forEach(function (dy) {
+      dy.groups.forEach(function (x) { h += '<div><span class="when">' + esc(dy.label) + '</span><span class="grow"><b>' + esc(x.vendor || 'Other') + '</b>: ' + esc(x.items.map(function (i) { return i.item; }).join(', ')) + '</span></div>'; });
+    });
+    h += '</div><div><button class="btn sm" data-tab="groceries">Open groceries</button></div></div>';
+  }
+  var up = [];
+  var lim = addDays(TODAY, 14);
+  S.exceptions.forEach(function (e) {
+    if (e.date > TODAY && e.date <= lim) {
+      var p = personById(S, e.personId); if (!p) return;
+      var txt = e.kind === 'absent' ? 'not coming' : e.kind === 'extra' ? 'extra day at ' + e.time : 'coming at ' + e.time;
+      up.push({ date: e.date, html: '<span class="dot" style="--pc:' + pc(p) + '"></span> <b>' + esc(p.name) + '</b> ' + esc(txt) });
+    }
+  });
+  S.holidays.forEach(function (x) { if (x.date > TODAY && x.date <= lim) up.push({ date: x.date, html: 'Public holiday: ' + esc(x.name) }); });
+  up.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  h += '<div class="card"><h2>Next two weeks</h2>';
+  if (!up.length) h += '<p class="muted small">No reported changes or holidays.</p>';
+  else { h += '<div class="list">'; up.forEach(function (u) { h += '<div><span class="when">' + labelDate(u.date) + '</span><span>' + u.html + '</span></div>'; }); h += '</div>'; }
+  h += '</div>';
+  $('p-today').innerHTML = h;
+}
+
+function renderMessage() {
+  if ($('by') && !$('by').value && S.lastBy) $('by').value = S.lastBy;
+  $('examples').innerHTML = EXAMPLES.map(function (x) { return '<button class="chip" data-ex="' + esc(x) + '">' + esc(x) + '</button>'; }).join('');
+  var l = '';
+  S.messages.slice().reverse().forEach(function (m) {
+    var tag = m.kind === 'applied' ? '<span class="pill good">Applied</span>' : m.kind === 'answer' ? '<span class="pill">Answered</span>' : m.kind === 'discarded' ? '<span class="pill">Discarded</span>' : m.kind === 'undone' ? '<span class="pill warn">Undone</span>' : '<span class="pill bad">Not understood</span>';
+    l += '<div style="flex-direction:column;align-items:stretch;gap:4px"><div class="row between"><span class="mono small muted">' + esc(m.at) + '</span>' + tag + '</div>' +
+      '<div>' + esc(m.text) + '</div><div class="small muted">' + esc(m.detail) + '</div>' +
+      (m.kind === 'applied' && m.undo ? '<div><button class="btn sm link" data-undo="' + m.id + '">Undo</button></div>' : '') + '</div>';
+  });
+  $('log').innerHTML = l || '<p class="muted small">Nothing yet.</p>';
+}
+
+function nowStr() { try { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+function logMsg(text, kind, detail, undo) {
+  var m = { id: 'm' + (S.nextId++), at: nowStr(), text: text, kind: kind, detail: detail, undo: undo || null };
+  S.messages.push(m); save(); return m;
+}
+
+function showResult(html) { $('msg-result').innerHTML = html; }
+
+function nowHM() { try { var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); } catch (e) { return ''; } }
+function logSummary(it) { return it.kind === 'otp' ? 'OTP from ' + it.source : it.summary; }
+
+function pendingCard() {
+  var r = pending.r, n = r.items.length;
+  var h = '<div class="card"><div class="result"><div class="bubble-q">' + esc(pending.sensitive ? maskDigits(pending.text) : pending.text) + '</div>';
+  if (n) {
+    h += '<p class="small muted">Understood as ' + (n === 1 ? '1 update' : n + ' updates') + ':</p><div class="list">';
+    r.items.forEach(function (it, i) {
+      h += '<div style="flex-direction:column;align-items:flex-start;gap:4px"><b>' + esc(it.summary) + '</b>' +
+        (it.alt ? '<button class="btn sm link" data-alt="' + i + '">Meant ' + esc(labelDate(it.alt)) + ' instead?</button>' : '') + '</div>';
+    });
+    h += '</div>';
+  }
+  r.notes.forEach(function (x) { h += '<p class="small muted">' + esc(x) + '</p>'; });
+  r.unclear.forEach(function (x) { h += '<p class="small" style="color:var(--warn)">Not understood: ' + esc('"' + x + '"') + '</p>'; });
+  h += '<div class="row">' + (n ? '<button class="btn primary" id="apply">' + (n > 1 ? 'Apply all' : 'Apply') + '</button>' : '') + '<button class="btn" id="discard">' + (n ? 'Wrong, discard' : 'Close') + '</button></div></div></div>';
+  showResult(h);
+}
+
+function doSend() {
+  var text = $('msg').value.trim();
+  if (!text) return;
+  var r = interpretMessage(S, text);
+  if (r.type === 'answer') {
+    var extra = '';
+    if (r.count) {
+      var c = r.count, off = countOffParts(c);
+      extra = '<p class="small muted">' + c.calendarDays + ' days in the range. Came: ' + esc(countLines(c) || 'none') + (off.length ? '. Not counted: ' + esc(off.join(', ')) : '') + '.</p>';
+    }
+    showResult('<div class="card"><div class="result"><div class="bubble-q">' + esc(text) + '</div><p><b>' + esc(r.text) + '</b></p>' + extra + '</div></div>');
+    logMsg(text, 'answer', r.text);
+    pending = null;
+  } else if (r.type === 'unknown') {
+    var shown = r.sensitive ? maskDigits(text) : text;
+    showResult('<div class="card"><div class="result bad"><div class="bubble-q">' + esc(shown) + '</div><p>' + esc(r.msg) + '</p></div></div>');
+    logMsg(shown, 'unclear', r.msg);
+    if (r.sensitive) $('msg').value = '';
+    pending = null;
+  } else {
+    pending = { text: text, r: r, sensitive: !!r.sensitive };
+    pendingCard();
+  }
+  renderMessage();
+}
+
+function doApply() {
+  if (!pending || !pending.r.items.length) return;
+  var items = pending.r.items, at = nowHM();
+  var by = ($('by') && $('by').value.trim()) || (pending.by || '');
+  S.lastBy = by || S.lastBy || '';
+  items.forEach(function (it) { if (it.kind === 'otp') { it.at = at; it.by = by; } else if (it.kind === 'grocery') it.by = by; });
+  var undo = items.map(function (it) { return applyResult(S, it); });
+  var detail = items.map(logSummary).join('; ');
+  logMsg(pending.sensitive ? maskDigits(pending.text) : pending.text, 'applied', detail, undo);
+  showResult('<div class="card"><div class="result"><p><b>Done.</b></p><div class="list">' + items.map(function (it) { return '<div>' + esc(it.summary) + '</div>'; }).join('') + '</div></div></div>');
+  pending = null; $('msg').value = '';
+  save(); renderAll();
+}
+function doDiscard() {
+  if (!pending) return;
+  if (pending.r.items.length) logMsg(pending.sensitive ? maskDigits(pending.text) : pending.text, 'discarded', pending.r.items.map(logSummary).join('; '));
+  pending = null; showResult(''); renderMessage();
+}
+
+/* ---------- E-ink display (800 x 480, black and white only) ---------- */
+function einkPerson(p) {
+  var st = dayStatus(S, p, TODAY), big, sm = '', cls = '';
+  if (st.state === 'working') { big = fmt12(st.time); sm = st.hol ? 'Public holiday, working' : 'Coming'; }
+  else if (st.state === 'late') { big = fmt12(st.time); sm = 'Time changed'; cls = ' change'; }
+  else if (st.state === 'extra') { big = fmt12(st.time); sm = 'Extra day'; cls = ' change'; }
+  else if (st.state === 'absent') { big = 'NOT COMING'; sm = st.sub ? 'Substitute day off' : 'Cancelled'; cls = ' alert'; }
+  else { big = st.holidayOff ? 'HOLIDAY' : 'DAY OFF'; sm = st.holidayOff && st.hol ? st.hol.name : ''; cls = ' off'; }
+  return '<div class="ek-person' + cls + '"><div><div class="nm">' + esc(p.name) + '</div><div class="rl">' + esc(p.role) + '</div></div><div class="st"><div class="big">' + esc(big) + '</div>' + (sm ? '<div class="sm">' + esc(sm) + '</div>' : '') + '</div></div>';
+}
+function einkHTML() {
+  var open = (S.otps || []).filter(function (o) { return o.date === TODAY && !o.used; });
+  var shown = open.length > 3 ? open.slice(0, 2) : open;
+  var otp = '<div class="ek-otp"><div class="ek-h">OTPs TODAY</div>';
+  if (!open.length) otp += '<div class="ek-none">None waiting</div>';
+  shown.forEach(function (o) { otp += '<div class="ek-orow"><span class="who">' + esc(o.source) + (o.by ? ' <small>(' + esc(o.by) + ')</small>' : '') + '</span><span class="cd">' + esc(o.code) + '</span></div>'; });
+  if (open.length > shown.length) otp += '<div class="ek-more">+ ' + (open.length - shown.length) + ' more</div>';
+  otp += '</div>';
+  var rows = [], BUDGET = 336, gdays = groceryDays(S).filter(function (d) { return d.date <= tomorrow(); });
+  var hasToday = gdays.some(function (d) { return d.date <= TODAY; }), hasTom = gdays.some(function (d) { return d.date > TODAY; });
+  var gTitle = hasToday && hasTom ? 'TO ORDER' : hasToday ? 'ORDER TODAY' : 'ORDER FOR TOMORROW';
+  gdays.forEach(function (dy) {
+    if (hasToday && hasTom) rows.push({ h: 28, html: '<div class="ek-day">' + esc(dy.label.toUpperCase()) + '</div>', item: false });
+    dy.groups.forEach(function (gr) {
+      rows.push({ h: 30, html: '<div class="ek-gv">' + esc((gr.vendor || 'Other').toUpperCase()) + '</div>', item: false });
+      gr.items.forEach(function (i) { rows.push({ h: 36, html: '<div class="ek-grow">' + esc(i.item) + '</div>', item: true }); });
+    });
+  });
+  var used = rows.reduce(function (a, r) { return a + r.h; }, 0), groc = '<div class="ek-groc"><div class="ek-h">' + gTitle + '</div>';
+  if (used > BUDGET) {
+    var cut = 0;
+    while (used > BUDGET - 28 && rows.length) { var r0 = rows.pop(); used -= r0.h; if (r0.item) cut++; }
+    while (rows.length && !rows[rows.length - 1].item) { used -= rows.pop().h; }
+    rows.push({ h: 28, html: '<div class="ek-more">+ ' + cut + ' more</div>', item: false });
+  }
+  rows.forEach(function (r) { groc += r.html; });
+  if (!rows.length) for (var i = 0; i < 9; i++) groc += '<div class="ek-grow blank"></div>';
+  groc += '</div>';
+  return '<div class="eink"><div class="ek-head"><div class="ek-date">' + esc(longDate(TODAY).toUpperCase()) + '</div><div class="ek-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + '</div></div>' +
+    '<div class="ek-body"><div class="ek-left">' + S.people.map(einkPerson).join('') + otp + '</div>' + groc + '</div></div>';
+}
+function fitEink() {
+  var fr = document.querySelector('.eink-frame'); if (!fr) return;
+  var e = fr.firstChild, w = fr.clientWidth;
+  if (!w) return;
+  var k = w / 800;
+  e.style.transform = 'scale(' + k + ')';
+  fr.style.height = Math.round(480 * k) + 'px';
+}
+function renderDisplay() {
+  $('p-display').innerHTML = '<div class="card"><h2>Wall display</h2><p class="muted small">How today\'s screen would look on a TRMNL e-ink display (800 by 480, black and white only). It reads from the same data as the other tabs.</p>' +
+    '<div class="eink-frame">' + einkHTML() + '</div>' +
+    '<p class="muted small">Black blocks mean a cancellation, thick borders mean a changed time, dashed borders mean a day off. The grocery box lists what is still to order, grouped by shop.</p></div>';
+  fitEink();
+}
+window.addEventListener('resize', fitEink);
+
+var grocClearArm = false;
+function renderGroceries() {
+  purgeGroceries(S);
+  var days = groceryDays(S), done = S.groceries.filter(function (g) { return g.done; }), n = openGroceries(S).length;
+  var h = '<div class="card"><div class="row between"><h2>To order</h2><span class="pill ' + (n ? 'warn' : 'good') + '">' + n + (n === 1 ? ' item' : ' items') + '</span></div>' +
+    '<p class="muted small">Items are for tomorrow unless the message names another day. Send "Blinkit: Carrot, Dahi, Gobi" to add, "Blinkit: eggs today" for today, "Blinkit ordered" to tick off the nearest day\'s list, and "Remove carrot" to take an item off.</p>';
+  if (!days.length) h += '<p class="muted">Nothing to order yet.</p>';
+  days.forEach(function (dy) {
+    h += '<div class="row between" style="margin-top:10px"><h3>' + esc(dy.label) + (dy.label !== 'Today' && dy.label !== 'Tomorrow' ? '' : ' <span class="muted small" style="font-weight:400">' + esc(labelDate(dy.date)) + '</span>') + '</h3></div>';
+    dy.groups.forEach(function (gr) {
+      h += '<div class="row between" style="margin-top:4px"><b>' + esc(gr.vendor || 'Other') + '</b><button class="btn sm" data-groc-vendor="' + esc(gr.vendor) + '" data-groc-day="' + dy.date + '">All ordered</button></div><div class="list">';
+      gr.items.forEach(function (g) {
+        h += '<div><span class="grow"><b>' + esc(g.item) + '</b>' + (g.by ? ' <span class="muted small">sent by ' + esc(g.by) + '</span>' : '') + (g.forDate && g.forDate < TODAY ? ' <span class="pill bad">late</span>' : '') + '</span><button class="btn sm primary" data-groc-done="' + g.id + '">Ordered</button><button class="btn sm" data-groc-del="' + g.id + '" aria-label="Delete ' + esc(g.item) + '">Delete</button></div>';
+      });
+      h += '</div>';
+    });
+  });
+  h += '</div>';
+  h += '<div class="card"><h3>Add items</h3><div><label for="groc-vendor">Where from</label><input type="text" id="groc-vendor" list="groc-vendors" autocomplete="off" placeholder="e.g. Blinkit"><datalist id="groc-vendors">' +
+    ['Blinkit', 'Zepto', 'Instamart', 'BigBasket', 'Sabzi wala', 'Dairy'].map(function (v) { return '<option value="' + v + '">'; }).join('') + '</datalist></div>' +
+    '<div><label for="groc-items">Items (commas or new lines)</label><textarea id="groc-items" rows="3" placeholder="Carrot, Dahi, Gobi"></textarea></div>' +
+    '<div class="otp-form"><div><label for="groc-date">Order for</label><input type="date" id="groc-date" min="' + TODAY + '" value="' + tomorrow() + '"></div>' +
+    '<div><label for="groc-by">Sent by</label><input type="text" id="groc-by" autocomplete="off" value="' + esc(S.lastBy || '') + '" placeholder="Name"></div></div>' +
+    '<div class="row"><button class="btn primary" id="groc-add">Add to list</button><span class="small" id="groc-err" style="color:var(--bad)"></span></div></div>';
+  if (done.length) {
+    h += '<div class="card"><h3>Ordered today</h3><div class="list">' + done.map(function (g) {
+      return '<div><span class="grow muted" style="text-decoration:line-through">' + esc(g.item) + (g.vendor ? ' <span class="small">(' + esc(g.vendor) + ')</span>' : '') + '</span><button class="btn sm" data-groc-undo="' + g.id + '">Not ordered</button></div>';
+    }).join('') + '</div></div>';
+  }
+  if (S.groceries.length) h += '<div class="card"><div class="row"><button class="btn" id="groc-clear">' + (grocClearArm ? 'Tap again to remove all' : 'Clear the whole list') + '</button></div></div>';
+  $('p-groceries').innerHTML = h;
+}
+
+var otpClearArm = false;
+function renderOtps() {
+  purgeOtps(S);
+  var open = S.otps.filter(function (o) { return !o.used; }), used = S.otps.filter(function (o) { return o.used; });
+  var code = function (o) { return S.otpHide ? '••••' : esc(o.code); };
+  var h = '<div class="card"><div class="row between"><h2>Today\'s OTPs</h2><button class="btn sm" id="otp-hide" aria-pressed="' + (S.otpHide ? 'true' : 'false') + '">' + (S.otpHide ? 'Show codes' : 'Hide codes') + '</button></div>' +
+    '<p class="muted small">' + esc(longDate(TODAY)) + '. Codes are removed automatically at the end of the day.</p>';
+  if (!open.length) h += '<p class="muted">No OTPs waiting.</p>';
+  else {
+    h += '<div class="list">';
+    open.forEach(function (o) {
+      h += '<div style="flex-direction:column;align-items:stretch"><div class="otp"><div><div class="otp-code">' + code(o) + '</div><div class="small"><b>' + esc(o.source) + '</b>' + (o.at ? ' <span class="muted">received ' + esc(fmt12(o.at)) + '</span>' : '') + '</div>' + (o.by ? '<div class="small">Sent by <b>' + esc(o.by) + '</b></div>' : '') + '</div>' +
+        '<div class="row"><button class="btn sm primary" data-otp-used="' + o.id + '">Mark used</button><button class="btn sm" data-otp-del="' + o.id + '">Delete</button></div></div></div>';
+    });
+    h += '</div>';
+  }
+  h += '</div>';
+  h += '<div class="card"><h3>Add an OTP</h3><p class="muted small">Delivery, gate and visitor codes only. Never enter a bank, card or payment code.</p><div class="otp-form">' +
+    '<div><label for="otp-code">Code</label><input type="tel" inputmode="numeric" id="otp-code" maxlength="8" autocomplete="off" placeholder="e.g. 4821"></div>' +
+    '<div><label for="otp-src">From</label><input type="text" id="otp-src" autocomplete="off" placeholder="e.g. Amazon"></div>' +
+    '<div><label for="otp-by">Sent by</label><input type="text" id="otp-by" autocomplete="off" value="' + esc(S.lastBy || '') + '" placeholder="Name"></div></div>' +
+    '<div class="row"><button class="btn primary" id="otp-add">Add OTP</button><span class="small" id="otp-err" style="color:var(--bad)"></span></div></div>';
+  if (used.length) {
+    h += '<div class="card"><h3>Used today</h3><div class="list">' + used.map(function (o) {
+      return '<div style="flex-direction:column;align-items:stretch"><div class="otp used"><div><div class="otp-code" style="font-size:20px">' + code(o) + '</div><div class="small">' + esc(o.source) + (o.by ? ' · sent by ' + esc(o.by) : '') + (o.at ? ' <span class="muted">' + esc(fmt12(o.at)) + '</span>' : '') + '</div></div>' +
+        '<div class="row"><button class="btn sm" data-otp-unuse="' + o.id + '">Not used</button><button class="btn sm" data-otp-del="' + o.id + '">Delete</button></div></div></div>';
+    }).join('') + '</div></div>';
+  }
+  if (S.otps.length) h += '<div class="card"><div class="row"><button class="btn" id="otp-clear">' + (otpClearArm ? 'Tap again to remove all' : 'Remove all of today\'s OTPs') + '</button></div></div>';
+  $('p-otps').innerHTML = h;
+}
+
+function renderCalendar() {
+  var heads = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  $('cal-head').innerHTML = heads.map(function (x) { return '<div>' + x + '</div>'; }).join('');
+  $('cal-title').textContent = MONFULL[calM] + ' ' + calY;
+  var sel = '<option value="all">Everyone</option>' + S.people.map(function (p) { return '<option value="' + p.id + '"' + (calFilter === p.id ? ' selected' : '') + '>' + esc(p.name) + ' (' + esc(p.role) + ')</option>'; }).join('');
+  $('cal-filter').innerHTML = sel;
+  var first = new Date(Date.UTC(calY, calM, 1));
+  var offset = (first.getUTCDay() + 6) % 7;
+  var dim = new Date(Date.UTC(calY, calM + 1, 0)).getUTCDate();
+  var people = calFilter === 'all' ? S.people : S.people.filter(function (p) { return p.id === calFilter; });
+  var h = '';
+  for (var i = 0; i < offset; i++) h += '<div class="cell blank"></div>';
+  for (var d = 1; d <= dim; d++) {
+    var ds = fd(new Date(Date.UTC(calY, calM, d)));
+    var hol = holidayOn(S, ds);
+    var dots = people.map(function (p) {
+      var st = dayStatus(S, p, ds);
+      if (st.state === 'off') return '';
+      var cls = st.state === 'absent' ? 'pd absent' : st.state === 'late' ? 'pd late' : st.state === 'extra' ? 'pd extra' : 'pd';
+      return '<span class="' + cls + '" style="--pc:' + pc(p) + '"></span>';
+    }).join('');
+    h += '<button class="cell' + (ds === TODAY ? ' today' : '') + (ds === calSel ? ' sel' : '') + '" data-date="' + ds + '" aria-label="' + esc(labelDate(ds)) + '"><span class="n">' + d + '</span>' + (hol ? '<span class="hol">' + esc(hol.name) + '</span>' : '') + '<span class="dots">' + dots + '</span></button>';
+  }
+  $('cal-grid').innerHTML = h;
+  var det = '<h2>' + esc(DAYFULL[dow(calSel)] + ' ' + labelDate(calSel).split(' ').slice(1).join(' ')) + '</h2>';
+  var hol2 = holidayOn(S, calSel);
+  if (hol2) det += '<p class="small muted">Public holiday: ' + esc(hol2.name) + '</p>';
+  det += '<div class="list">';
+  people.forEach(function (p) {
+    var a = attendanceOf(S, p, calSel), st = a.st;
+    var note = a.came === null ? 'Not yet' : a.confirmed ? (a.came ? 'Confirmed came' : 'Confirmed did not come') : (st.expected ? 'Assumed came' : '');
+    det += '<div><span class="dot" style="--pc:' + pc(p) + ';align-self:center"></span><span class="grow"><b>' + esc(p.name) + '</b> <span class="muted small">' + esc(p.role) + '</span></span><span>' + pillFor(st) + '</span></div>' + (note ? '<div style="padding-top:0;border-top:0"><span class="when"></span><span class="small muted">' + esc(note) + '</span></div>' : '');
+  });
+  det += '</div>';
+  $('cal-detail').innerHTML = det;
+  document.querySelectorAll('[data-view]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.view === calView ? 'true' : 'false'); });
+  $('cal-month').hidden = calView !== 'month';
+  $('cal-week').hidden = calView !== 'week';
+  renderWeek();
+}
+
+function renderWeek() {
+  var people = calFilter === 'all' ? S.people : S.people.filter(function (p) { return p.id === calFilter; });
+  var last = addDays(weekStart, 6);
+  $('wk-title').textContent = labelDate(weekStart) + ' to ' + labelDate(last) + ' ' + last.slice(0, 4);
+  var h = '<thead><tr><th>Day</th><th>Who and what</th></tr></thead><tbody>';
+  for (var i = 0; i < 7; i++) {
+    var ds = addDays(weekStart, i), hol = holidayOn(S, ds);
+    h += '<tr class="' + (ds === TODAY ? 'wk-today' : '') + '"><td><b>' + DAYFULL[dow(ds)] + '</b><br><span class="mono small muted">' + esc(labelDate(ds).split(' ').slice(1).join(' ')) + '</span>' +
+      (ds === TODAY ? '<br><span class="small">Today</span>' : '') + (hol ? '<br><span class="pill warn">' + esc(hol.name) + '</span>' : '') + '</td><td>';
+    people.forEach(function (p) {
+      var s = daySentence(S, p, ds);
+      var inner = s.parts.map(function (x) { return x.k ? '<span class="wk-' + x.k + '">' + esc(x.t) + '</span>' : esc(x.t); }).join('');
+      h += '<div class="wk-line' + (s.grey ? ' grey' : '') + '"><span class="wk-text">' + inner + '</span>' + (s.conf ? '<span class="wk-conf">' + s.conf + '</span>' : '') + '</div>';
+    });
+    h += '</td></tr>';
+  }
+  $('wk-table').innerHTML = h + '</tbody>';
+}
+
+function renderCount() {
+  var sel = $('c-person');
+  if (!sel.options.length) sel.innerHTML = S.people.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + ' (' + esc(p.role) + ')</option>'; }).join('');
+  if (!$('c-from').value) $('c-from').value = monthStart(TODAY);
+  if (!$('c-to').value) $('c-to').value = TODAY;
+  var p = personById(S, sel.value) || S.people[0];
+  var from = $('c-from').value, to = $('c-to').value;
+  if (!from || !to) { $('c-result').innerHTML = '<p class="muted">Pick two dates.</p>'; return; }
+  if (to < from) { $('c-result').innerHTML = '<p class="muted">The end date is before the start date.</p>'; return; }
+  var c = countDays(S, p, from, to);
+  var notes = '';
+  if (to > TODAY) notes += '<div class="note">Counted up to today (' + labelDate(TODAY) + '). Future days are not counted.</div>';
+  if (from < S.holidayFrom) notes += '<div class="note">Public holidays are only entered from ' + labelDate(S.holidayFrom) + ' ' + S.holidayFrom.slice(0, 4) + '. Earlier holidays are not removed, so this count may be too high.</div>';
+  if (from < p.start) notes += '<div class="note">' + esc(p.name) + '\'s schedule starts on ' + labelDate(p.start) + ' ' + p.start.slice(0, 4) + '. Earlier days are not counted.</div>';
+  var rows = [
+    ['Days in range', c.calendarDays, false],
+    ['Came, confirmed', c.confirmedCame, false],
+    ['Came, assumed (nobody said otherwise)', c.assumedCame, false],
+    ['Public holidays off', c.holidayOff, true],
+    ['Not scheduled that weekday', c.notScheduled, true],
+    ['Cancelled or substitute day off', c.cancelled, true],
+    ['Confirmed did not come', c.confirmedMissed, true],
+    ['Before start date', c.beforeStart, true]
+  ];
+  var h = '<div><span class="big">' + c.total + '</span> <span class="muted">days come</span></div>' +
+    '<p>' + esc(countSentence(p, c)) + '</p>';
+  if (c.extras) h += '<p class="small muted">Includes ' + c.extras + ' extra day' + (c.extras > 1 ? 's' : '') + '.</p>';
+  h += notes + '<div class="scroll-x"><table><thead><tr><th>Breakdown</th><th style="text-align:right">Days</th></tr></thead><tbody>';
+  rows.forEach(function (r) { if (r[1] || !r[2]) h += '<tr><td>' + r[0] + '</td><td class="num">' + r[1] + '</td></tr>'; });
+  h += '</tbody></table></div>';
+  $('c-result').innerHTML = h;
+}
+
+function renderPeople() {
+  var order = [1, 2, 3, 4, 5, 6, 0];
+  var h = '<thead><tr><th>Person</th><th>Days</th><th>Usual time</th><th>Holidays</th><th>Starts</th></tr></thead><tbody>';
+  S.people.forEach(function (p) {
+    h += '<tr><td><span class="dot" style="--pc:' + pc(p) + ';display:inline-block;margin-right:6px"></span><b>' + esc(p.name) + '</b><br><span class="muted small">' + esc(p.role) + '</span></td>' +
+      '<td><span class="days">' + order.map(function (n) { return '<span class="' + (p.days.indexOf(n) >= 0 ? 'on' : '') + '">' + DAYN[n].slice(0, 1) + '</span>'; }).join('') + '</span></td>' +
+      '<td class="mono">' + esc(describeTimes(p)) + '</td><td>' + (p.holidays ? 'Off' : 'Works') + '</td><td class="mono">' + labelDate(p.start) + '</td></tr>';
+  });
+  $('people-table').innerHTML = h + '</tbody>';
+}
+
+var HOL_MODES = [['off', 'Not working'], ['working', 'Working'], ['sub', 'Working, substitute day off'], ['pay', 'Working, extra day-off pay']];
+
+function renderHolidays() {
+  $('hol-note').textContent = 'Sample dates to check against the official list, entered from ' + labelDate(S.holidayFrom) + ' ' + S.holidayFrom.slice(0, 4) + ' only. Pick what happens for each person. Anything except "Not working" counts as a working day. The note box is for anything else.';
+  var h = '<thead><tr><th>Holiday</th>' + S.people.map(function (p) {
+    return '<th><span class="dot" style="--pc:' + pc(p) + ';display:inline-block;margin-right:6px"></span>' + esc(p.name) + '<br><span class="small muted" style="font-weight:400">' + esc(p.role) + '</span></th>';
+  }).join('') + '</tr></thead><tbody>';
+  S.holidays.forEach(function (x) {
+    var when = x.date < TODAY ? 'Past' : (x.date === TODAY ? 'Today' : '');
+    h += '<tr><td><b>' + esc(x.name) + '</b><br><span class="mono small muted">' + esc(labelDate(x.date)) + '</span>' + (when ? '<br><span class="small muted">' + when + '</span>' : '') + '</td>';
+    S.people.forEach(function (p) {
+      var key = x.date + '|' + p.id, id = 'hp_' + x.date + '_' + p.id;
+      var weekdayOk = x.date >= p.start && p.days.indexOf(dow(x.date)) >= 0;
+      if (!weekdayOk) { h += '<td class="muted small">No work that day (' + DAYFULL[dow(x.date)] + ')</td>'; return; }
+      var pl = S.holidayPlans[key] || {}, mode = modeOf(S, p, x.date);
+      var cell = '<select id="' + id + '" data-hp="' + key + '" aria-label="' + esc(p.name + ' on ' + x.name) + '">' +
+        HOL_MODES.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === mode ? ' selected' : '') + '>' + m[1] + '</option>'; }).join('') + '</select>';
+      if (mode === 'sub') {
+        cell += '<label class="sub-l" for="' + id + '_d">Day off on</label><input type="date" id="' + id + '_d" data-hpd="' + key + '" value="' + esc(pl.subDate || '') + '">';
+        if (!pl.subDate) cell += '<div class="warn-t">Date still to set</div>';
+        else if (dayStatus(S, p, pl.subDate).state === 'off') cell += '<div class="warn-t">That day is already a day off</div>';
+      }
+      cell += '<input type="text" id="' + id + '_n" data-hpn="' + key + '" value="' + esc(pl.note || '') + '" placeholder="Note" aria-label="' + esc('Note for ' + p.name + ' on ' + x.name) + '">';
+      h += '<td>' + cell + '</td>';
+    });
+    h += '</tr>';
+  });
+  $('hol-table').innerHTML = h + '</tbody>';
+
+  var rows = [
+    ['Holidays with work scheduled', function (t) { return t.listed; }],
+    ['Not working', function (t) { return t.off; }],
+    ['Working', function (t) { return t.working; }],
+    ['of which substitute day off', function (t) { return t.sub; }],
+    ['of which date still to set', function (t) { return t.subUndated; }],
+    ['of which extra day-off pay', function (t) { return t.pay; }],
+    ['No work that day anyway', function (t) { return t.noWork; }]
+  ];
+  var tallies = S.people.map(function (p) { return holidayTally(S, p); });
+  var th = '<thead><tr><th>Tally</th>' + S.people.map(function (p) { return '<th style="text-align:right">' + esc(p.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
+  rows.forEach(function (r) {
+    th += '<tr><td>' + r[0] + '</td>' + tallies.map(function (t) { return '<td class="num">' + r[1](t) + '</td>'; }).join('') + '</tr>';
+  });
+  $('hol-tally').innerHTML = th + '</tbody>';
+}
+
+function setPlan(key, patch) {
+  var parts = key.split('|'), p = personById(S, parts[1]);
+  if (!p) return;
+  var cur = S.holidayPlans[key] || { mode: p.holidays ? 'off' : 'working', subDate: '', note: '' };
+  Object.keys(patch).forEach(function (k) { cur[k] = patch[k]; });
+  if (cur.mode !== 'sub') cur.subDate = '';
+  S.holidayPlans[key] = cur;
+  syncSub(S, parts[0], p.id);
+  save(); renderAll();
+}
+
+function renderAll() { purgeOtps(S); purgeGroceries(S); renderToday(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderGroceries(); renderDisplay(); renderCount(); renderPeople(); }
+
+function init() {
+  S = load();
+  $('dateline').textContent = DAYFULL[dow(TODAY)] + ' ' + pd(TODAY).getUTCDate() + ' ' + MONFULL[pd(TODAY).getUTCMonth()] + ' ' + TODAY.slice(0, 4);
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (t.dataset.tab) { otpClearArm = false; grocClearArm = false; return setTab(t.dataset.tab); }
+    if (t.dataset.act) {
+      var key = t.dataset.pid + '|' + TODAY;
+      if (t.dataset.act === 'clear') delete S.attendance[key]; else S.attendance[key] = t.dataset.act;
+      save(); renderToday(); renderCalendar(); renderCount(); return;
+    }
+    if (t.dataset.ex) { $('msg').value = t.dataset.ex; $('msg').focus(); return; }
+    if (t.dataset.date) { calSel = t.dataset.date; renderCalendar(); return; }
+    if (t.dataset.view) {
+      if (t.dataset.view === 'week' && calView !== 'week') weekStart = mondayOf(calSel);
+      if (t.dataset.view === 'month' && calView !== 'month') { var wd = pd(weekStart); calY = wd.getUTCFullYear(); calM = wd.getUTCMonth(); }
+      calView = t.dataset.view; renderCalendar(); return;
+    }
+    if (t.id === 'wprev') { weekStart = addDays(weekStart, -7); return renderCalendar(); }
+    if (t.id === 'wnext') { weekStart = addDays(weekStart, 7); return renderCalendar(); }
+    if (t.id === 'wtoday') { weekStart = mondayOf(TODAY); return renderCalendar(); }
+    if (t.dataset.undo) {
+      var m = S.messages.filter(function (x) { return x.id === t.dataset.undo; })[0];
+      if (m && m.undo) { undoMany(S, m.undo); m.undo = null; m.kind = 'undone'; save(); renderAll(); }
+      return;
+    }
+    if (t.id === 'send') return doSend();
+    if (t.dataset.alt !== undefined) { if (pending) { swapAlt(S, pending.r.items[+t.dataset.alt]); pendingCard(); } return; }
+    if (t.dataset.otpUsed) { var ou = S.otps.filter(function (o) { return o.id === t.dataset.otpUsed; })[0]; if (ou) ou.used = true; save(); return renderAll(); }
+    if (t.dataset.otpUnuse) { var on = S.otps.filter(function (o) { return o.id === t.dataset.otpUnuse; })[0]; if (on) on.used = false; save(); return renderAll(); }
+    if (t.dataset.otpDel) { S.otps = S.otps.filter(function (o) { return o.id !== t.dataset.otpDel; }); save(); return renderAll(); }
+    if (t.id === 'otp-hide') { S.otpHide = !S.otpHide; save(); return renderAll(); }
+    if (t.id === 'otp-clear') { if (!otpClearArm) { otpClearArm = true; return renderOtps(); } otpClearArm = false; S.otps = []; save(); return renderAll(); }
+    if (t.id === 'otp-add') {
+      var c = $('otp-code').value.replace(/\s/g, ''), src = $('otp-src').value.trim() || 'Unknown sender';
+      if (!/^\d{4,8}$/.test(c)) { $('otp-err').textContent = 'Enter the 4 to 8 digit code.'; return; }
+      if (OTP_BLOCK.test(src)) { $('otp-err').textContent = 'Not saved. This looks like a bank or payment code.'; $('otp-code').value = ''; return; }
+      var ob = $('otp-by').value.trim(); S.lastBy = ob || S.lastBy || '';
+      applyResult(S, { kind: 'otp', code: c, source: src, at: nowHM(), by: ob });
+      save(); return renderAll();
+    }
+    if (t.dataset.grocDone) { var gd = S.groceries.filter(function (g) { return g.id === t.dataset.grocDone; })[0]; if (gd) { gd.done = true; gd.doneOn = TODAY; } save(); return renderAll(); }
+    if (t.dataset.grocUndo) { var gu = S.groceries.filter(function (g) { return g.id === t.dataset.grocUndo; })[0]; if (gu) { gu.done = false; delete gu.doneOn; } save(); return renderAll(); }
+    if (t.dataset.grocDel) { S.groceries = S.groceries.filter(function (g) { return g.id !== t.dataset.grocDel; }); save(); return renderAll(); }
+    if (t.dataset.grocVendor !== undefined) { S.groceries.forEach(function (g) { var gd = g.forDate && g.forDate > TODAY ? g.forDate : TODAY; if (!g.done && (g.vendor || '') === t.dataset.grocVendor && gd === t.dataset.grocDay) { g.done = true; g.doneOn = TODAY; } }); save(); return renderAll(); }
+    if (t.id === 'groc-clear') { if (!grocClearArm) { grocClearArm = true; return renderGroceries(); } grocClearArm = false; S.groceries = []; save(); return renderAll(); }
+    if (t.id === 'groc-add') {
+      var gv = $('groc-vendor').value.trim(), items = splitItems($('groc-items').value), gb = $('groc-by').value.trim();
+      if (!items.length) { $('groc-err').textContent = 'Type at least one item.'; return; }
+      var known = vendorFromText(gv);
+      S.lastBy = gb || S.lastBy || '';
+      var gdt = $('groc-date').value || tomorrow();
+      if (gdt < TODAY) { $('groc-err').textContent = 'Pick today or a later day.'; return; }
+      applyResult(S, { kind: 'grocery', vendor: known !== null ? known : titleCase(gv), list: items, by: gb, forDate: gdt });
+      save(); return renderAll();
+    }
+    if (t.id === 'apply') return doApply();
+    if (t.id === 'discard') return doDiscard();
+    if (t.id === 'prev') { calM--; if (calM < 0) { calM = 11; calY--; } return renderCalendar(); }
+    if (t.id === 'next') { calM++; if (calM > 11) { calM = 0; calY++; } return renderCalendar(); }
+    if (t.id === 'reset') { S = sampleState(); save(); pending = null; showResult(''); $('c-person').innerHTML = ''; renderAll(); return; }
+  });
+  $('cal-filter').addEventListener('change', function (e) { calFilter = e.target.value; renderCalendar(); });
+  document.addEventListener('change', function (e) {
+    var t = e.target, d = t.dataset || {};
+    if (d.hp) return setPlan(d.hp, { mode: t.value });
+    if (d.hpd) return setPlan(d.hpd, { subDate: t.value });
+    if (d.hpn) return setPlan(d.hpn, { note: t.value.trim() });
+  });
+  ['c-person', 'c-from', 'c-to'].forEach(function (id) { $(id).addEventListener('change', renderCount); });
+  renderAll();
+}
+init();
+</script>
