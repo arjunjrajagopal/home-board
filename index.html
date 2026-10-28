@@ -204,6 +204,8 @@ label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px
 .cell.today { border-color: var(--accent); border-width: 2px; }
 .cell.sel { background: var(--soft); }
 .cell .n { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cell .shol { font-size: 9px; line-height: 1.1; color: var(--accent); font-weight: 700; text-align: center; overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
+.pill.school { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); white-space: normal; }
 .cell .hol { font-size: 9px; line-height: 1.1; color: var(--warn); text-align: center; overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
 .dots { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
 .pd { width: 9px; height: 9px; border-radius: 50%; background: var(--pc); }
@@ -458,6 +460,11 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
       <div class="scroll-x"><table class="hol-table" id="hol-table"></table></div>
     </div>
     <div class="card">
+      <h2>School holidays</h2>
+      <p class="muted small">From the school app. These show on the calendar and do not change anyone's schedule.</p>
+      <div class="list" id="school-list"></div>
+    </div>
+    <div class="card">
       <h2>Tally</h2>
       <p class="muted small">Counts every holiday in the list, including upcoming ones.</p>
       <div class="scroll-x"><table id="hol-tally"></table></div>
@@ -536,8 +543,18 @@ function labelDate(s) { var d = pd(s); return DAYN[d.getUTCDay()] + ' ' + d.getU
 function monthStart(s) { return s.slice(0, 8) + '01'; }
 function mkDate(day, mon) { var y = pd(TODAY).getUTCFullYear(); return fd(new Date(Date.UTC(y, mon, day))); }
 
+var SCHOOL_HOLIDAYS = [
+  { date: '2026-10-29', name: 'Karwachauth' }, { date: '2026-11-07', name: 'Diwali 1' }, { date: '2026-11-09', name: 'Diwali 3' },
+  { date: '2026-11-10', name: 'Goverdhan puja/Balipadyami' }, { date: '2026-11-11', name: 'Bhai Dooj' },
+  { date: '2026-11-24', name: 'Guru Nanak Jayanti/Rasa Purnima' }, { date: '2026-12-25', name: 'Christmas' },
+  { date: '2026-12-28', name: 'Winter break' }, { date: '2026-12-29', name: 'Winter break' }, { date: '2026-12-30', name: 'Winter break' },
+  { date: '2026-12-31', name: 'Winter Holiday' }, { date: '2027-01-01', name: 'New Year/Winter Break' },
+  { date: '2027-01-14', name: 'Sankranti/Pongal Break' }, { date: '2027-01-26', name: 'Republic Day' },
+  { date: '2027-03-09', name: 'Eid-Ul-Fitr (as per the moon)' }, { date: '2027-03-22', name: 'Holi' }
+];
 function sampleState() {
   return {
+    schoolHolidays: JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS)),
     people: [
       { id: 'kamal', name: 'Kamal', role: 'Driver', days: [1, 2, 3, 4, 5, 6], time: '09:15', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 1 },
       { id: 'deepak', name: 'Deepak', role: 'Tutor', days: [1, 2, 3, 4, 5, 6], time: '17:45', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 2 }
@@ -561,6 +578,11 @@ function sampleState() {
   };
 }
 
+function schoolOn(S, date) {
+  var l = S.schoolHolidays || [];
+  for (var i = 0; i < l.length; i++) if (l[i].date === date) return l[i];
+  return null;
+}
 function holidayOn(S, date) {
   for (var i = 0; i < S.holidays.length; i++) if (S.holidays[i].date === date) return S.holidays[i];
   return null;
@@ -1224,6 +1246,7 @@ function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function migrateState(o) {
   if (!o.holidayPlans) o.holidayPlans = {};
+  if (!o.schoolHolidays) o.schoolHolidays = JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS));
   if (!o.otps) o.otps = [];
   o.people.forEach(function (p) { if (p.id === 'deepak' && p.role === 'Therapist') p.role = 'Tutor'; });
   if (!o.groceries) o.groceries = [];
@@ -1415,6 +1438,7 @@ function renderToday() {
     }
   });
   S.holidays.forEach(function (x) { if (x.date > TODAY && x.date <= lim) up.push({ date: x.date, html: 'Public holiday: ' + esc(x.name) }); });
+  (S.schoolHolidays || []).forEach(function (x) { if (x.date > TODAY && x.date <= lim) up.push({ date: x.date, html: 'No school: ' + esc(x.name) }); });
   up.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
   h += '<div class="card"><h2>Next two weeks</h2>';
   if (!up.length) h += '<p class="muted small">No reported changes or holidays.</p>';
@@ -1723,12 +1747,14 @@ function renderCalendar() {
       var cls = st.state === 'absent' ? 'pd absent' : st.state === 'late' ? 'pd late' : st.state === 'extra' ? 'pd extra' : 'pd';
       return '<span class="' + cls + '" style="--pc:' + pc(p) + '"></span>';
     }).join('');
-    h += '<button class="cell' + (ds === TODAY ? ' today' : '') + (ds === calSel ? ' sel' : '') + '" data-date="' + ds + '" aria-label="' + esc(labelDate(ds)) + '"><span class="n">' + d + '</span>' + (hol ? '<span class="hol">' + esc(hol.name) + '</span>' : '') + '<span class="dots">' + dots + '</span></button>';
+    h += '<button class="cell' + (ds === TODAY ? ' today' : '') + (ds === calSel ? ' sel' : '') + '" data-date="' + ds + '" aria-label="' + esc(labelDate(ds)) + '"><span class="n">' + d + '</span>' + (hol ? '<span class="hol">' + esc(hol.name) + '</span>' : '') + (schoolOn(S, ds) ? '<span class="shol" title="' + esc(schoolOn(S, ds).name) + '">🏫 off</span>' : '') + '<span class="dots">' + dots + '</span></button>';
   }
   $('cal-grid').innerHTML = h;
   var det = '<h2>' + esc(DAYFULL[dow(calSel)] + ' ' + labelDate(calSel).split(' ').slice(1).join(' ')) + '</h2>';
   var hol2 = holidayOn(S, calSel);
   if (hol2) det += '<p class="small muted">Public holiday: ' + esc(hol2.name) + '</p>';
+  var sh2 = schoolOn(S, calSel);
+  if (sh2) det += '<p class="small"><span class="pill school">School holiday: ' + esc(sh2.name) + '</span></p>';
   det += '<div class="list">';
   people.forEach(function (p) {
     var a = attendanceOf(S, p, calSel), st = a.st;
@@ -1751,7 +1777,7 @@ function renderWeek() {
   for (var i = 0; i < 7; i++) {
     var ds = addDays(weekStart, i), hol = holidayOn(S, ds);
     h += '<tr class="' + (ds === TODAY ? 'wk-today' : '') + '"><td><b>' + DAYFULL[dow(ds)] + '</b><br><span class="mono small muted">' + esc(labelDate(ds).split(' ').slice(1).join(' ')) + '</span>' +
-      (ds === TODAY ? '<br><span class="small">Today</span>' : '') + (hol ? '<br><span class="pill warn">' + esc(hol.name) + '</span>' : '') + '</td><td>';
+      (ds === TODAY ? '<br><span class="small">Today</span>' : '') + (hol ? '<br><span class="pill warn">' + esc(hol.name) + '</span>' : '') + (schoolOn(S, ds) ? '<br><span class="pill school">School: ' + esc(schoolOn(S, ds).name) + '</span>' : '') + '</td><td>';
     people.forEach(function (p) {
       var s = daySentence(S, p, ds);
       var inner = s.parts.map(function (x) { return x.k ? '<span class="wk-' + x.k + '">' + esc(x.t) + '</span>' : esc(x.t); }).join('');
@@ -1808,7 +1834,14 @@ function renderPeople() {
 
 var HOL_MODES = [['off', 'Not working'], ['working', 'Working'], ['sub', 'Working, substitute day off'], ['pay', 'Working, extra day-off pay']];
 
+function renderSchoolList() {
+  var l = (S.schoolHolidays || []).slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  $('school-list').innerHTML = l.map(function (x) {
+    return '<div><span class="when">' + labelDate(x.date) + ' ' + x.date.slice(0, 4) + '</span><span class="grow">' + esc(x.name) + '</span>' + (x.date < TODAY ? '<span class="pill">Past</span>' : '') + '</div>';
+  }).join('');
+}
 function renderHolidays() {
+  renderSchoolList();
   $('hol-note').textContent = 'Sample dates to check against the official list, entered from ' + labelDate(S.holidayFrom) + ' ' + S.holidayFrom.slice(0, 4) + ' only. Pick what happens for each person. Anything except "Not working" counts as a working day. The note box is for anything else.';
   var h = '<thead><tr><th>Holiday</th>' + S.people.map(function (p) {
     return '<th><span class="dot" style="--pc:' + pc(p) + ';display:inline-block;margin-right:6px"></span>' + esc(p.name) + '<br><span class="small muted" style="font-weight:400">' + esc(p.role) + '</span></th>';
