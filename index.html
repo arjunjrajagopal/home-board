@@ -155,6 +155,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .otp.used { opacity: .6; }
 .otp.used .otp-code { text-decoration: line-through; }
 .otp-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.otp-form > div { min-width: 0; }
+.otp-form input, .otp-form select { width: 100%; min-width: 0; box-sizing: border-box; }
 @media (max-width: 380px) { .otp-form { grid-template-columns: 1fr; } }
 .tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
 
@@ -266,7 +268,8 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-off { background: var(--soft); border-color: var(--line); border-style: dashed; }
 /* person cards are 20% smaller to make room for the school card */
 .ph-person { padding: 13px; gap: 8px; border-radius: 16px; }
-.ph-person .ph-prow { display: flex; align-items: center; justify-content: space-between; gap: 4px 8px; flex-wrap: wrap; }
+.ph-person .ph-prow { display: flex; align-items: center; justify-content: space-between; gap: 4px 8px; }
+@media (max-width: 374px) { .ph-person .ph-prow { flex-wrap: wrap; } }
 .ph-person .ph-status { margin-left: auto; }
 .ph-person .ph-tcol { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
 .ph-person .ph-sub { margin-top: 2px; }
@@ -281,7 +284,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-person .ph-sub { font-size: 15px; }
 .ph-person .ph-btn { min-height: 44px; font-size: 15px; padding: 6px 10px; flex-basis: 120px; }
 .ph-person .ph-edit input { min-height: 44px; font-size: 18px; }
-.ph-staff { flex-direction: row; align-items: center; justify-content: space-between; padding: 10px 14px; gap: 10px; }
+.ph-staff { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 10px 14px; gap: 8px 10px; }
 .ph-staff .ph-sname { display: flex; align-items: center; gap: 10px; }
 .ph-staff .ph-sico { font-size: 28px; }
 .ph-staff .ph-name { font-size: 24px; }
@@ -490,6 +493,18 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 
   <section class="panel" id="p-holidays" hidden>
     <div class="card">
+      <h2>House staff days off</h2>
+      <p class="muted small">For people tracked by days off only. Pick the first and last day off. They show as back in work the day after.</p>
+      <div class="otp-form">
+        <div><label for="so-person">Who</label><select id="so-person"></select></div>
+        <div></div>
+        <div><label for="so-from">First day off</label><input type="date" id="so-from"></div>
+        <div><label for="so-to">Last day off</label><input type="date" id="so-to"></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="so-add">Add days off</button><span class="small" id="so-err" style="color:var(--bad)"></span></div>
+      <div class="list" id="so-list" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
       <h2>Public holidays</h2>
       <p class="muted small" id="hol-note"></p>
       <div class="scroll-x"><table class="hol-table" id="hol-table"></table></div>
@@ -584,6 +599,42 @@ function simpleStaff() {
     { id: 'suhani', name: 'Suhani', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 3, simple: true },
     { id: 'jassie', name: 'Jassie', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 4, simple: true }
   ];
+}
+/* The day a person is back: the first day after `date` with no reported day off. */
+function returnDate(S, p, date) {
+  var d = date, guard = 0;
+  while (guard++ < 400 && S.exceptions.some(function (e) { return e.personId === p.id && e.date === d && e.kind === 'absent'; })) d = addDays(d, 1);
+  return d;
+}
+/* Runs of consecutive reported days off for house staff that have not finished yet: [{p, from, to, back}] */
+function staffLeaves(S) {
+  var out = [];
+  S.people.filter(function (p) { return p.simple; }).forEach(function (p) {
+    var days = S.exceptions.filter(function (e) { return e.personId === p.id && e.kind === 'absent' && e.date >= TODAY; }).map(function (e) { return e.date; }).sort();
+    var cur = null;
+    days.forEach(function (d) {
+      if (cur && addDays(cur.to, 1) === d) cur.to = d; else { cur = { p: p, from: d, to: d }; out.push(cur); }
+    });
+  });
+  out.forEach(function (l) { l.back = addDays(l.to, 1); });
+  out.sort(function (a, b) { return a.from < b.from ? -1 : a.from > b.from ? 1 : 0; });
+  return out;
+}
+function addStaffLeave(S, pid, from, to) {
+  var p = personById(S, pid);
+  if (!p || !p.simple) return { err: 'Pick one of the house staff.' };
+  if (!from || !to) return { err: 'Pick both dates.' };
+  if (to < from) return { err: 'The last day is before the first day.' };
+  if (daysBetween(from, to) > 89) return { err: 'That is more than 90 days. Add it in two parts.' };
+  var n = 0;
+  for (var d = from; d <= to; d = addDays(d, 1)) {
+    if (S.exceptions.some(function (e) { return e.personId === pid && e.date === d && e.kind === 'absent'; })) continue;
+    S.exceptions.push({ id: 'e' + (S.nextId++), personId: pid, date: d, kind: 'absent', time: null }); n++;
+  }
+  return { added: n };
+}
+function removeStaffLeave(S, pid, from, to) {
+  S.exceptions = S.exceptions.filter(function (e) { return !(e.personId === pid && e.kind === 'absent' && e.date >= from && e.date <= to); });
 }
 function trackedPeople() { return S.people.filter(function (p) { return !p.simple; }); }
 var SCHOOL_HOLIDAYS = [
@@ -826,7 +877,7 @@ function statusText(S, p, date, st) {
   var when = labelDate(date);
   var hol = st.hol ? ' (' + st.hol.name + ')' : '';
   var reported = S.exceptions.some(function (e) { return e.personId === p.id && e.date === date; });
-  if (st.simple) return st.state === 'absent' ? p.name + ' (' + p.role + ') has a day off on ' + when + '.' : p.name + ' (' + p.role + ') is in on ' + when + ', no day off reported.';
+  if (st.simple) return st.state === 'absent' ? p.name + ' (' + p.role + ') has a day off on ' + when + ', back on ' + labelDate(returnDate(S, p, date)) + '.' : p.name + ' (' + p.role + ') is in on ' + when + ', no day off reported.';
   if (st.state === 'working') return p.name + ' (' + p.role + ') is due on ' + when + ' at ' + st.time + '. ' + (st.hol ? 'Working on a public holiday (' + st.hol.name + ')' + planPhrase(planFor(S, p, date)) + '. ' : '') + (reported ? '' : 'No change has been reported.');
   if (st.state === 'late') return p.name + ' (' + p.role + ') is coming on ' + when + ' at ' + st.time + ' (time changed).';
   if (st.state === 'extra') return p.name + ' (' + p.role + ') is coming on ' + when + ' at ' + st.time + ' as an extra day.';
@@ -1656,7 +1707,7 @@ var PH_ROLE_ICON = { driver: '🚗', tutor: '📚', therapist: '🩺', 'house st
 function phStaff(p) {
   var date = phDate(), word = phView === 'tomorrow' ? 'tomorrow' : 'today', st = dayStatus(S, p, date), off = st.state === 'absent';
   var reported = S.exceptions.some(function (e) { return e.personId === p.id && e.date === date && !e.subFor; });
-  return '<section class="ph-card ph-staff ' + (off ? 'ph-bad' : 'ph-good') + '"><div class="ph-sname"><span class="ph-sico" aria-hidden="true">' + (off ? '❌' : '✅') + '</span><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + (off ? 'Day off' : 'In') + '</div></div></div>' +
+  return '<section class="ph-card ph-staff ' + (off ? 'ph-bad' : 'ph-good') + '"><div class="ph-sname"><span class="ph-sico" aria-hidden="true">' + (off ? '❌' : '✅') + '</span><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + (off ? 'Day off - returns on ' + esc(labelDate(returnDate(S, p, date))) : 'In') + '</div></div></div>' +
     (off ? (reported ? '<button class="ph-btn" data-ph-restore="' + p.id + '">Back to normal</button>' : '') : '<button class="ph-btn" data-ph-absent="' + p.id + '">Day off ' + word + '</button>') + '</section>';
 }
 function phPerson(p) {
@@ -1915,7 +1966,18 @@ function renderSchoolList() {
     return '<div><span class="when">' + labelDate(x.date) + ' ' + x.date.slice(0, 4) + '</span><span class="grow">' + esc(x.name) + '</span>' + (x.date < TODAY ? '<span class="pill">Past</span>' : '') + '</div>';
   }).join('');
 }
+function renderStaffOff() {
+  var sel = $('so-person'), staff = S.people.filter(function (p) { return p.simple; });
+  if (sel.options.length !== staff.length) sel.innerHTML = staff.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('');
+  if (!$('so-from').value) { $('so-from').value = TODAY; $('so-to').value = TODAY; }
+  var ls = staffLeaves(S);
+  $('so-list').innerHTML = ls.length ? ls.map(function (l) {
+    var one = l.from === l.to;
+    return '<div><span class="dot" style="--pc:' + pc(l.p) + ';align-self:center"></span><span class="grow"><b>' + esc(l.p.name) + '</b> <span class="muted small">' + (one ? esc(labelDate(l.from)) : esc(labelDate(l.from)) + ' to ' + esc(labelDate(l.to))) + '. Back on ' + esc(labelDate(l.back)) + '</span></span><button class="btn sm" data-so-del="' + l.p.id + '|' + l.from + '|' + l.to + '" aria-label="Remove days off for ' + esc(l.p.name) + '">Remove</button></div>';
+  }).join('') : '<p class="muted small">No days off coming up.</p>';
+}
 function renderHolidays() {
+  renderStaffOff();
   renderSchoolList();
   $('hol-note').textContent = 'Sample dates to check against the official list, entered from ' + labelDate(S.holidayFrom) + ' ' + S.holidayFrom.slice(0, 4) + ' only. Pick what happens for each person. Anything except "Not working" counts as a working day. The note box is for anything else.';
   var h = '<thead><tr><th>Holiday</th>' + trackedPeople().map(function (p) {
@@ -2024,6 +2086,12 @@ function init() {
     if (t.dataset.grocDel) { S.groceries = S.groceries.filter(function (g) { return g.id !== t.dataset.grocDel; }); save(); return renderAll(); }
     if (t.dataset.grocVendor !== undefined) { S.groceries.forEach(function (g) { var gd = g.forDate && g.forDate > TODAY ? g.forDate : TODAY; if (!g.done && (g.vendor || '') === t.dataset.grocVendor && gd === t.dataset.grocDay) { g.done = true; g.doneOn = TODAY; } }); save(); return renderAll(); }
     if (t.id === 'groc-clear') { if (!grocClearArm) { grocClearArm = true; return renderGroceries(); } grocClearArm = false; S.groceries = []; save(); return renderAll(); }
+    if (t.id === 'so-add') {
+      var sr = addStaffLeave(S, $('so-person').value, $('so-from').value, $('so-to').value);
+      if (sr.err) { $('so-err').textContent = sr.err; return; }
+      $('so-err').textContent = ''; save(); renderAll(); return;
+    }
+    if (t.dataset.soDel) { var sp = t.dataset.soDel.split('|'); removeStaffLeave(S, sp[0], sp[1], sp[2]); save(); return renderAll(); }
     if (t.id === 'groc-add') {
       var gv = $('groc-vendor').value.trim(), items = splitItems($('groc-items').value), gb = $('groc-by').value.trim();
       if (!items.length) { $('groc-err').textContent = 'Type at least one item.'; return; }
