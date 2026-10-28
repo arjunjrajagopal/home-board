@@ -292,6 +292,24 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-staff.ph-good .ph-role { color: var(--good); }
 .ph-staff.ph-bad .ph-role { color: var(--bad); }
 .ph-staff .ph-btn { flex: 0 1 170px; min-height: 44px; font-size: 15px; padding: 6px 10px; }
+.car-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.car-title { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.car-title h2 { margin: 0; }
+.car-driver { margin: 10px 0; padding: 8px 12px; border-radius: 12px; font-size: 15px; }
+.car-driver.good { background: var(--good-bg); color: var(--good); }
+.car-driver.bad { background: var(--bad-bg); color: var(--bad); }
+.car-grid { display: grid; grid-template-columns: minmax(64px, 84px) repeat(4, minmax(0, 1fr)); gap: 6px; align-items: stretch; }
+.car-head { font-weight: 800; font-size: 14px; text-align: center; align-self: end; padding-bottom: 2px; overflow: hidden; text-overflow: ellipsis; }
+.car-slot { font-weight: 700; font-size: 14px; display: flex; align-items: center; }
+.car-cell { min-height: 56px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font-size: 24px; cursor: pointer; padding: 0; }
+.car-cell.on { background: color-mix(in srgb, var(--accent) 32%, var(--surface)); border-color: var(--accent); }
+.car-cell.clash { border-color: var(--warn); border-width: 3px; background: var(--warn-bg); }
+.car-cell.blocked { opacity: .5; }
+.car-cell:disabled { opacity: .45; cursor: not-allowed; }
+.car-cell.on:disabled { opacity: .8; }
+.car-warn { margin: 10px 0 0; padding: 8px 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-weight: 700; font-size: 15px; }
+.ph-car .ph-crow { font-size: 18px; font-weight: 700; display: flex; gap: 8px; }
+.ph-car .ph-crow span:first-child { min-width: 92px; color: var(--muted); }
 .ph-school { flex-direction: row; align-items: center; gap: 12px; padding: 12px 14px; }
 .ph-school .ph-sico { font-size: 38px; }
 .ph-school .ph-sbig { font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1.05; }
@@ -404,6 +422,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <button class="tab" role="tab" data-tab="today" aria-selected="true">Today</button>
     <button class="tab" role="tab" data-tab="message" aria-selected="false">Message</button>
     <button class="tab" role="tab" data-tab="calendar" aria-selected="false">Calendar</button>
+    <button class="tab" role="tab" data-tab="car" aria-selected="false">Car</button>
     <button class="tab" role="tab" data-tab="holidays" aria-selected="false">Holidays</button>
     <button class="tab" role="tab" data-tab="otps" aria-selected="false">OTPs</button>
     <button class="tab" role="tab" data-tab="groceries" aria-selected="false">Groceries</button>
@@ -483,6 +502,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     </div>
   </section>
 
+  <section class="panel" id="p-car" hidden></section>
   <section class="panel" id="p-otps" hidden></section>
 
   <section class="panel" id="p-groceries" hidden></section>
@@ -566,6 +586,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
   <button class="bn" data-tab="phone" aria-selected="false"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Home</span></button>
   <button class="bn" data-tab="message" aria-selected="false"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>Update</span></button>
   <button class="bn" data-tab="calendar" aria-selected="false"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
+  <button class="bn" data-tab="car" aria-selected="false"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M5 17a2 2 0 1 0 4 0m6 0a2 2 0 1 0 4 0M3 13l2-6h14l2 6v4H3z"/></svg><span>Car</span></button>
   <button class="bn" data-more="toggle" aria-selected="false" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg><span>More</span></button>
 </nav>
 
@@ -636,6 +657,42 @@ function addStaffLeave(S, pid, from, to) {
 function removeStaffLeave(S, pid, from, to) {
   S.exceptions = S.exceptions.filter(function (e) { return !(e.personId === pid && e.kind === 'absent' && e.date >= from && e.date <= to); });
 }
+/* ---------- The big car: who has it, and in which part of the day. It needs Kamal to be working that day. ---------- */
+var CAR_USERS = [{ id: 'alok', name: 'Alok' }, { id: 'malini', name: 'Malini' }, { id: 'makku', name: 'Makku' }, { id: 'arjun', name: 'Arjun' }];
+var CAR_SLOTS = [{ id: 'morning', name: 'Morning' }, { id: 'afternoon', name: 'Afternoon' }, { id: 'evening', name: 'Evening' }, { id: 'night', name: 'Night' }];
+function carUserName(id) { for (var i = 0; i < CAR_USERS.length; i++) if (CAR_USERS[i].id === id) return CAR_USERS[i].name; return id; }
+function carHas(S, date, slot, who) {
+  return (S.carBookings || []).some(function (b) { return b.date === date && b.slot === slot && b.who === who; });
+}
+/* Book the slot, or release it if this person already has it. Returns true when the slot is now booked. */
+function carToggle(S, date, slot, who) {
+  if (!S.carBookings) S.carBookings = [];
+  if (carHas(S, date, slot, who)) {
+    S.carBookings = S.carBookings.filter(function (b) { return !(b.date === date && b.slot === slot && b.who === who); });
+    return false;
+  }
+  S.carBookings.push({ date: date, slot: slot, who: who });
+  return true;
+}
+/* Is the car usable that day? Only when Kamal is working (his normal day, a changed time or an extra day). */
+function carDriver(S, date) {
+  var k = personById(S, 'kamal');
+  if (!k) return { ok: true, name: 'Driver', st: null };
+  var st = dayStatus(S, k, date);
+  return { ok: st.state === 'working' || st.state === 'late' || st.state === 'extra', name: k.name, st: st };
+}
+function carClashes(S, date) {
+  var out = [];
+  CAR_SLOTS.forEach(function (sl) {
+    var who = (S.carBookings || []).filter(function (b) { return b.date === date && b.slot === sl.id; }).map(function (b) { return b.who; });
+    if (who.length > 1) out.push({ slot: sl, who: who });
+  });
+  return out;
+}
+function carClashText(c) {
+  var names = c.who.map(carUserName);
+  return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + ' both have the car in the ' + c.slot.name.toLowerCase() + '.';
+}
 function trackedPeople() { return S.people.filter(function (p) { return !p.simple; }); }
 var SCHOOL_HOLIDAYS = [
   { date: '2026-10-29', name: 'Karwachauth' }, { date: '2026-11-07', name: 'Diwali 1' }, { date: '2026-11-09', name: 'Diwali 3' },
@@ -648,6 +705,7 @@ var SCHOOL_HOLIDAYS = [
 ];
 function sampleState() {
   return {
+    carBookings: [],
     schoolHolidays: JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS)),
     people: [
       { id: 'kamal', name: 'Kamal', role: 'Driver', days: [1, 2, 3, 4, 5, 6], time: '09:15', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 1 },
@@ -1349,6 +1407,7 @@ function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function migrateState(o) {
   if (!o.holidayPlans) o.holidayPlans = {};
+  if (!o.carBookings) o.carBookings = [];
   simpleStaff().forEach(function (n) { if (!o.people.some(function (p) { return p.id === n.id; })) o.people.push(n); });
   if (!o.schoolHolidays) o.schoolHolidays = JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS));
   if (!o.otps) o.otps = [];
@@ -1485,7 +1544,7 @@ function pillFor(st) {
   return '<span class="' + cls + '">' + esc(txt) + '</span>';
 }
 
-var MAIN_TABS = ['phone', 'message', 'calendar'];
+var MAIN_TABS = ['phone', 'message', 'calendar', 'car'];
 function closeMore() { var m = document.getElementById('more'); if (m) m.hidden = true; var t = document.querySelector('[data-more="toggle"]'); if (t) t.setAttribute('aria-expanded', 'false'); }
 function setTab(name) {
   document.querySelectorAll('.tab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
@@ -1493,10 +1552,11 @@ function setTab(name) {
   document.querySelectorAll('.mr').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
   closeMore();
   document.body.classList.toggle('tab-phone', name === 'phone');
-  ['today', 'message', 'calendar', 'holidays', 'otps', 'groceries', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
+  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'groceries', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
   if (name === 'count') renderCount();
   if (name === 'display') { renderDisplay(); }
   if (name === 'phone') { renderPhone(); }
+  if (name === 'car') { renderCar(); }
 }
 
 function renderToday() {
@@ -1704,6 +1764,16 @@ window.addEventListener('resize', fitEink);
 var phEdit = null, phShop = 'Blinkit', phDay = 'tomorrow', phErr = '', phView = 'today';
 function phDate() { return phView === 'tomorrow' ? tomorrow() : TODAY; }
 var PH_ROLE_ICON = { driver: '🚗', tutor: '📚', therapist: '🩺', 'house staff': '🏠', nanny: '👩', chef: '🍳', cleaner: '🧹' };
+function phCar() {
+  var date = phDate(), drv = carDriver(S, date), rows = '';
+  CAR_SLOTS.forEach(function (sl) {
+    var who = (S.carBookings || []).filter(function (b) { return b.date === date && b.slot === sl.id; }).map(function (b) { return carUserName(b.who); });
+    if (who.length) rows += '<div class="ph-crow"><span>' + esc(sl.name) + '</span><span>' + esc(who.join(', ')) + (who.length > 1 ? ' (clash)' : '') + '</span></div>';
+  });
+  var cls = !drv.ok ? 'ph-off' : carClashes(S, date).length ? 'ph-warn' : '';
+  return '<section class="ph-card ph-car ' + cls + '"><div class="ph-h"><span aria-hidden="true">🚗</span>Car</div>' +
+    (!drv.ok ? '<div class="ph-none">' + esc(drv.name) + ' is off, no car</div>' : '') + (rows || (drv.ok ? '<div class="ph-none">Nobody has booked the car</div>' : '')) + (!drv.ok && rows ? '<div class="ph-small">These bookings need a new plan</div>' : '') + '</section>';
+}
 function phStaff(p) {
   var date = phDate(), word = phView === 'tomorrow' ? 'tomorrow' : 'today', st = dayStatus(S, p, date), off = st.state === 'absent';
   var reported = S.exceptions.some(function (e) { return e.personId === p.id && e.date === date && !e.subFor; });
@@ -1747,6 +1817,7 @@ function renderPhone() {
   h += phSchool();
   trackedPeople().forEach(function (p) { h += phPerson(p); });
   S.people.filter(function (p) { return p.simple; }).forEach(function (p) { h += phStaff(p); });
+  h += phCar();
 
   var open = S.otps.filter(function (o) { return !o.used; });
   if (!tom) h += '<section class="ph-card"><div class="ph-h"><span aria-hidden="true">🔑</span>OTPs</div>';
@@ -1966,6 +2037,29 @@ function renderSchoolList() {
     return '<div><span class="when">' + labelDate(x.date) + ' ' + x.date.slice(0, 4) + '</span><span class="grow">' + esc(x.name) + '</span>' + (x.date < TODAY ? '<span class="pill">Past</span>' : '') + '</div>';
   }).join('');
 }
+var carDate = TODAY;
+function renderCar() {
+  var d = carDate, dt = pd(d), drv = carDriver(S, d), past = d < TODAY;
+  var h = '<div class="card"><div class="car-nav"><button class="btn" data-car-nav="-1" aria-label="Previous day">Prev</button><div class="car-title"><h2>' + esc(DAYFULL[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MONFULL[dt.getUTCMonth()]) + '</h2>' +
+    '<button class="btn sm" data-car-nav="0"' + (d === TODAY ? ' disabled' : '') + '>Today</button></div><button class="btn" data-car-nav="1" aria-label="Next day">Next</button></div>';
+  if (drv.ok) h += '<p class="car-driver good"><b>' + esc(drv.name) + '</b> is working' + (drv.st && drv.st.time ? ' from ' + esc(fmt12(drv.st.time)) : '') + ', so the car is available.</p>';
+  else h += '<p class="car-driver bad"><b>' + esc(drv.name) + '</b> is not working this day, so the car cannot be used.</p>';
+  if (past) h += '<p class="muted small">This day has passed, so it can no longer be changed.</p>';
+  h += '<div class="car-grid" role="group" aria-label="Car bookings"><div class="car-corner"></div>' + CAR_USERS.map(function (u) { return '<div class="car-head">' + esc(u.name) + '</div>'; }).join('');
+  CAR_SLOTS.forEach(function (sl) {
+    h += '<div class="car-slot">' + esc(sl.name) + '</div>';
+    var n = CAR_USERS.filter(function (u) { return carHas(S, d, sl.id, u.id); }).length;
+    CAR_USERS.forEach(function (u) {
+      var on = carHas(S, d, sl.id, u.id);
+      h += '<button class="car-cell' + (on ? ' on' : '') + (on && n > 1 ? ' clash' : '') + (on && !drv.ok ? ' blocked' : '') + '" data-car-cell="' + u.id + '|' + sl.id + '" aria-pressed="' + on + '" aria-label="' + esc(u.name + ', ' + sl.name + (on ? ', booked' : ', free')) + '"' + ((past || !drv.ok) && !on ? ' disabled' : '') + (past ? ' disabled' : '') + '>' + (on ? '🚗' : '') + '</button>';
+    });
+  });
+  h += '</div>';
+  carClashes(S, d).forEach(function (c) { h += '<p class="car-warn">Clash: ' + esc(carClashText(c)) + '</p>'; });
+  if (!drv.ok && (S.carBookings || []).some(function (b) { return b.date === d; })) h += '<p class="car-warn">These bookings need a new plan: ' + esc(drv.name) + ' is not working.</p>';
+  h += '<p class="muted small" style="margin-top:10px">Tap a box to book the car. Tap it again to release it. Two people can book the same part of the day, but it shows a clash.</p></div>';
+  $('p-car').innerHTML = h;
+}
 function renderStaffOff() {
   var sel = $('so-person'), staff = S.people.filter(function (p) { return p.simple; });
   if (sel.options.length !== staff.length) sel.innerHTML = staff.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('');
@@ -2034,7 +2128,7 @@ function setPlan(key, patch) {
   save(); renderAll();
 }
 
-function renderAll() { purgeOtps(S); purgeGroceries(S); renderToday(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderGroceries(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); }
+function renderAll() { purgeOtps(S); purgeGroceries(S); renderToday(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderGroceries(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); }
 
 function init() {
   S = load();
@@ -2086,6 +2180,8 @@ function init() {
     if (t.dataset.grocDel) { S.groceries = S.groceries.filter(function (g) { return g.id !== t.dataset.grocDel; }); save(); return renderAll(); }
     if (t.dataset.grocVendor !== undefined) { S.groceries.forEach(function (g) { var gd = g.forDate && g.forDate > TODAY ? g.forDate : TODAY; if (!g.done && (g.vendor || '') === t.dataset.grocVendor && gd === t.dataset.grocDay) { g.done = true; g.doneOn = TODAY; } }); save(); return renderAll(); }
     if (t.id === 'groc-clear') { if (!grocClearArm) { grocClearArm = true; return renderGroceries(); } grocClearArm = false; S.groceries = []; save(); return renderAll(); }
+    if (t.dataset.carNav !== undefined) { var cn = +t.dataset.carNav; carDate = cn === 0 ? TODAY : addDays(carDate, cn); return renderCar(); }
+    if (t.dataset.carCell) { var cc = t.dataset.carCell.split('|'); if (carDate < TODAY) return; carToggle(S, carDate, cc[1], cc[0]); save(); return renderAll(); }
     if (t.id === 'so-add') {
       var sr = addStaffLeave(S, $('so-person').value, $('so-from').value, $('so-to').value);
       if (sr.err) { $('so-err').textContent = sr.err; return; }
