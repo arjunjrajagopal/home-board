@@ -289,6 +289,9 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-day { font-size: 14px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: var(--ink); color: var(--bg); padding: 4px 10px; border-radius: 8px; align-self: flex-start; }
 .ph-shop { font-size: 18px; font-weight: 800; border-bottom: 3px solid var(--ink); padding-bottom: 2px; }
 .ph-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; font-size: 24px; font-weight: 700; text-align: left; padding: 8px 12px; cursor: pointer; }
+.ph-irow { display: flex; gap: 8px; align-items: stretch; }
+.ph-irow .ph-item { flex: 1; width: auto; min-width: 0; }
+.ph-x { flex: none; width: 56px; min-height: 56px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--bad); font: inherit; font-size: 24px; font-weight: 800; cursor: pointer; }
 .ph-item .bx { width: 30px; height: 30px; border: 3px solid var(--ink); border-radius: 8px; flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }
 .ph-item.done { opacity: .55; text-decoration: line-through; }
 .ph-item.done .bx { background: var(--good); border-color: var(--good); color: var(--bg); }
@@ -1610,7 +1613,7 @@ function renderPhone() {
     if (!tom) h += '<div class="ph-day">' + esc(dy.label) + '</div>';
     dy.groups.forEach(function (gr) {
       h += '<div class="ph-shop">' + esc(gr.vendor || 'Other') + '</div>';
-      gr.items.forEach(function (g) { h += '<button class="ph-item" data-groc-done="' + g.id + '"><span class="bx" aria-hidden="true"></span><span>' + esc(g.item) + '</span></button>'; });
+      gr.items.forEach(function (g) { h += '<div class="ph-irow"><button class="ph-item" data-groc-done="' + g.id + '"><span class="bx" aria-hidden="true"></span><span>' + esc(g.item) + '</span></button><button class="ph-x" data-groc-del="' + g.id + '" aria-label="Delete ' + esc(g.item) + '">✕</button></div>'; });
     });
   });
   if (done.length) {
