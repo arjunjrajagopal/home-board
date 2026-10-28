@@ -1734,8 +1734,8 @@ function phPerson(p) {
 function phSchool() {
   var date = phDate(), word = phView === 'tomorrow' ? 'Tomorrow' : 'Today', sh = schoolOn(S, date), wd = dow(date);
   var cls, ico, big, sub = '';
-  if (sh) { cls = 'ph-warn'; ico = '🎈'; big = 'School holiday'; sub = sh.name; }
-  else if (wd === 0 || wd === 6) { cls = 'ph-off'; ico = '🏡'; big = 'No school, weekend'; }
+  if (wd === 0 || wd === 6) { cls = 'ph-off'; ico = '🏡'; big = 'No school, weekend'; if (sh) sub = sh.name; }
+  else if (sh) { cls = 'ph-warn'; ico = '🎈'; big = 'School holiday'; sub = sh.name; }
   else { cls = 'ph-good'; ico = '🎒'; big = 'School day'; sub = 'Normal school day'; }
   return '<section class="ph-card ph-school ' + cls + '" aria-label="School ' + esc(word.toLowerCase()) + '"><span class="ph-sico" aria-hidden="true">' + ico + '</span><div><div class="ph-sbig">' + esc(big) + '</div>' + (sub ? '<div class="ph-ssub">' + esc(sub) + '</div>' : '') + '</div></section>';
 }
