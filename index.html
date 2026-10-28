@@ -132,6 +132,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .ek-person.change { border-width: 7px; }
 .ek-person.off { border-style: dashed; }
 .ek-person.off .big { font-size: 32px; }
+.ek-staff { display: flex; gap: 10px; }
+.ek-staff span { flex: 1; text-align: center; border: 3px solid #000; border-radius: 6px; padding: 6px 8px; font-size: 24px; font-weight: 800; }
+.ek-staff span.off { background: #000; color: #fff; }
 .ek-otp { flex: 1; border: 3px solid #000; border-radius: 6px; padding: 8px 16px; min-height: 0; overflow: hidden; }
 .ek-h { font-size: 18px; font-weight: 800; letter-spacing: .08em; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 4px; }
 .ek-orow { display: flex; justify-content: space-between; align-items: baseline; height: 40px; border-bottom: 1px solid #000; }
@@ -263,15 +266,29 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-off { background: var(--soft); border-color: var(--line); border-style: dashed; }
 /* person cards are 20% smaller to make room for the school card */
 .ph-person { padding: 13px; gap: 8px; border-radius: 16px; }
-.ph-person .ph-ico { font-size: 32px; }
-.ph-person .ph-name { font-size: 26px; }
+.ph-person .ph-prow { display: flex; align-items: center; justify-content: space-between; gap: 4px 8px; flex-wrap: wrap; }
+.ph-person .ph-status { margin-left: auto; }
+.ph-person .ph-tcol { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.ph-person .ph-sub { margin-top: 2px; }
+.ph-person .ph-ico { font-size: 28px; }
+.ph-person .ph-name { font-size: 24px; }
 .ph-person .ph-role { font-size: 13px; margin-top: 2px; }
-.ph-person .ph-sico { font-size: 32px; }
-.ph-person .ph-big { font-size: 42px; }
-.ph-person .ph-big.sm { font-size: 29px; }
+.ph-person .ph-sico { font-size: 26px; }
+.ph-person .ph-status { gap: 8px; min-width: 0; }
+.ph-person .ph-who { gap: 10px; min-width: 0; }
+.ph-person .ph-big { font-size: 34px; white-space: nowrap; }
+.ph-person .ph-big.sm { font-size: 22px; }
 .ph-person .ph-sub { font-size: 15px; }
 .ph-person .ph-btn { min-height: 44px; font-size: 15px; padding: 6px 10px; flex-basis: 120px; }
 .ph-person .ph-edit input { min-height: 44px; font-size: 18px; }
+.ph-staff { flex-direction: row; align-items: center; justify-content: space-between; padding: 10px 14px; gap: 10px; }
+.ph-staff .ph-sname { display: flex; align-items: center; gap: 10px; }
+.ph-staff .ph-sico { font-size: 28px; }
+.ph-staff .ph-name { font-size: 24px; }
+.ph-staff .ph-role { font-size: 15px; font-weight: 800; }
+.ph-staff.ph-good .ph-role { color: var(--good); }
+.ph-staff.ph-bad .ph-role { color: var(--bad); }
+.ph-staff .ph-btn { flex: 0 1 170px; min-height: 44px; font-size: 15px; padding: 6px 10px; }
 .ph-school { flex-direction: row; align-items: center; gap: 12px; padding: 12px 14px; }
 .ph-school .ph-sico { font-size: 38px; }
 .ph-school .ph-sbig { font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1.05; }
@@ -561,6 +578,14 @@ function labelDate(s) { var d = pd(s); return DAYN[d.getUTCDay()] + ' ' + d.getU
 function monthStart(s) { return s.slice(0, 8) + '01'; }
 function mkDate(day, mon) { var y = pd(TODAY).getUTCFullYear(); return fd(new Date(Date.UTC(y, mon, day))); }
 
+/* House staff are tracked by days off only: they are in every day unless a day off is reported. No times, no public-holiday plans. */
+function simpleStaff() {
+  return [
+    { id: 'suhani', name: 'Suhani', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 3, simple: true },
+    { id: 'jassie', name: 'Jassie', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 4, simple: true }
+  ];
+}
+function trackedPeople() { return S.people.filter(function (p) { return !p.simple; }); }
 var SCHOOL_HOLIDAYS = [
   { date: '2026-10-29', name: 'Karwachauth' }, { date: '2026-11-07', name: 'Diwali 1' }, { date: '2026-11-09', name: 'Diwali 3' },
   { date: '2026-11-10', name: 'Goverdhan puja/Balipadyami' }, { date: '2026-11-11', name: 'Bhai Dooj' },
@@ -576,7 +601,7 @@ function sampleState() {
     people: [
       { id: 'kamal', name: 'Kamal', role: 'Driver', days: [1, 2, 3, 4, 5, 6], time: '09:15', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 1 },
       { id: 'deepak', name: 'Deepak', role: 'Tutor', days: [1, 2, 3, 4, 5, 6], time: '17:45', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 2 }
-    ],
+    ].concat(simpleStaff()),
     holidayFrom: '2026-10-01',
     holidays: [
       { date: '2026-10-02', name: 'Gandhi Jayanti' },
@@ -665,6 +690,11 @@ function describeTimes(p) {
 
 /* What is the plan for this person on this date: standing schedule first, then reported changes. */
 function dayStatus(S, p, date) {
+  var st = dayStatusBase(S, p, date);
+  if (p.simple) { st.simple = true; if (st.state === 'working') { st.time = null; st.label = 'In'; } else if (st.state === 'absent') st.label = 'Day off'; }
+  return st;
+}
+function dayStatusBase(S, p, date) {
   var hol = holidayOn(S, date);
   var ex = S.exceptions.filter(function (e) { return e.personId === p.id && e.date === date; });
   var absent = ex.filter(function (e) { return e.kind === 'absent'; })[0];
@@ -796,6 +826,7 @@ function statusText(S, p, date, st) {
   var when = labelDate(date);
   var hol = st.hol ? ' (' + st.hol.name + ')' : '';
   var reported = S.exceptions.some(function (e) { return e.personId === p.id && e.date === date; });
+  if (st.simple) return st.state === 'absent' ? p.name + ' (' + p.role + ') has a day off on ' + when + '.' : p.name + ' (' + p.role + ') is in on ' + when + ', no day off reported.';
   if (st.state === 'working') return p.name + ' (' + p.role + ') is due on ' + when + ' at ' + st.time + '. ' + (st.hol ? 'Working on a public holiday (' + st.hol.name + ')' + planPhrase(planFor(S, p, date)) + '. ' : '') + (reported ? '' : 'No change has been reported.');
   if (st.state === 'late') return p.name + ' (' + p.role + ') is coming on ' + when + ' at ' + st.time + ' (time changed).';
   if (st.state === 'extra') return p.name + ' (' + p.role + ') is coming on ' + when + ' at ' + st.time + ' as an extra day.';
@@ -844,7 +875,9 @@ function daySentence(S, p, date) {
   var pre = hol ? 'Public Holiday (' + hol.name + ') - ' : '';
   var head = n + ' ', body = '', kind = '', grey = false;
   var at = st.time ? fmt12(st.time) : '';
-  if (date < p.start) {
+  if (p.simple && date >= p.start) {
+    if (st.state === 'absent') { kind = 'red'; body = 'day off'; } else body = 'in';
+  } else if (date < p.start) {
     head = n + ' not started yet (starts ' + longDate(p.start) + ')'; grey = true;
   } else if (st.state === 'working') {
     if (hol) {
@@ -912,6 +945,7 @@ function interpretOne(S, text, forced, noQuestion) {
   if (/(cancel|not coming|won't come|will not come|isn't coming|is not coming|not come|can't come|cannot come|not working|isn't working|won't work|will not work|day off|\boff\b|on leave|\bleave\b|absent|holiday|no show)/.test(t)) {
     return { type: 'update', kind: 'absent', personId: p.id, date: d, summary: p.name + ' is not coming on ' + labelDate(d) };
   }
+  if (p.simple) return { type: 'info', msg: p.name + ' is tracked by days off only, so there are no times to set. Try "' + p.name + ' is off tomorrow".' };
   time = parseTime(t);
   if (/\b(extra|also coming|will work|will be working|is working|working|can come|will come|coming on|coming in on|will be in on)\b/.test(t) && dd.explicit) {
     st = dayStatus(S, p, d);
@@ -1264,6 +1298,7 @@ function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function migrateState(o) {
   if (!o.holidayPlans) o.holidayPlans = {};
+  simpleStaff().forEach(function (n) { if (!o.people.some(function (p) { return p.id === n.id; })) o.people.push(n); });
   if (!o.schoolHolidays) o.schoolHolidays = JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS));
   if (!o.otps) o.otps = [];
   o.people.forEach(function (p) { if (p.id === 'deepak' && p.role === 'Therapist') p.role = 'Tutor'; });
@@ -1392,7 +1427,7 @@ function pc(p) { return 'var(--p' + p.color + ')'; }
 
 function pillFor(st) {
   var cls = 'pill', txt = st.label;
-  if (st.state === 'working') { cls += ' good'; txt = 'Coming ' + st.time; }
+  if (st.state === 'working') { cls += ' good'; txt = st.simple ? 'In' : 'Coming ' + st.time; }
   else if (st.state === 'late') { cls += ' warn'; txt = 'Coming ' + st.time; }
   else if (st.state === 'extra') { cls += ' extra'; txt = 'Extra day ' + st.time; }
   else if (st.state === 'absent') { cls += ' bad'; txt = st.label; }
@@ -1421,8 +1456,9 @@ function renderToday() {
     if (a.confirmed) note = a.came ? 'Confirmed: came' : 'Confirmed: did not come';
     else if (st.expected) note = 'Assumed from the plan. Nobody has confirmed.';
     else note = st.hol && st.holidayOff ? st.hol.name : 'Nothing expected today';
+    if (p.simple && !a.confirmed) note = st.state === 'absent' ? 'Day off reported.' : 'In unless a day off is reported.';
     var rep = S.exceptions.filter(function (e) { return e.personId === p.id && e.date === TODAY; }).length ? ' Change reported.' : '';
-    if (st.hol && st.expected) { var tpl = planFor(S, p, TODAY); rep += esc(' Working on ' + st.hol.name + planPhrase(tpl) + '.' + (tpl && tpl.note ? ' ' + tpl.note : '')); }
+    if (st.hol && st.expected && !p.simple) { var tpl = planFor(S, p, TODAY); rep += esc(' Working on ' + st.hol.name + planPhrase(tpl) + '.' + (tpl && tpl.note ? ' ' + tpl.note : '')); }
     h += '<div style="flex-direction:column;align-items:stretch;gap:8px">' +
       '<div class="row between"><div class="row"><span class="dot" style="--pc:' + pc(p) + '"></span><span class="person-name">' + esc(p.name) + '</span><span class="muted small">' + esc(p.role) + '</span></div>' + pillFor(st) + '</div>' +
       '<div class="row between"><span class="small muted">' + esc(note) + rep + '</span><span class="row">' +
@@ -1552,6 +1588,11 @@ function doDiscard() {
 }
 
 /* ---------- E-ink display (800 x 480, black and white only) ---------- */
+function einkStaff() {
+  var st = S.people.filter(function (p) { return p.simple; });
+  if (!st.length) return '';
+  return '<div class="ek-staff">' + st.map(function (p) { var off = dayStatus(S, p, TODAY).state !== 'working'; return '<span class="' + (off ? 'off' : '') + '">' + esc(p.name) + ' ' + (off ? 'OFF' : 'IN') + '</span>'; }).join('') + '</div>';
+}
 function einkPerson(p) {
   var st = dayStatus(S, p, TODAY), big, sm = '', cls = '';
   if (st.state === 'working') { big = fmt12(st.time); sm = st.hol ? 'Public holiday, working' : 'Coming'; }
@@ -1590,7 +1631,7 @@ function einkHTML() {
   if (!rows.length) for (var i = 0; i < 9; i++) groc += '<div class="ek-grow blank"></div>';
   groc += '</div>';
   return '<div class="eink"><div class="ek-head"><div class="ek-date">' + esc(longDate(TODAY).toUpperCase()) + '</div><div class="ek-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + '</div></div>' +
-    '<div class="ek-body"><div class="ek-left">' + S.people.map(einkPerson).join('') + otp + '</div>' + groc + '</div></div>';
+    '<div class="ek-body"><div class="ek-left">' + trackedPeople().map(einkPerson).join('') + einkStaff() + otp + '</div>' + groc + '</div></div>';
 }
 function fitEink() {
   var fr = document.querySelector('.eink-frame'); if (!fr) return;
@@ -1611,7 +1652,13 @@ window.addEventListener('resize', fitEink);
 /* ---------- Phone display: big, bold, with one-tap updates ---------- */
 var phEdit = null, phShop = 'Blinkit', phDay = 'tomorrow', phErr = '', phView = 'today';
 function phDate() { return phView === 'tomorrow' ? tomorrow() : TODAY; }
-var PH_ROLE_ICON = { driver: '🚗', tutor: '📚', therapist: '🩺', nanny: '👩', chef: '🍳', cleaner: '🧹' };
+var PH_ROLE_ICON = { driver: '🚗', tutor: '📚', therapist: '🩺', 'house staff': '🏠', nanny: '👩', chef: '🍳', cleaner: '🧹' };
+function phStaff(p) {
+  var date = phDate(), word = phView === 'tomorrow' ? 'tomorrow' : 'today', st = dayStatus(S, p, date), off = st.state === 'absent';
+  var reported = S.exceptions.some(function (e) { return e.personId === p.id && e.date === date && !e.subFor; });
+  return '<section class="ph-card ph-staff ' + (off ? 'ph-bad' : 'ph-good') + '"><div class="ph-sname"><span class="ph-sico" aria-hidden="true">' + (off ? '❌' : '✅') + '</span><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + (off ? 'Day off' : 'In') + '</div></div></div>' +
+    (off ? (reported ? '<button class="ph-btn" data-ph-restore="' + p.id + '">Back to normal</button>' : '') : '<button class="ph-btn" data-ph-absent="' + p.id + '">Day off ' + word + '</button>') + '</section>';
+}
 function phPerson(p) {
   var date = phDate(), word = phView === 'tomorrow' ? 'tomorrow' : 'today';
   var st = dayStatus(S, p, date), cls, ico, big, sub = '', small = false, acts = '';
@@ -1630,8 +1677,8 @@ function phPerson(p) {
     if (reported) acts += '<button class="ph-btn" data-ph-restore="' + p.id + '">Back to normal</button>';
     acts += '</div>';
   }
-  return '<section class="ph-card ph-person ' + cls + '"><div class="ph-who"><div class="ph-ico" aria-hidden="true">' + (PH_ROLE_ICON[p.role.toLowerCase()] || '👤') + '</div><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + esc(p.role) + '</div></div></div>' +
-    '<div class="ph-status"><span class="ph-sico" aria-hidden="true">' + ico + '</span><span class="ph-big' + (small ? ' sm' : '') + '">' + esc(big) + '</span></div>' + (sub ? '<div class="ph-sub">' + esc(sub) + '</div>' : '') + acts + '</section>';
+  return '<section class="ph-card ph-person ' + cls + '"><div class="ph-prow"><div class="ph-who"><div class="ph-ico" aria-hidden="true">' + (PH_ROLE_ICON[p.role.toLowerCase()] || '👤') + '</div><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + esc(p.role) + '</div></div></div>' +
+    '<div class="ph-status"><span class="ph-sico" aria-hidden="true">' + ico + '</span><div class="ph-tcol"><span class="ph-big' + (small ? ' sm' : '') + '">' + esc(big) + '</span>' + (sub ? '<div class="ph-sub">' + esc(sub) + '</div>' : '') + '</div></div></div>' + acts + '</section>';
 }
 function phSchool() {
   var date = phDate(), word = phView === 'tomorrow' ? 'Tomorrow' : 'Today', sh = schoolOn(S, date), wd = dow(date);
@@ -1647,7 +1694,8 @@ function renderPhone() {
   var h = '<div class="ph"><div class="ph-head"><div class="ph-titlebox"><h2 class="ph-title"><span class="ph-lab">' + (tom ? 'Tomorrow:' : 'Today:') + '</span> ' + DAYFULL[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MONFULL[dt.getUTCMonth()] + '</h2><div class="ph-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + ' · <span id="ph-sync">' + esc(syncLabel()) + '</span></div></div>' +
     '<button class="ph-nav" data-ph-view="' + (tom ? 'today' : 'tomorrow') + '" aria-label="' + (tom ? 'Back to today' : 'See info for tomorrow') + '"><span class="ph-nav-lab">' + (tom ? 'Today' : 'Tomorrow') + '</span><span class="ph-nav-arr" aria-hidden="true">' + (tom ? '←' : '→') + '</span></button></div>';
   h += phSchool();
-  S.people.forEach(function (p) { h += phPerson(p); });
+  trackedPeople().forEach(function (p) { h += phPerson(p); });
+  S.people.filter(function (p) { return p.simple; }).forEach(function (p) { h += phStaff(p); });
 
   var open = S.otps.filter(function (o) { return !o.used; });
   if (!tom) h += '<section class="ph-card"><div class="ph-h"><span aria-hidden="true">🔑</span>OTPs</div>';
@@ -1854,7 +1902,7 @@ function renderPeople() {
   S.people.forEach(function (p) {
     h += '<tr><td><span class="dot" style="--pc:' + pc(p) + ';display:inline-block;margin-right:6px"></span><b>' + esc(p.name) + '</b><br><span class="muted small">' + esc(p.role) + '</span></td>' +
       '<td><span class="days">' + order.map(function (n) { return '<span class="' + (p.days.indexOf(n) >= 0 ? 'on' : '') + '">' + DAYN[n].slice(0, 1) + '</span>'; }).join('') + '</span></td>' +
-      '<td class="mono">' + esc(describeTimes(p)) + '</td><td>' + (p.holidays ? 'Off' : 'Works') + '</td><td class="mono">' + labelDate(p.start) + '</td></tr>';
+      '<td class="mono">' + (p.simple ? 'Days off only' : esc(describeTimes(p))) + '</td><td>' + (p.simple ? 'n/a' : p.holidays ? 'Off' : 'Works') + '</td><td class="mono">' + labelDate(p.start) + '</td></tr>';
   });
   $('people-table').innerHTML = h + '</tbody>';
 }
@@ -1870,13 +1918,13 @@ function renderSchoolList() {
 function renderHolidays() {
   renderSchoolList();
   $('hol-note').textContent = 'Sample dates to check against the official list, entered from ' + labelDate(S.holidayFrom) + ' ' + S.holidayFrom.slice(0, 4) + ' only. Pick what happens for each person. Anything except "Not working" counts as a working day. The note box is for anything else.';
-  var h = '<thead><tr><th>Holiday</th>' + S.people.map(function (p) {
+  var h = '<thead><tr><th>Holiday</th>' + trackedPeople().map(function (p) {
     return '<th><span class="dot" style="--pc:' + pc(p) + ';display:inline-block;margin-right:6px"></span>' + esc(p.name) + '<br><span class="small muted" style="font-weight:400">' + esc(p.role) + '</span></th>';
   }).join('') + '</tr></thead><tbody>';
   S.holidays.forEach(function (x) {
     var when = x.date < TODAY ? 'Past' : (x.date === TODAY ? 'Today' : '');
     h += '<tr><td><b>' + esc(x.name) + '</b><br><span class="mono small muted">' + esc(labelDate(x.date)) + '</span>' + (when ? '<br><span class="small muted">' + when + '</span>' : '') + '</td>';
-    S.people.forEach(function (p) {
+    trackedPeople().forEach(function (p) {
       var key = x.date + '|' + p.id, id = 'hp_' + x.date + '_' + p.id;
       var weekdayOk = x.date >= p.start && p.days.indexOf(dow(x.date)) >= 0;
       var lab = esc(p.name + ' (' + p.role + ')');
@@ -1905,8 +1953,8 @@ function renderHolidays() {
     ['of which extra day-off pay', function (t) { return t.pay; }],
     ['No work that day anyway', function (t) { return t.noWork; }]
   ];
-  var tallies = S.people.map(function (p) { return holidayTally(S, p); });
-  var th = '<thead><tr><th>Tally</th>' + S.people.map(function (p) { return '<th style="text-align:right">' + esc(p.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
+  var tallies = trackedPeople().map(function (p) { return holidayTally(S, p); });
+  var th = '<thead><tr><th>Tally</th>' + trackedPeople().map(function (p) { return '<th style="text-align:right">' + esc(p.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
   rows.forEach(function (r) {
     th += '<tr><td>' + r[0] + '</td>' + tallies.map(function (t) { return '<td class="num">' + r[1](t) + '</td>'; }).join('') + '</tr>';
   });
