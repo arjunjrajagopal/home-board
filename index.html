@@ -261,6 +261,24 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-warn { background: var(--warn-bg); border-color: var(--warn); }
 .ph-bad { background: var(--bad-bg); border-color: var(--bad); }
 .ph-off { background: var(--soft); border-color: var(--line); border-style: dashed; }
+/* person cards are 20% smaller to make room for the school card */
+.ph-person { padding: 13px; gap: 8px; border-radius: 16px; }
+.ph-person .ph-ico { font-size: 32px; }
+.ph-person .ph-name { font-size: 26px; }
+.ph-person .ph-role { font-size: 13px; margin-top: 2px; }
+.ph-person .ph-sico { font-size: 32px; }
+.ph-person .ph-big { font-size: 42px; }
+.ph-person .ph-big.sm { font-size: 29px; }
+.ph-person .ph-sub { font-size: 15px; }
+.ph-person .ph-btn { min-height: 44px; font-size: 15px; padding: 6px 10px; flex-basis: 120px; }
+.ph-person .ph-edit input { min-height: 44px; font-size: 18px; }
+.ph-school { flex-direction: row; align-items: center; gap: 12px; padding: 12px 14px; }
+.ph-school .ph-sico { font-size: 38px; }
+.ph-school .ph-sbig { font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1.05; }
+.ph-school .ph-ssub { font-size: 15px; font-weight: 700; margin-top: 2px; }
+.ph-school.ph-good .ph-sbig { color: var(--good); }
+.ph-school.ph-warn .ph-sbig { color: var(--warn); }
+.ph-school.ph-off .ph-sbig { color: var(--muted); }
 .ph-who { display: flex; align-items: center; gap: 12px; }
 .ph-ico { font-size: 40px; line-height: 1; }
 .ph-name { font-family: var(--font-display); font-size: 32px; font-weight: 800; line-height: 1; }
@@ -1612,14 +1630,23 @@ function phPerson(p) {
     if (reported) acts += '<button class="ph-btn" data-ph-restore="' + p.id + '">Back to normal</button>';
     acts += '</div>';
   }
-  return '<section class="ph-card ' + cls + '"><div class="ph-who"><div class="ph-ico" aria-hidden="true">' + (PH_ROLE_ICON[p.role.toLowerCase()] || '👤') + '</div><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + esc(p.role) + '</div></div></div>' +
+  return '<section class="ph-card ph-person ' + cls + '"><div class="ph-who"><div class="ph-ico" aria-hidden="true">' + (PH_ROLE_ICON[p.role.toLowerCase()] || '👤') + '</div><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + esc(p.role) + '</div></div></div>' +
     '<div class="ph-status"><span class="ph-sico" aria-hidden="true">' + ico + '</span><span class="ph-big' + (small ? ' sm' : '') + '">' + esc(big) + '</span></div>' + (sub ? '<div class="ph-sub">' + esc(sub) + '</div>' : '') + acts + '</section>';
+}
+function phSchool() {
+  var date = phDate(), word = phView === 'tomorrow' ? 'Tomorrow' : 'Today', sh = schoolOn(S, date), wd = dow(date);
+  var cls, ico, big, sub = '';
+  if (sh) { cls = 'ph-warn'; ico = '🎈'; big = 'School holiday'; sub = sh.name; }
+  else if (wd === 0 || wd === 6) { cls = 'ph-off'; ico = '🏡'; big = 'No school, weekend'; }
+  else { cls = 'ph-good'; ico = '🎒'; big = 'School day'; sub = 'Normal school day'; }
+  return '<section class="ph-card ph-school ' + cls + '" aria-label="School ' + esc(word.toLowerCase()) + '"><span class="ph-sico" aria-hidden="true">' + ico + '</span><div><div class="ph-sbig">' + esc(big) + '</div>' + (sub ? '<div class="ph-ssub">' + esc(sub) + '</div>' : '') + '</div></section>';
 }
 function renderPhone() {
   purgeOtps(S); purgeGroceries(S);
   var vd = phDate(), dt = pd(vd), tom = phView === 'tomorrow';
   var h = '<div class="ph"><div class="ph-head"><div class="ph-titlebox"><h2 class="ph-title"><span class="ph-lab">' + (tom ? 'Tomorrow:' : 'Today:') + '</span> ' + DAYFULL[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MONFULL[dt.getUTCMonth()] + '</h2><div class="ph-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + ' · <span id="ph-sync">' + esc(syncLabel()) + '</span></div></div>' +
     '<button class="ph-nav" data-ph-view="' + (tom ? 'today' : 'tomorrow') + '" aria-label="' + (tom ? 'Back to today' : 'See info for tomorrow') + '"><span class="ph-nav-lab">' + (tom ? 'Today' : 'Tomorrow') + '</span><span class="ph-nav-arr" aria-hidden="true">' + (tom ? '←' : '→') + '</span></button></div>';
+  h += phSchool();
   S.people.forEach(function (p) { h += phPerson(p); });
 
   var open = S.otps.filter(function (o) { return !o.used; });
