@@ -39,6 +39,7 @@
   --p2: #d97706;
   --p3: #7c3aed;
   --p4: #db2777;
+  --p5: #0284c7;
   --font-display: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
   --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -64,6 +65,7 @@
     --p2: #fbbf24;
     --p3: #a78bfa;
     --p4: #f472b6;
+  --p5: #38bdf8;
     color-scheme: dark;
   }
 }
@@ -87,6 +89,7 @@
   --p2: #fbbf24;
   --p3: #a78bfa;
   --p4: #f472b6;
+  --p5: #38bdf8;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -286,12 +289,12 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-person .ph-edit input { min-height: 44px; font-size: 18px; }
 .ph-staff { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 10px 14px; gap: 8px 10px; }
 .ph-staff .ph-sname { display: flex; align-items: center; gap: 10px; }
-.ph-staff .ph-sico { font-size: 28px; }
-.ph-staff .ph-name { font-size: 24px; }
+.ph-staff .ph-sico { font-size: 24px; }
+.ph-staff .ph-name { font-size: 22px; }
 .ph-staff .ph-role { font-size: 15px; font-weight: 800; }
 .ph-staff.ph-good .ph-role { color: var(--good); }
 .ph-staff.ph-bad .ph-role { color: var(--bad); }
-.ph-staff .ph-btn { flex: 0 1 170px; min-height: 44px; font-size: 15px; padding: 6px 10px; }
+.ph-staff .ph-btn { white-space: nowrap; flex: 0 1 126px; min-height: 44px; font-size: 15px; padding: 6px 8px; }
 .car-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .car-title { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .car-title h2 { margin: 0; }
@@ -618,7 +621,8 @@ function mkDate(day, mon) { var y = pd(TODAY).getUTCFullYear(); return fd(new Da
 function simpleStaff() {
   return [
     { id: 'suhani', name: 'Suhani', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 3, simple: true },
-    { id: 'jassie', name: 'Jassie', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 4, simple: true }
+    { id: 'jassie', name: 'Jassie', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 4, simple: true },
+    { id: 'sangeetha', name: 'Sangeetha', role: 'Nanny', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 5, simple: true }
   ];
 }
 /* The day a person is back: the first day after `date` with no reported day off. */
@@ -1408,6 +1412,7 @@ function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&
 function migrateState(o) {
   if (!o.holidayPlans) o.holidayPlans = {};
   if (!o.carBookings) o.carBookings = [];
+  o.people.forEach(function (p) { if (p.id === 'sangeetha' && p.role === 'House staff') p.role = 'Nanny'; });
   simpleStaff().forEach(function (n) { if (!o.people.some(function (p) { return p.id === n.id; })) o.people.push(n); });
   if (!o.schoolHolidays) o.schoolHolidays = JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS));
   if (!o.otps) o.otps = [];
