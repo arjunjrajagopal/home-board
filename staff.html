@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<meta name="robots" content="noindex">
+<title>घर</title>
+<link rel="manifest" href="staff.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --bg:#f3f1ec; --ink:#14213d; --muted:#5b6475; --card:#fff;
+  --go:#1f8a4c; --go-bg:#e3f4e9; --stop:#c62828; --stop-bg:#fde7e7;
+  --warn:#b26a00; --warn-bg:#fff2d6; --off:#6b7280; --off-bg:#eceef1;
+  --r:22px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Devanagari","Mukta",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 28px)}
+.wrap{max-width:520px;margin:0 auto}
+button{font:inherit;color:inherit;cursor:pointer}
+
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.date{flex:1;min-width:0}
+.date .d1{font-size:30px;font-weight:800;line-height:1.1}
+.date .d2{font-size:19px;color:var(--muted);font-weight:600}
+.speak-all{flex:0 0 auto;width:72px;height:72px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:34px;display:grid;place-items:center;box-shadow:0 3px 10px rgba(20,33,61,.25)}
+.speak-all[aria-pressed=true]{background:var(--go)}
+
+.days{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.days button{border:3px solid var(--ink);background:#fff;border-radius:18px;padding:10px 0;font-size:26px;font-weight:800}
+.days button[aria-pressed=true]{background:var(--ink);color:#fff}
+
+.card{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h2{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:22px}
+.card h2 .ic{font-size:30px}
+.card h2 .say{margin-left:auto}
+.say{border:0;background:var(--off-bg);border-radius:50%;width:48px;height:48px;font-size:24px;flex:0 0 auto}
+
+.big{display:flex;align-items:center;gap:14px;border-radius:18px;padding:14px}
+.big .em{font-size:52px;line-height:1}
+.big .t1{font-size:28px;font-weight:800;line-height:1.15}
+.big .t2{font-size:18px;font-weight:600;opacity:.85}
+.go{background:var(--go-bg);color:var(--go)} .stop{background:var(--stop-bg);color:var(--stop)}
+.warn{background:var(--warn-bg);color:var(--warn)} .off{background:var(--off-bg);color:var(--off)}
+
+.person{display:flex;align-items:center;gap:12px;border-radius:18px;padding:10px 12px;margin-top:8px}
+.person:first-of-type{margin-top:0}
+.av{flex:0 0 auto;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-size:30px;background:#fff}
+.person .nm{font-size:24px;font-weight:800;line-height:1.1}
+.person .rl{font-size:16px;font-weight:600;opacity:.8}
+.person .st{margin-left:auto;text-align:right}
+.person .st .s1{font-size:24px;font-weight:800;line-height:1.1;white-space:nowrap}
+.person .st .s2{font-size:15px;font-weight:600;opacity:.85}
+.mark{font-size:30px;margin-right:2px}
+
+.slots{display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px;border-radius:16px;padding:10px 12px;background:var(--off-bg)}
+.slot .em{font-size:30px;width:36px;text-align:center}
+.slot .sn{font-size:21px;font-weight:700;min-width:80px}
+.slot .who{margin-left:auto;font-size:22px;font-weight:800;text-align:right}
+.slot.busy{background:#e7eefb;color:#1d3f8f}
+.slot.clash{background:var(--warn-bg);color:var(--warn)}
+
+.shop{font-size:18px;font-weight:800;color:var(--muted);margin:12px 0 6px;display:flex;align-items:center;gap:8px}
+.shop:first-child{margin-top:0}
+.items{display:flex;flex-wrap:wrap;gap:8px}
+.item{background:#f6f3ea;border:2px solid #e3dccb;border-radius:14px;padding:8px 12px;font-size:21px;font-weight:700}
+.none{font-size:21px;font-weight:600;color:var(--muted);padding:6px 2px}
+
+.foot{text-align:center;color:var(--muted);font-size:15px;margin-top:6px}
+.foot .dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--go);vertical-align:middle;margin-right:6px}
+.foot .dot.old{background:var(--warn)} .foot .dot.bad{background:var(--stop)}
+.setup{background:#fff;border-radius:var(--r);padding:22px;text-align:center}
+.setup .em{font-size:64px}
+.setup p{font-size:20px}
+.speaking{outline:4px solid var(--go);outline-offset:3px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* Home Board: staff screen (read-only).
+ * Opened from a link like  staff.html#api=https://home-board-api.xxx.workers.dev&k=STAFF_KEY
+ * The link is remembered on the phone and then removed from the address bar.
+ * ?demo=1 shows sample data. ?today=YYYY-MM-DD pretends it is another day.
+ */
+var LS = 'hb-staff-v1';
+
+/* ---------- Words. Names shown in Devanagari when known, otherwise as typed. ---------- */
+var HI_NAMES = { kamal: 'कमल', deepak: 'दीपक', suhani: 'सुहानी', jassie: 'जस्सी', sangeetha: 'संगीता',
+  alok: 'आलोक', malini: 'मालिनी', makku: 'मक्कू', arjun: 'अर्जुन' };
+var HI_ROLES = { 'driver': 'ड्राइवर', 'tutor': 'टीचर', 'house staff': 'घर का काम', 'nanny': 'आया', 'cook': 'खाना', 'chef': 'खाना', 'cleaner': 'सफ़ाई' };
+var ROLE_ICON = { 'driver': '🚗', 'tutor': '📚', 'house staff': '🏠', 'nanny': '👶', 'cook': '🍳', 'chef': '🍳', 'cleaner': '🧹' };
+var CAR_USERS = ['alok', 'malini', 'makku', 'arjun'];
+var SLOTS = [{ id: 'morning', hi: 'सुबह', em: '🌅' }, { id: 'afternoon', hi: 'दोपहर', em: '☀️' }, { id: 'evening', hi: 'शाम', em: '🌇' }, { id: 'night', hi: 'रात', em: '🌙' }];
+var DAY_HI = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+var MON_HI = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
+
+function hiName(id, name) { return HI_NAMES[id] || name || id; }
+function roleKey(r) { return String(r || '').toLowerCase(); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+/* ---------- Dates (same rules as the main board) ---------- */
+function pad(n) { return ('0' + n).slice(-2); }
+var TODAY = (function () {
+  var q = /[?&]today=(\d{4}-\d{2}-\d{2})/.exec(location.search);
+  if (q) return q[1];
+  var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+})();
+function pd(s) { var a = s.split('-').map(Number); return new Date(Date.UTC(a[0], a[1] - 1, a[2])); }
+function fd(d) { return d.toISOString().slice(0, 10); }
+function addDays(s, n) { var d = pd(s); d.setUTCDate(d.getUTCDate() + n); return fd(d); }
+function dow(s) { return pd(s).getUTCDay(); }
+function longHi(s) { var d = pd(s); return d.getUTCDate() + ' ' + MON_HI[d.getUTCMonth()]; }
+
+/* 12-hour clock with a Hindi part of the day: "9:15 सुबह" */
+function time12(t) {
+  if (!t) return '';
+  var a = t.split(':').map(Number), h = a[0], m = a[1];
+  var part = h < 12 ? 'सुबह' : h < 16 ? 'दोपहर' : h < 19 ? 'शाम' : 'रात';
+  var h12 = h % 12 || 12;
+  return { text: h12 + ':' + pad(m), part: part, spoken: h12 + (m ? ' बजकर ' + m + ' मिनट' : ' बजे') };
+}
+
+/* ---------- Status logic (mirrors dayStatusBase in index.html) ---------- */
+function holidayOn(S, date) { return (S.holidays || []).filter(function (h) { return h.date === date; })[0] || null; }
+function schoolOn(S, date) { return (S.schoolHolidays || []).filter(function (h) { return h.date === date; })[0] || null; }
+function modeOf(S, p, date) {
+  var pl = S.holidayPlans && S.holidayPlans[date + '|' + p.id];
+  return pl && pl.mode ? pl.mode : (p.holidays ? 'off' : 'working');
+}
+function timeFor(p, date) { var t = p.times && p.times[dow(date)]; return t || p.time || null; }
+function dayStatus(S, p, date) {
+  var hol = holidayOn(S, date);
+  var ex = (S.exceptions || []).filter(function (e) { return e.personId === p.id && e.date === date; });
+  var absent = ex.filter(function (e) { return e.kind === 'absent'; })[0];
+  var extra = ex.filter(function (e) { return e.kind === 'extra'; })[0];
+  var late = ex.filter(function (e) { return e.kind === 'late'; })[0];
+  var weekdayOk = date >= (p.start || '0000') && (p.days || []).indexOf(dow(date)) >= 0;
+  var holidayOff = weekdayOk && !!hol && modeOf(S, p, date) === 'off';
+  var scheduled = weekdayOk && !holidayOff;
+  if (absent) return { state: 'absent' };
+  if (extra && !scheduled) return { state: 'extra', time: extra.time || timeFor(p, date) };
+  if (!scheduled) return { state: 'off', holiday: holidayOff };
+  if (late) return { state: 'late', time: late.time };
+  return { state: 'working', time: timeFor(p, date) };
+}
+function isOut(st) { return st.state === 'absent' || st.state === 'off'; }
+/* For staff tracked by days off: the first day they are back. */
+function backOn(S, p, date) {
+  var d = date, n = 0;
+  while (n++ < 120 && isOut(dayStatus(S, p, d))) d = addDays(d, 1);
+  return d;
+}
+function groceriesFor(S, date) {
+  var dayOf = function (g) { var f = g.forDate || addDays(g.date || TODAY, 1); return f < TODAY ? TODAY : f; };
+  var list = (S.groceries || []).filter(function (g) { return !g.done && (date === TODAY ? dayOf(g) <= TODAY : dayOf(g) === date); });
+  var by = {};
+  list.forEach(function (g) { var v = g.vendor || 'Other'; (by[v] = by[v] || []).push(g.item); });
+  return by;
+}
+
+/* ---------- Data: fetch the staff view, keep the last copy for when the phone is offline ---------- */
+var CFG = { api: '', key: '' }, DATA = null, FETCHED = 0, STATUS = 'ok', VIEW = TODAY;
+var DEMO = /[?&]demo=1\b/.test(location.search);
+
+function loadCfg() {
+  try {
+    var h = location.hash.replace(/^#/, ''), m;
+    var api = (m = /(?:^|&)api=([^&]+)/.exec(h)) && decodeURIComponent(m[1]);
+    var key = (m = /(?:^|&)k=([^&]+)/.exec(h)) && decodeURIComponent(m[1]);
+    if (api && /^https:\/\//.test(api) && key) {
+      localStorage.setItem(LS + '-cfg', JSON.stringify({ api: api, key: key }));
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+    var c = JSON.parse(localStorage.getItem(LS + '-cfg') || 'null'); if (c) CFG = c;
+    var d = JSON.parse(localStorage.getItem(LS + '-data') || 'null'); if (d) { DATA = d.state; FETCHED = d.at || 0; }
+  } catch (e) { }
+}
+function fetchData() {
+  if (DEMO) { DATA = demoState(); FETCHED = Date.now(); STATUS = 'ok'; return render(); }
+  if (!CFG.api || !CFG.key) { STATUS = 'setup'; return render(); }
+  var ctl = window.AbortController ? new AbortController() : null, tm = ctl && setTimeout(function () { ctl.abort(); }, 10000);
+  fetch(CFG.api.replace(/\/+$/, '') + '/api/staff', { headers: { Authorization: 'Bearer ' + CFG.key }, signal: ctl ? ctl.signal : undefined, cache: 'no-store' })
+    .then(function (r) {
+      if (tm) clearTimeout(tm);
+      if (r.status === 401) { STATUS = 'auth'; return null; }
+      if (!r.ok) { STATUS = 'offline'; return null; }
+      return r.json();
+    })
+    .then(function (j) {
+      if (j && j.state) {
+        DATA = j.state; FETCHED = Date.now(); STATUS = 'ok';
+        try { localStorage.setItem(LS + '-data', JSON.stringify({ state: DATA, at: FETCHED })); } catch (e) { }
+      }
+      render();
+    }, function () { STATUS = 'offline'; render(); });
+}
+
+/* ---------- Drawing ---------- */
+var SPEECH = {}; /* card id -> Hindi sentence to read aloud */
+
+function personRow(S, p, date, isStaff) {
+  var st = dayStatus(S, p, date), rk = roleKey(p.role), nm = hiName(p.id, p.name), cls, mark, s1, s2 = '', say;
+  var role = HI_ROLES[rk] || p.role || '';
+  if (isOut(st)) {
+    cls = 'stop'; mark = '✕'; s1 = 'छुट्टी';
+    if (isStaff) {
+      var back = backOn(S, p, date);
+      s2 = back === addDays(TODAY, 1) ? 'कल आएँगी' : longHi(back) + ' को आएँगी';
+      say = nm + ' की छुट्टी है। ' + s2 + '।';
+    } else say = nm + ' ' + (date === TODAY ? 'आज' : 'कल') + ' नहीं आएँगे।';
+  } else if (isStaff) {
+    cls = 'go'; mark = '✓'; s1 = 'आज हैं';
+    if (date !== TODAY) s1 = 'कल हैं';
+    say = nm + ' ' + (date === TODAY ? 'आज' : 'कल') + ' काम पर हैं।';
+  } else {
+    var t = time12(st.time);
+    cls = st.state === 'late' ? 'warn' : 'go'; mark = '✓';
+    s1 = t ? t.text : 'आएँगे'; s2 = t ? t.part + (st.state === 'late' ? ' · नया समय' : '') : '';
+    say = nm + ' ' + (date === TODAY ? 'आज' : 'कल') + (t ? ' ' + t.part + ' ' + t.spoken : '') + ' आएँगे।' + (st.state === 'late' ? ' समय बदला है।' : '');
+  }
+  return { say: say, html: '<div class="person ' + cls + '"><div class="av" aria-hidden="true">' + (ROLE_ICON[rk] || '🙂') + '</div>' +
+    '<div><div class="nm">' + esc(nm) + '</div><div class="rl">' + esc(role) + '</div></div>' +
+    '<div class="st"><div class="s1"><span class="mark" aria-hidden="true">' + mark + '</span>' + esc(s1) + '</div>' + (s2 ? '<div class="s2">' + esc(s2) + '</div>' : '') + '</div></div>' };
+}
+
+function card(id, icon, title, body) {
+  return '<section class="card" id="c-' + id + '"><h2><span class="ic" aria-hidden="true">' + icon + '</span>' + esc(title) +
+    '<button class="say" data-say="' + id + '" aria-label="सुनिए">🔊</button></h2>' + body + '</section>';
+}
+
+function render() {
+  var app = document.getElementById('app'), S = DATA, date = VIEW, isToday = date === TODAY, word = isToday ? 'आज' : 'कल';
+  SPEECH = {};
+  var d = pd(date);
+  var h = '<div class="top"><div class="date"><div class="d1">' + word + ' ' + DAY_HI[d.getUTCDay()] + '</div><div class="d2">' + esc(longHi(date)) + '</div></div>' +
+    '<button class="speak-all" id="speak-all" aria-label="सब सुनिए" aria-pressed="false">🔊</button></div>' +
+    '<div class="days"><button data-view="' + TODAY + '" aria-pressed="' + isToday + '">आज</button><button data-view="' + addDays(TODAY, 1) + '" aria-pressed="' + !isToday + '">कल</button></div>';
+
+  if (!S) {
+    var msg = STATUS === 'auth' ? 'यह लिंक अब काम नहीं करता। नया लिंक माँगिए।' : STATUS === 'setup' ? 'यह फ़ोन अभी जुड़ा नहीं है। घर वालों से लिंक माँगिए।' : 'इंटरनेट नहीं है। थोड़ी देर बाद देखिए।';
+    app.innerHTML = '<div class="setup"><div class="em">' + (STATUS === 'offline' ? '📶' : '🔗') + '</div><p>' + esc(msg) + '</p></div>';
+    return;
+  }
+
+  /* School */
+  var sh = schoolOn(S, date), sc;
+  if (dow(date) === 0) { sc = { c: 'off', em: '🏠', t1: 'स्कूल नहीं', t2: 'रविवार' }; }
+  else if (sh) { sc = { c: 'warn', em: '🏖️', t1: 'स्कूल की छुट्टी', t2: sh.name }; }
+  else { sc = { c: 'go', em: '🎒', t1: 'स्कूल है', t2: '' }; }
+  SPEECH.school = word + ' ' + sc.t1 + (sc.c === 'go' ? '।' : ' है।');
+  if (dow(date) === 0) SPEECH.school = word + ' रविवार है, स्कूल नहीं है।';
+  h += card('school', '🏫', 'स्कूल', '<div class="big ' + sc.c + '"><div class="em" aria-hidden="true">' + sc.em + '</div><div><div class="t1">' + esc(sc.t1) + '</div>' + (sc.t2 ? '<div class="t2">' + esc(sc.t2) + '</div>' : '') + '</div></div>');
+
+  /* Kamal and Deepak: come at a time */
+  var timed = (S.people || []).filter(function (p) { return !p.simple; }), rows = timed.map(function (p) { return personRow(S, p, date, false); });
+  SPEECH.come = rows.map(function (r) { return r.say; }).join(' ');
+  h += card('come', '🕘', 'कौन कब आएगा', rows.map(function (r) { return r.html; }).join(''));
+
+  /* House staff: in or on leave */
+  var staff = (S.people || []).filter(function (p) { return p.simple; }), srows = staff.map(function (p) { return personRow(S, p, date, true); });
+  if (staff.length) {
+    SPEECH.staff = srows.map(function (r) { return r.say; }).join(' ');
+    h += card('staff', '👥', 'घर का स्टाफ़', srows.map(function (r) { return r.html; }).join(''));
+  }
+
+  /* Car */
+  var kamal = (S.people || []).filter(function (p) { return p.id === 'kamal'; })[0];
+  var carOk = !kamal || !isOut(dayStatus(S, kamal, date)), body = '', said = [];
+  if (!carOk) {
+    body = '<div class="big off"><div class="em" aria-hidden="true">🚫</div><div><div class="t1">गाड़ी नहीं</div><div class="t2">ड्राइवर की छुट्टी</div></div></div>';
+    SPEECH.car = word + ' ड्राइवर की छुट्टी है, बड़ी गाड़ी नहीं चलेगी।';
+  } else {
+    body = '<div class="slots">' + SLOTS.map(function (sl) {
+      var who = (S.carBookings || []).filter(function (b) { return b.date === date && b.slot === sl.id; }).map(function (b) { return b.who; })
+        .sort(function (a, b) { return CAR_USERS.indexOf(a) - CAR_USERS.indexOf(b); }).map(function (w) { return hiName(w, w); });
+      if (who.length) said.push(sl.hi + ' ' + who.join(' और '));
+      return '<div class="slot' + (who.length > 1 ? ' clash' : who.length ? ' busy' : '') + '"><span class="em" aria-hidden="true">' + sl.em + '</span><span class="sn">' + sl.hi + '</span><span class="who">' + (who.length ? esc(who.join(' + ')) : '—') + '</span></div>';
+    }).join('') + '</div>';
+    SPEECH.car = said.length ? word + ' गाड़ी: ' + said.join('। ') + '।' : word + ' गाड़ी किसी ने नहीं ली है।';
+  }
+  h += card('car', '🚗', 'बड़ी गाड़ी', body);
+
+  /* Groceries */
+  var g = groceriesFor(S, date), shops = Object.keys(g), gb = '';
+  if (!shops.length) { gb = '<div class="none">✓ कुछ नहीं मँगाना</div>'; SPEECH.groc = word + ' कुछ नहीं मँगाना है।'; }
+  else {
+    gb = shops.map(function (v) { return '<div class="shop">🛍️ ' + esc(v) + '</div><div class="items">' + g[v].map(function (i) { return '<span class="item">' + esc(i) + '</span>'; }).join('') + '</div>'; }).join('');
+    SPEECH.groc = word + ' मँगाना है: ' + shops.map(function (v) { return v + ' से ' + g[v].join(', '); }).join('। ') + '।';
+  }
+  h += card('groc', '🛒', 'सामान मँगाना', gb);
+
+  /* Freshness */
+  var age = FETCHED ? Math.round((Date.now() - FETCHED) / 60000) : null, dot = STATUS === 'ok' ? '' : age !== null && age < 60 ? ' old' : ' bad';
+  var ft = STATUS === 'ok' ? 'अभी की जानकारी' : STATUS === 'auth' ? 'लिंक बंद है · पुरानी जानकारी' : 'इंटरनेट नहीं · ' + (age === null ? '' : age < 60 ? age + ' मिनट पुरानी' : 'पुरानी') + ' जानकारी';
+  if (DEMO) ft = 'नमूना (demo)';
+  h += '<div class="foot"><span class="dot' + dot + '"></span>' + esc(ft) + '</div>';
+  app.innerHTML = h;
+}
+
+/* ---------- Read aloud in Hindi ---------- */
+var VOICE = null;
+function pickVoice() {
+  if (!window.speechSynthesis) return;
+  var v = speechSynthesis.getVoices();
+  VOICE = v.filter(function (x) { return /^hi(-|_|$)/i.test(x.lang); })[0] || null;
+}
+function speak(ids) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  var all = document.getElementById('speak-all');
+  ids.forEach(function (id, i) {
+    var u = new SpeechSynthesisUtterance(SPEECH[id] || '');
+    u.lang = 'hi-IN'; if (VOICE) u.voice = VOICE; u.rate = 0.9;
+    u.onstart = function () { var c = document.getElementById('c-' + id); if (c) c.classList.add('speaking'); if (ids.length > 1 && all) all.setAttribute('aria-pressed', 'true'); };
+    u.onend = u.onerror = function () { var c = document.getElementById('c-' + id); if (c) c.classList.remove('speaking'); if (i === ids.length - 1 && all) all.setAttribute('aria-pressed', 'false'); };
+    speechSynthesis.speak(u);
+  });
+}
+
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.view) { VIEW = b.dataset.view; if (window.speechSynthesis) speechSynthesis.cancel(); render(); return; }
+  if (b.dataset.say) { speak([b.dataset.say]); return; }
+  if (b.id === 'speak-all') {
+    if (b.getAttribute('aria-pressed') === 'true') { speechSynthesis.cancel(); b.setAttribute('aria-pressed', 'false'); document.querySelectorAll('.speaking').forEach(function (c) { c.classList.remove('speaking'); }); return; }
+    speak(['school', 'come', 'staff', 'car', 'groc'].filter(function (k) { return SPEECH[k]; }));
+  }
+});
+
+/* ---------- Sample data for ?demo=1 ---------- */
+function demoState() {
+  var t = TODAY, t1 = addDays(TODAY, 1), t3 = addDays(TODAY, 3);
+  return {
+    people: [
+      { id: 'kamal', name: 'Kamal', role: 'Driver', days: [1, 2, 3, 4, 5, 6], time: '09:15', times: { 6: '10:00' }, start: '2026-01-01', holidays: true },
+      { id: 'deepak', name: 'Deepak', role: 'Tutor', days: [1, 2, 3, 4, 5, 6], time: '17:45', times: { 6: '10:00' }, start: '2026-01-01', holidays: true },
+      { id: 'suhani', name: 'Suhani', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-01-01', simple: true },
+      { id: 'jassie', name: 'Jassie', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-01-01', simple: true },
+      { id: 'sangeetha', name: 'Sangeetha', role: 'Nanny', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-01-01', simple: true }
+    ],
+    exceptions: [
+      { personId: 'deepak', date: t, kind: 'late', time: '18:30' },
+      { personId: 'suhani', date: t, kind: 'absent' }, { personId: 'suhani', date: t1, kind: 'absent' }, { personId: 'suhani', date: addDays(t, 2), kind: 'absent' },
+      { personId: 'kamal', date: t3, kind: 'absent' }
+    ],
+    holidays: [], holidayPlans: {},
+    schoolHolidays: [{ date: t1, name: 'Guru Nanak Jayanti' }],
+    carBookings: [{ date: t, slot: 'morning', who: 'malini' }, { date: t, slot: 'evening', who: 'arjun' }, { date: t, slot: 'evening', who: 'makku' }, { date: t1, slot: 'afternoon', who: 'alok' }],
+    groceries: [
+      { id: 'g1', item: 'Carrot', vendor: 'Blinkit', forDate: t }, { id: 'g2', item: 'Dahi', vendor: 'Blinkit', forDate: t }, { id: 'g3', item: 'Gobi', vendor: 'Blinkit', forDate: t },
+      { id: 'g4', item: 'Milk', vendor: 'Milkbasket', forDate: t1 }, { id: 'g5', item: 'Eggs', vendor: 'Blinkit', forDate: t1 }
+    ]
+  };
+}
+
+/* ---------- Start ---------- */
+loadCfg();
+if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+render();
+fetchData();
+setInterval(function () { if (!document.hidden) fetchData(); }, 60000);
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) return;
+  var now = new Date(), d = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  if (!/[?&]today=/.test(location.search) && d !== TODAY) { location.reload(); return; }
+  fetchData();
+});
+window.addEventListener('online', fetchData);
+</script>
+</body>
+</html>
