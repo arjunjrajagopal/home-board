@@ -40,6 +40,9 @@
   --p3: #7c3aed;
   --p4: #db2777;
   --p5: #0284c7;
+  --p6: #65a30d;
+  --p7: #c2410c;
+  --p8: #4f46e5;
   --font-display: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
   --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -66,6 +69,9 @@
     --p3: #a78bfa;
     --p4: #f472b6;
   --p5: #38bdf8;
+  --p6: #a3e635;
+  --p7: #fb923c;
+  --p8: #818cf8;
     color-scheme: dark;
   }
 }
@@ -90,6 +96,9 @@
   --p3: #a78bfa;
   --p4: #f472b6;
   --p5: #38bdf8;
+  --p6: #a3e635;
+  --p7: #fb923c;
+  --p8: #818cf8;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -250,6 +259,18 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .hol-table select, .hol-table input { font-size: 13px; padding: 7px 8px; }
 .sub-l { margin: 0; font-size: 12px; }
 .warn-t { color: var(--warn); font-size: 12px; }
+.card[hidden] { display: none; }
+.pe-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.pe-day > * { min-width: 0; }
+.pe-day .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.pe-day { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+.pe-day .btn { padding: 8px 0; text-align: center; }
+.pe-day input { width: 100%; box-sizing: border-box; font-size: 12px; padding: 4px 2px; }
+.pe-row { flex-wrap: wrap; }
+.pe-row .grow { min-width: 180px; }
+.pe-ver { font-size: 13px; color: var(--muted); }
+.pe-ver b { color: var(--ink, inherit); font-weight: 600; }
+@media (max-width: 520px) { .pe-days { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .note { background: var(--warn-bg); color: var(--warn); padding: 8px 10px; border-radius: 8px; font-size: 13px; }
 /* ---------- Phone display ---------- */
 .phone-only header, .phone-only .tabs { display: none; }
@@ -560,14 +581,16 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
   </section>
 
   <section class="panel" id="p-people" hidden>
+    <div class="card" id="people-form" hidden></div>
     <div class="card">
-      <h2>Standing schedules</h2>
-      <div class="scroll-x"><table id="people-table"></table></div>
+      <div class="row between"><h2>People</h2><button class="btn primary" data-pe-new="1">Add a person</button></div>
+      <p class="muted small">Each person's days and times are kept as dated versions. Changing a schedule "from" a date leaves the days before it as they were.</p>
+      <div class="list" id="people-list"></div>
     </div>
     <div class="card" id="sync-card"></div>
     <div class="card">
       <h3>Start again</h3>
-      <p class="muted small">This removes every entry and restores the two people and the holiday list. If the board is shared, it clears it for everyone.</p>
+      <p class="muted small">This removes every entry, including anyone added on the People screen, and restores the starting staff list and holidays. If the board is shared, it clears it for everyone.</p>
       <div class="row"><button class="btn" id="reset">Clear all entries</button></div>
     </div>
   </section>
@@ -618,12 +641,31 @@ function monthStart(s) { return s.slice(0, 8) + '01'; }
 function mkDate(day, mon) { var y = pd(TODAY).getUTCFullYear(); return fd(new Date(Date.UTC(y, mon, day))); }
 
 /* House staff are tracked by days off only: they are in every day unless a day off is reported. No times, no public-holiday plans. */
-function simpleStaff() {
-  return [
-    { id: 'suhani', name: 'Suhani', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 3, simple: true },
-    { id: 'jassie', name: 'Jassie', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 4, simple: true },
-    { id: 'sangeetha', name: 'Sangeetha', role: 'Nanny', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-10-01', holidays: false, color: 5, simple: true }
-  ];
+/* ---------- People and their dated schedules ----------
+ * A person has one or more schedule versions: { personId, from, days, time, times }.
+ * The version in force on a date is the latest one starting on or before it, so changing
+ * someone's days or time "from 1 Dec" never rewrites the days before. A person may also
+ * have an `end` date (their last day), after which they are no longer expected. */
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function bySortFrom(a, b) { return a.from < b.from ? -1 : a.from > b.from ? 1 : 0; }
+function schedulesOf(S, p) { return (S.schedules || []).filter(function (x) { return x.personId === p.id; }).sort(bySortFrom); }
+function startOf(S, p) { var l = schedulesOf(S, p); return l.length ? l[0].from : '9999-12-31'; }
+function ruleOn(S, p, date) {
+  if (p.end && date > p.end) return null;
+  var r = null; schedulesOf(S, p).forEach(function (x) { if (x.from <= date) r = x; });
+  return r;
+}
+/* The schedule that describes someone now: today's, or the next one if they have not started. */
+function currentRule(S, p) { var l = schedulesOf(S, p); return ruleOn(S, p, TODAY) || l.filter(function (x) { return x.from > TODAY; })[0] || l[l.length - 1] || null; }
+function worksOn(S, p, date) { var r = ruleOn(S, p, date); return !!r && (r.days || []).indexOf(dow(date)) >= 0; }
+function activeOn(S, p, date) { return startOf(S, p) <= date && (!p.end || date <= p.end); }
+/* Shown on day views: working that day, or starting within the next week. */
+function listedOn(S, p, date) { var st = startOf(S, p); return activeOn(S, p, date) || (st > date && daysBetween(date, st) <= 7); }
+function staffPeople(date) { return S.people.filter(function (p) { return p.simple && listedOn(S, p, date || TODAY); }); }
+function timedPeople() { return S.people.filter(function (p) { return !p.simple && (!p.end || p.end >= (S.holidayFrom || TODAY)); }); }
+function driverOf(S, date) {
+  var l = S.people.filter(function (p) { return !p.simple && /\bdriver\b/i.test(p.role || ''); });
+  return l.filter(function (p) { return activeOn(S, p, date); })[0] || l[0] || null;
 }
 /* The day a person is back: the first day after `date` with no reported day off. */
 function returnDate(S, p, date) {
@@ -654,7 +696,7 @@ function addStaffLeave(S, pid, from, to) {
   var n = 0;
   for (var d = from; d <= to; d = addDays(d, 1)) {
     if (S.exceptions.some(function (e) { return e.personId === pid && e.date === d && e.kind === 'absent'; })) continue;
-    S.exceptions.push({ id: 'e' + (S.nextId++), personId: pid, date: d, kind: 'absent', time: null }); n++;
+    S.exceptions.push({ id: 'e' + uid(), personId: pid, date: d, kind: 'absent', time: null }); n++;
   }
   return { added: n };
 }
@@ -680,7 +722,7 @@ function carToggle(S, date, slot, who) {
 }
 /* Is the car usable that day? Only when Kamal is working (his normal day, a changed time or an extra day). */
 function carDriver(S, date) {
-  var k = personById(S, 'kamal');
+  var k = driverOf(S, date);
   if (!k) return { ok: true, name: 'Driver', st: null };
   var st = dayStatus(S, k, date);
   return { ok: st.state === 'working' || st.state === 'late' || st.state === 'extra', name: k.name, st: st };
@@ -697,7 +739,7 @@ function carClashText(c) {
   var names = c.who.map(carUserName);
   return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + ' both have the car in the ' + c.slot.name.toLowerCase() + '.';
 }
-function trackedPeople() { return S.people.filter(function (p) { return !p.simple; }); }
+function trackedPeople(date) { var d = date || TODAY; return S.people.filter(function (p) { return !p.simple && listedOn(S, p, d); }); }
 var SCHOOL_HOLIDAYS = [
   { date: '2026-10-29', name: 'Karwachauth' }, { date: '2026-11-07', name: 'Diwali 1' }, { date: '2026-11-09', name: 'Diwali 3' },
   { date: '2026-11-10', name: 'Goverdhan puja/Balipadyami' }, { date: '2026-11-11', name: 'Bhai Dooj' },
@@ -708,13 +750,18 @@ var SCHOOL_HOLIDAYS = [
   { date: '2027-03-09', name: 'Eid-Ul-Fitr (as per the moon)' }, { date: '2027-03-22', name: 'Holi' }
 ];
 function sampleState() {
+  var P = [
+    ['kamal', 'Kamal', 'कमल', 'Driver', false, true, [1, 2, 3, 4, 5, 6], '09:15', { 6: '10:00' }],
+    ['deepak', 'Deepak', 'दीपक', 'Tutor', false, true, [1, 2, 3, 4, 5, 6], '17:45', { 6: '10:00' }],
+    ['suhani', 'Suhani', 'सुहानी', 'House staff', true, false, [0, 1, 2, 3, 4, 5, 6], null, null],
+    ['jassie', 'Jassie', 'जस्सी', 'House staff', true, false, [0, 1, 2, 3, 4, 5, 6], null, null],
+    ['sangeetha', 'Sangeetha', 'संगीता', 'Nanny', true, false, [0, 1, 2, 3, 4, 5, 6], null, null]
+  ];
   return {
     carBookings: [],
     schoolHolidays: JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS)),
-    people: [
-      { id: 'kamal', name: 'Kamal', role: 'Driver', days: [1, 2, 3, 4, 5, 6], time: '09:15', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 1 },
-      { id: 'deepak', name: 'Deepak', role: 'Tutor', days: [1, 2, 3, 4, 5, 6], time: '17:45', times: { 6: '10:00' }, start: '2026-10-01', holidays: true, color: 2 }
-    ].concat(simpleStaff()),
+    people: P.map(function (x, i) { return { id: x[0], name: x[1], nameHi: x[2], role: x[3], simple: x[4], holidays: x[5], color: i + 1 }; }),
+    schedules: P.map(function (x) { var r = { id: x[0] + '-2026-10-01', personId: x[0], from: '2026-10-01', days: x[6], time: x[7] }; if (x[8]) r.times = x[8]; return r; }),
     holidayFrom: '2026-10-01',
     holidays: [
       { date: '2026-10-02', name: 'Gandhi Jayanti' },
@@ -729,8 +776,7 @@ function sampleState() {
     otps: [],
     otpHide: false,
     groceries: [],
-    messages: [],
-    nextId: 10
+    messages: []
   };
 }
 
@@ -768,13 +814,13 @@ function syncSub(S, holDate, pid) {
   var pl = S.holidayPlans[holDate + '|' + pid];
   if (pl && pl.mode === 'sub' && pl.subDate) {
     var clash = S.exceptions.some(function (e) { return e.personId === pid && e.date === pl.subDate; });
-    if (!clash) S.exceptions.push({ id: 'e' + (S.nextId++), personId: pid, date: pl.subDate, kind: 'absent', time: null, subFor: holDate });
+    if (!clash) S.exceptions.push({ id: 'e' + uid(), personId: pid, date: pl.subDate, kind: 'absent', time: null, subFor: holDate });
   }
 }
 function holidayTally(S, p) {
   var t = { listed: 0, off: 0, working: 0, sub: 0, subUndated: 0, pay: 0, noWork: 0 };
   S.holidays.forEach(function (h) {
-    if (!(h.date >= p.start && p.days.indexOf(dow(h.date)) >= 0)) { t.noWork++; return; }
+    if (!worksOn(S, p, h.date)) { t.noWork++; return; }
     t.listed++;
     var pl = planFor(S, p, h.date), mode = modeOf(S, p, h.date);
     if (mode === 'off') { t.off++; return; }
@@ -787,14 +833,16 @@ function holidayTally(S, p) {
 
 /* Usual arrival time for a date: a weekday-specific time if the person has one, otherwise the default. */
 function timeFor(p, date) {
-  return (p.times && p.times[dow(date)]) || p.time;
+  var r = ruleOn(S, p, date) || currentRule(S, p);
+  return r ? ((r.times && r.times[dow(date)]) || r.time || null) : null;
 }
-function describeTimes(p) {
-  if (!p.times) return p.time;
+function describeTimes(p, r) { return describeRule(r || currentRule(S, p) || { days: [], time: null }); }
+function describeRule(p) {
+  if (!p.times) return p.time ? fmt12(p.time) : '';
   var groups = {}, order = [];
   [1, 2, 3, 4, 5, 6, 0].forEach(function (n) {
     if (p.days.indexOf(n) < 0) return;
-    var t = p.times[n] || p.time;
+    var t = fmt12(p.times[n] || p.time);
     if (!groups[t]) { groups[t] = []; order.push(t); }
     groups[t].push(DAYN[n]);
   });
@@ -813,7 +861,7 @@ function dayStatusBase(S, p, date) {
   var absent = ex.filter(function (e) { return e.kind === 'absent'; })[0];
   var extra = ex.filter(function (e) { return e.kind === 'extra'; })[0];
   var late = ex.filter(function (e) { return e.kind === 'late'; })[0];
-  var weekdayOk = date >= p.start && p.days.indexOf(dow(date)) >= 0;
+  var weekdayOk = worksOn(S, p, date);
   var holidayOff = weekdayOk && !!hol && modeOf(S, p, date) === 'off';
   var scheduled = weekdayOk && !holidayOff;
   if (absent) {
@@ -823,7 +871,7 @@ function dayStatusBase(S, p, date) {
     return { state: 'extra', expected: true, scheduled: false, holidayOff: holidayOff, hol: hol, cancelled: false, label: 'Extra day', time: extra.time || timeFor(p, date) };
   }
   if (!scheduled) {
-    return { state: 'off', expected: false, scheduled: false, holidayOff: holidayOff, hol: hol, cancelled: false, label: holidayOff ? 'Public holiday' : 'Day off', time: null };
+    return { state: 'off', expected: false, scheduled: false, holidayOff: holidayOff, hol: hol, cancelled: false, label: holidayOff ? 'Public holiday' : !activeOn(S, p, date) ? (date < startOf(S, p) ? 'Not started' : 'Left') : 'Day off', inactive: !activeOn(S, p, date), time: null };
   }
   if (late) {
     return { state: 'late', expected: true, scheduled: true, holidayOff: false, hol: hol, cancelled: false, label: 'Time changed', time: late.time };
@@ -852,7 +900,7 @@ function countDays(S, p, from, to) {
     if (a.confirmed && a.came) { c.confirmedCame++; if (a.st.state === 'extra') c.extras++; }
     else if (a.confirmed && !a.came) { c.confirmedMissed++; }
     else if (a.st.expected) { c.assumedCame++; if (a.st.state === 'extra') c.extras++; }
-    else if (d < p.start) { c.beforeStart++; }
+    else if (d < startOf(S, p)) { c.beforeStart++; }
     else if (a.st.cancelled) { c.cancelled++; }
     else if (a.st.holidayOff) { c.holidayOff++; }
     else { c.notScheduled++; }
@@ -911,11 +959,12 @@ function findPerson(S, t) {
   var i, p;
   for (i = 0; i < S.people.length; i++) { p = S.people[i]; if (new RegExp('\\b' + p.name.toLowerCase() + '\\b').test(t)) return p; }
   var alias = { driver: /\bdriver\b/, tutor: /\b(tutor|tutoring|teacher|therapist|therapy)\b/, nanny: /\bnanny\b/, chef: /\b(chef|cook)\b/, cleaner: /\b(cleaner|maid)\b/ };
-  for (i = 0; i < S.people.length; i++) {
-    p = S.people[i]; var re = alias[p.role.toLowerCase()];
-    if (re && re.test(t)) return p;
-  }
-  return null;
+  var hits = S.people.filter(function (q) {
+    if (q.end && q.end < TODAY) return false;
+    var role = (q.role || '').toLowerCase();
+    return Object.keys(alias).some(function (k) { return role.indexOf(k) >= 0 && alias[k].test(t); });
+  });
+  return hits.length === 1 ? hits[0] : null;
 }
 
 function parseTime(t) {
@@ -936,6 +985,7 @@ function parseTime(t) {
 }
 
 function statusText(S, p, date, st) {
+  if (!activeOn(S, p, date)) return date < startOf(S, p) ? p.name + ' (' + p.role + ') has not started yet. Their first day is ' + labelDate(firstWorkDay(p)) + '.' : p.name + ' (' + p.role + ') left on ' + labelDate(p.end) + '.';
   var when = labelDate(date);
   var hol = st.hol ? ' (' + st.hol.name + ')' : '';
   var reported = S.exceptions.some(function (e) { return e.personId === p.id && e.date === date; });
@@ -984,14 +1034,16 @@ function mondayOf(s) { return addDays(s, -((dow(s) + 6) % 7)); }
    grey: true when the person is simply not working that day (regular day off, public holiday, not started). */
 function daySentence(S, p, date) {
   var n = p.name, st = dayStatus(S, p, date), hol = st.hol, pl = planFor(S, p, date);
-  var weekdayOk = date >= p.start && p.days.indexOf(dow(date)) >= 0;
+  var weekdayOk = worksOn(S, p, date), st0 = startOf(S, p), gone = !!(p.end && date > p.end);
   var pre = hol ? 'Public Holiday (' + hol.name + ') - ' : '';
   var head = n + ' ', body = '', kind = '', grey = false;
   var at = st.time ? fmt12(st.time) : '';
-  if (p.simple && date >= p.start) {
+  if (gone) {
+    head = n + ' has left (last day ' + longDate(p.end) + ')'; grey = true;
+  } else if (p.simple && date >= st0) {
     if (st.state === 'absent') { kind = 'red'; body = 'day off'; } else body = 'in';
-  } else if (date < p.start) {
-    head = n + ' not started yet (starts ' + longDate(p.start) + ')'; grey = true;
+  } else if (date < st0) {
+    head = n + ' not started yet (starts ' + longDate(st0) + ')'; grey = true;
   } else if (st.state === 'working') {
     if (hol) {
       var mode = modeOf(S, p, date);
@@ -1049,6 +1101,10 @@ function interpretOne(S, text, forced, noQuestion) {
   if (!p) return { type: 'unknown', msg: 'I could not tell which person this is about. Include a name or a role such as the driver.' };
   var dd = resolveDate(t);
   d = dd.date;
+  if (!activeOn(S, p, d)) {
+    var st1 = startOf(S, p);
+    return { type: 'info', msg: d < st1 ? p.name + ' has not started on ' + labelDate(d) + '. Their first day is ' + labelDate(firstWorkDay(p)) + '.' : p.name + ' left on ' + labelDate(p.end) + ', so nothing changes.' };
+  }
   if (/(didn't|did not|never|hasn't|has not|failed to|wasn't)\s+(come|turn up|show|arrive|here)/.test(t) || /\bno.?show\b/.test(t) && /\b(yesterday|was)\b/.test(t)) {
     return { type: 'update', kind: 'missed', personId: p.id, date: d, summary: p.name + ' did not come on ' + labelDate(d) };
   }
@@ -1348,7 +1404,7 @@ function applyResult(S, r) {
     r.list.forEach(function (x) {
       var fdt = r.forDate && r.forDate >= TODAY ? r.forDate : tomorrow();
       if (groceryDup(S, r.vendor, x, fdt)) return;
-      var gid = 'g' + (S.nextId++);
+      var gid = 'g' + uid();
       S.groceries.push({ id: gid, item: x, vendor: r.vendor || '', by: r.by || '', date: TODAY, forDate: fdt, done: false });
       ids.push(gid);
     });
@@ -1368,7 +1424,7 @@ function applyResult(S, r) {
     if (!S.otps) S.otps = [];
     var dup = S.otps.some(function (o) { return o.code === r.code && o.source === r.source && o.date === TODAY; });
     if (dup) return { kind: 'otp', noop: true };
-    var oid = 'o' + (S.nextId++);
+    var oid = 'o' + uid();
     S.otps.push({ id: oid, code: r.code, source: r.source, date: TODAY, at: r.at || '', by: r.by || '', used: false });
     return { kind: 'otp', otpId: oid };
   }
@@ -1381,7 +1437,7 @@ function applyResult(S, r) {
   }
   var prev = S.exceptions.filter(function (e) { return e.personId === r.personId && e.date === r.date; });
   S.exceptions = S.exceptions.filter(function (e) { return !(e.personId === r.personId && e.date === r.date); });
-  var id = 'e' + (S.nextId++);
+  var id = 'e' + uid();
   S.exceptions.push({ id: id, personId: r.personId, date: r.date, kind: r.kind, time: r.time || null });
   undo.addedId = id; undo.prevList = prev;
   return undo;
@@ -1412,13 +1468,25 @@ function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&
 function migrateState(o) {
   if (!o.holidayPlans) o.holidayPlans = {};
   if (!o.carBookings) o.carBookings = [];
-  o.people.forEach(function (p) { if (p.id === 'sangeetha' && p.role === 'House staff') p.role = 'Nanny'; });
-  simpleStaff().forEach(function (n) { if (!o.people.some(function (p) { return p.id === n.id; })) o.people.push(n); });
+  if (!o.attendance) o.attendance = {};
+  if (!o.holidays) o.holidays = [];
+  if (!o.messages) o.messages = [];
   if (!o.schoolHolidays) o.schoolHolidays = JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS));
   if (!o.otps) o.otps = [];
-  o.people.forEach(function (p) { if (p.id === 'deepak' && p.role === 'Therapist') p.role = 'Tutor'; });
   if (!o.groceries) o.groceries = [];
   o.groceries.forEach(function (g) { if (!g.forDate) g.forDate = addDays(g.date || TODAY, 1); });
+  /* A board saved by the old version keeps each weekly rule on the person: turn it into a first schedule. */
+  if (!o.schedules) {
+    o.schedules = [];
+    o.people.forEach(function (p) {
+      if (!p.days) return;
+      var r = { id: p.id + '-' + (p.start || '2026-10-01'), personId: p.id, from: p.start || '2026-10-01', days: p.days, time: p.time || null };
+      if (p.times && Object.keys(p.times).length) r.times = p.times;
+      o.schedules.push(r);
+    });
+  }
+  o.people.forEach(function (p) { delete p.days; delete p.time; delete p.times; delete p.start; });
+  delete o.nextId;
   return o;
 }
 function load() {
@@ -1430,36 +1498,92 @@ function save() {
   syncPush();
 }
 
-/* ---------- Shared board: one copy on the server, every device reads and writes it ---------- */
-var SYNC = { url: '', token: '', version: 0, status: 'off', busy: false, dirty: false, unsynced: false, timer: null, msg: '', last: '' };
+/* ---------- Shared board: tables on the server, every device reads and writes single rows ----------
+ * The board is turned into rows (one per person, schedule, day off, booking, item...).
+ * SYNC.base holds the rows as the server last had them. On save, only rows that differ from
+ * base are sent, so two people changing different things never get in each other's way.
+ * Other phones' changes arrive through /api/v2/changes?since=<seq>. */
+var SYNC = { url: '', token: '', seq: 0, base: null, status: 'off', busy: false, dirty: false, timer: null, last: '' };
+var COLLS = ['people', 'schedules', 'exceptions', 'holidays', 'schoolHolidays', 'holidayPlans', 'carBookings', 'attendance', 'groceries', 'otps', 'messages', 'settings'];
 function syncLoadCfg() {
   try {
     var q = /[?&]api=([^&#]+)/.exec(location.search);
     if (q && /^https:\/\//.test(decodeURIComponent(q[1]))) localStorage.setItem('hb-api', decodeURIComponent(q[1]));
     SYNC.url = localStorage.getItem('hb-api') || ''; SYNC.token = localStorage.getItem('hb-token') || '';
+    var m = JSON.parse(localStorage.getItem(LS + '-sync') || 'null');
+    if (m && m.url === SYNC.url && m.base) { SYNC.seq = m.seq || 0; SYNC.base = m.base; }
   } catch (e) { }
 }
+function syncSaveMeta() { try { localStorage.setItem(LS + '-sync', JSON.stringify({ url: SYNC.url, seq: SYNC.seq, base: SYNC.base })); } catch (e) { } }
 function syncOn() { return !!(SYNC.url && SYNC.token); }
-function syncReq(method, body) {
-  var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(function () { ctl.abort(); }, 10000) : null;
-  return fetch(SYNC.url.replace(/\/+$/, '') + '/api/state', { method: method, headers: { 'Authorization': 'Bearer ' + SYNC.token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined, signal: ctl ? ctl.signal : undefined })
+function syncReq(method, path, body) {
+  var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : null;
+  return fetch(SYNC.url.replace(/\/+$/, '') + path, { method: method, headers: { 'Authorization': 'Bearer ' + SYNC.token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined, signal: ctl ? ctl.signal : undefined, cache: 'no-store' })
     .then(function (res) { if (tm) clearTimeout(tm); return res.json().catch(function () { return {}; }).then(function (j) { return { status: res.status, json: j }; }); },
       function (e) { if (tm) clearTimeout(tm); throw e; });
 }
-function syncStrip(st) { var c = JSON.parse(JSON.stringify(st)); delete c.otpHide; delete c.lastBy; return c; }
-function syncAdopt(state, version) {
+
+/* Board <-> rows. Rows have no empty fields, so a row compares equal however it was made. */
+function tidy(o) {
+  if (Array.isArray(o)) return o.map(tidy);
+  if (!o || typeof o !== 'object') return o;
+  var r = {}; Object.keys(o).sort().forEach(function (k) { if (o[k] !== null && o[k] !== undefined) r[k] = tidy(o[k]); });
+  return r;
+}
+function toRows(st) {
+  var R = {}; COLLS.forEach(function (c) { R[c] = {}; });
+  var put = function (c, row) { row = tidy(row); R[c][row.id] = row; };
+  st.people.forEach(function (p, i) { put('people', { id: p.id, name: p.name, nameHi: p.nameHi, role: p.role, simple: !!p.simple, holidays: !!p.holidays, color: p.color, sort: i, end: p.end || null }); });
+  (st.schedules || []).forEach(function (x) { put('schedules', x); });
+  st.exceptions.forEach(function (x) { put('exceptions', x); });
+  (st.holidays || []).forEach(function (h) { put('holidays', { id: h.date, date: h.date, name: h.name }); });
+  (st.schoolHolidays || []).forEach(function (h) { put('schoolHolidays', { id: h.date, date: h.date, name: h.name }); });
+  Object.keys(st.holidayPlans || {}).forEach(function (k) { var a = k.split('|'), v = st.holidayPlans[k]; put('holidayPlans', { id: k, date: a[0], personId: a[1], mode: v.mode, subDate: v.subDate, note: v.note }); });
+  (st.carBookings || []).forEach(function (b) { put('carBookings', { id: b.date + '|' + b.slot + '|' + b.who, date: b.date, slot: b.slot, who: b.who }); });
+  Object.keys(st.attendance || {}).forEach(function (k) { var a = k.split('|'); put('attendance', { id: k, personId: a[0], date: a[1], value: st.attendance[k] }); });
+  (st.groceries || []).forEach(function (g) { var r = JSON.parse(JSON.stringify(g)); r.done = !!r.done; put('groceries', r); });
+  (st.otps || []).forEach(function (o) { var r = JSON.parse(JSON.stringify(o)); r.used = !!r.used; put('otps', r); });
+  (st.messages || []).forEach(function (m) { put('messages', m); });
+  if (st.holidayFrom) put('settings', { id: 'holidayFrom', value: st.holidayFrom });
+  return R;
+}
+function fromRows(R) {
+  var list = function (c) { var m = R[c] || {}; return Object.keys(m).sort().map(function (id) { return JSON.parse(JSON.stringify(m[id])); }); };
+  var o = { people: [], schedules: list('schedules'), exceptions: list('exceptions'), holidays: [], schoolHolidays: [], holidayPlans: {}, carBookings: [], attendance: {}, groceries: list('groceries'), otps: list('otps'), messages: list('messages') };
+  o.people = list('people').sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).map(function (p) { delete p.sort; return p; });
+  o.holidays = list('holidays').map(function (h) { return { date: h.date, name: h.name }; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  o.schoolHolidays = list('schoolHolidays').map(function (h) { return { date: h.date, name: h.name }; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  list('holidayPlans').forEach(function (r) { var v = { mode: r.mode }; if (r.subDate != null) v.subDate = r.subDate; if (r.note != null) v.note = r.note; o.holidayPlans[r.id] = v; });
+  o.carBookings = list('carBookings').map(function (r) { return { date: r.date, slot: r.slot, who: r.who }; });
+  list('attendance').forEach(function (r) { o.attendance[r.id] = r.value; });
+  var hf = (R.settings || {}).holidayFrom; o.holidayFrom = hf ? hf.value : '2026-10-01';
+  return migrateState(o);
+}
+function rowsFromServer(rows) { var R = {}; COLLS.forEach(function (c) { R[c] = {}; (rows[c] || []).forEach(function (r) { r = tidy(r); R[c][r.id] = r; }); }); return R; }
+function diffOps(base, cur) {
+  var ops = [];
+  COLLS.forEach(function (c) {
+    var b = base[c] || {}, n = cur[c] || {};
+    Object.keys(n).forEach(function (id) { if (!b[id] || JSON.stringify(b[id]) !== JSON.stringify(n[id])) ops.push({ c: c, op: 'put', row: n[id] }); });
+    Object.keys(b).forEach(function (id) { if (!n[id]) ops.push({ c: c, op: 'del', id: id }); });
+  });
+  return ops;
+}
+function pendingOps() { return SYNC.base ? diffOps(SYNC.base, toRows(S)) : []; }
+/* Put rows from the server into the board, keeping this phone's own settings and any unsent edits. */
+function syncAdoptRows(R, replace) {
   var keep = { otpHide: S.otpHide, lastBy: S.lastBy };
-  S = migrateState(state); S.otpHide = !!keep.otpHide; S.lastBy = keep.lastBy || '';
-  SYNC.version = version;
+  var cur = replace ? R : toRows(S);
+  S = fromRows(cur); S.otpHide = !!keep.otpHide; S.lastBy = keep.lastBy || '';
   try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) { }
   renderAll();
 }
 function syncLabel() {
-  return { off: 'Not shared', ok: 'Shared', offline: 'Offline: saved on this device only', auth: 'Wrong passphrase', conflict: 'Shared', wait: 'Saving…' }[SYNC.status] || '';
+  return { off: 'Not shared', ok: 'Shared', offline: 'Offline: saved on this device only', auth: 'Wrong passphrase', wait: 'Saving…', old: 'Server needs updating' }[SYNC.status] || '';
 }
 function syncSet(status) {
   SYNC.status = status;
-  if (status === 'ok' || status === 'conflict') SYNC.last = nowHM();
+  if (status === 'ok') SYNC.last = nowHM();
   var a = document.getElementById('sync-chip'), b = document.getElementById('ph-sync');
   if (a) a.textContent = syncLabel();
   if (b) b.textContent = syncLabel();
@@ -1474,28 +1598,59 @@ function syncPush() {
   if (!syncOn()) return;
   clearTimeout(SYNC.timer); SYNC.timer = setTimeout(syncDoPush, 250);
 }
+function syncFail(r) { syncSet(r && r.status === 401 ? 'auth' : r && r.status === 404 ? 'old' : 'offline'); }
 function syncDoPush() {
   SYNC.timer = null;
-  if (!syncOn()) return;
+  if (!syncOn() || !SYNC.base) return;
   if (SYNC.busy) { SYNC.dirty = true; return; }
+  var ops = pendingOps();
+  if (!ops.length) return;
   SYNC.busy = true; SYNC.dirty = false; syncSet('wait');
-  syncReq('PUT', { baseVersion: SYNC.version, state: syncStrip(S) }).then(function (r) {
-    if (r.status === 200) { SYNC.version = r.json.version; SYNC.unsynced = false; syncSet('ok'); }
-    else if (r.status === 409 && r.json.state) { SYNC.unsynced = false; syncAdopt(r.json.state, r.json.version); syncSet('conflict'); syncToast('Someone else changed the board at the same moment, so your last change was not saved. Please do it again.'); }
-    else if (r.status === 401) { SYNC.unsynced = true; syncSet('auth'); }
-    else { SYNC.unsynced = true; syncSet('offline'); }
-  }, function () { SYNC.unsynced = true; syncSet('offline'); }).then(function () { SYNC.busy = false; if (SYNC.dirty) syncDoPush(); });
+  var batch = ops.slice(0, 400);
+  syncReq('POST', '/api/v2/ops', { ops: batch }).then(function (r) {
+    if (r.status !== 200) return syncFail(r);
+    batch.forEach(function (o) { if (o.op === 'put') SYNC.base[o.c][o.row.id] = o.row; else delete SYNC.base[o.c][o.id]; });
+    syncSaveMeta(); syncSet('ok');
+    if (ops.length > batch.length) SYNC.dirty = true;
+  }, function () { syncSet('offline'); }).then(function () {
+    SYNC.busy = false;
+    if (SYNC.dirty) syncDoPush(); else syncPull(false, true);
+  });
 }
-function syncPull(force) {
+function syncFull() {
+  return syncReq('GET', '/api/v2/state').then(function (r) {
+    if (r.status !== 200) return syncFail(r);
+    var R = rowsFromServer(r.json.rows || {});
+    if (!Object.keys(R.people).length && S.people.length) {
+      /* An empty server: this phone's board becomes the shared board. */
+      SYNC.base = rowsFromServer({}); SYNC.seq = r.json.seq; syncSaveMeta(); syncSet('ok'); syncDoPush();
+      syncToast('Connected. This device\'s board is now the shared board.'); return 'pushed';
+    }
+    SYNC.base = R; SYNC.seq = r.json.seq; syncSaveMeta();
+    syncAdoptRows(JSON.parse(JSON.stringify(R)), true); syncSet('ok'); return 'adopted';
+  }, function () { syncSet('offline'); });
+}
+function syncPull(force, quiet) {
   if (!syncOn() || SYNC.busy || SYNC.timer) return Promise.resolve();
-  if (SYNC.unsynced) { syncDoPush(); return Promise.resolve(); }
+  if (!SYNC.base || force) return syncFull();
+  if (pendingOps().length) { syncDoPush(); return Promise.resolve(); }
   var a = document.activeElement;
-  if (!force && a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT') && (a.value || a.tagName === 'SELECT')) return Promise.resolve();
-  return syncReq('GET').then(function (r) {
-    if (r.status === 401) return syncSet('auth');
-    if (r.status !== 200) return syncSet('offline');
-    if (r.json.state === null) { SYNC.version = 0; syncSet('ok'); syncDoPush(); return; }
-    if (force || r.json.version !== SYNC.version) syncAdopt(r.json.state, r.json.version);
+  if (!quiet && a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT') && (a.value || a.tagName === 'SELECT')) return Promise.resolve();
+  return syncReq('GET', '/api/v2/changes?since=' + SYNC.seq).then(function (r) {
+    if (r.status !== 200) return syncFail(r);
+    var ch = r.json.changes || {}, any = false;
+    if (SYNC.busy || pendingOps().length) return; /* an edit happened meanwhile: send it first, fetch again next time */
+    var cur = toRows(S);
+    Object.keys(ch).forEach(function (c) {
+      if (!SYNC.base[c]) return;
+      ch[c].forEach(function (row) {
+        any = true;
+        if (row._deleted) { delete SYNC.base[c][row.id]; delete cur[c][row.id]; }
+        else { row = tidy(row); SYNC.base[c][row.id] = row; cur[c][row.id] = JSON.parse(JSON.stringify(row)); }
+      });
+    });
+    SYNC.seq = r.json.seq; syncSaveMeta();
+    if (any) syncAdoptRows(cur, true);
     syncSet('ok');
   }, function () { syncSet('offline'); });
 }
@@ -1504,19 +1659,19 @@ function syncConnect(box) {
   if (!/^https:\/\/.+/.test(url)) { err.textContent = 'The address should start with https://'; return; }
   if (!tok) { err.textContent = 'Enter the passphrase.'; return; }
   err.textContent = '';
-  SYNC.url = url; SYNC.token = tok;
-  syncReq('GET').then(function (r) {
+  SYNC.url = url; SYNC.token = tok; SYNC.base = null; SYNC.seq = 0;
+  syncReq('GET', '/api/v2/changes?since=0').then(function (r) {
     if (r.status === 401) { SYNC.token = ''; err.textContent = 'That passphrase was not accepted.'; return; }
+    if (r.status === 404) { SYNC.token = ''; err.textContent = 'That server has not been updated to the new Home Board yet.'; return; }
     if (r.status !== 200) { SYNC.token = ''; err.textContent = 'Could not use that address (error ' + r.status + ').'; return; }
     try { localStorage.setItem('hb-api', url); localStorage.setItem('hb-token', tok); } catch (e) { }
-    if (r.json.state === null) { SYNC.version = 0; syncSet('ok'); syncDoPush(); syncToast('Connected. This device\'s board is now the shared board.'); renderSyncBits(); }
-    else { syncAdopt(r.json.state, r.json.version); syncSet('ok'); syncToast('Connected. This device now shows the shared board.'); }
+    syncFull().then(function (how) { if (how === 'adopted') syncToast('Connected. This device now shows the shared board.'); renderSyncBits(); });
     startSyncPolling();
   }, function () { SYNC.token = ''; err.textContent = 'Could not reach that address.'; });
 }
 function syncDisconnect() {
-  try { localStorage.removeItem('hb-token'); } catch (e) { }
-  SYNC.token = ''; SYNC.status = 'off'; syncSet('off'); renderSyncBits();
+  try { localStorage.removeItem('hb-token'); localStorage.removeItem(LS + '-sync'); } catch (e) { }
+  SYNC.token = ''; SYNC.base = null; SYNC.seq = 0; SYNC.status = 'off'; syncSet('off'); renderSyncBits();
 }
 function syncFormHTML() {
   var on = syncOn();
@@ -1538,7 +1693,7 @@ function startSyncPolling() {
   document.addEventListener('visibilitychange', function () { if (!document.hidden) syncPull(false); });
   window.addEventListener('online', function () { syncPull(false); });
 }
-function pc(p) { return 'var(--p' + p.color + ')'; }
+function pc(p) { return 'var(--p' + (((+p.color || 1) - 1) % 8 + 1) + ')'; }
 
 function pillFor(st) {
   var cls = 'pill', txt = st.label;
@@ -1566,7 +1721,7 @@ function setTab(name) {
 
 function renderToday() {
   var h = '<div class="card"><h2>Today</h2><div class="list">';
-  S.people.forEach(function (p) {
+  S.people.filter(function (p) { return listedOn(S, p, TODAY); }).forEach(function (p) {
     var a = attendanceOf(S, p, TODAY), st = a.st;
     var note;
     if (a.confirmed) note = a.came ? 'Confirmed: came' : 'Confirmed: did not come';
@@ -1632,7 +1787,7 @@ function renderMessage() {
 
 function nowStr() { try { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
 function logMsg(text, kind, detail, undo) {
-  var m = { id: 'm' + (S.nextId++), at: nowStr(), text: text, kind: kind, detail: detail, undo: undo || null };
+  var m = { id: 'm' + uid(), at: nowStr(), text: text, kind: kind, detail: detail, undo: undo || null };
   S.messages.push(m); save(); return m;
 }
 
@@ -1705,7 +1860,7 @@ function doDiscard() {
 
 /* ---------- E-ink display (800 x 480, black and white only) ---------- */
 function einkStaff() {
-  var st = S.people.filter(function (p) { return p.simple; });
+  var st = staffPeople(TODAY);
   if (!st.length) return '';
   return '<div class="ek-staff">' + st.map(function (p) { var off = dayStatus(S, p, TODAY).state !== 'working'; return '<span class="' + (off ? 'off' : '') + '">' + esc(p.name) + ' ' + (off ? 'OFF' : 'IN') + '</span>'; }).join('') + '</div>';
 }
@@ -1747,7 +1902,7 @@ function einkHTML() {
   if (!rows.length) for (var i = 0; i < 9; i++) groc += '<div class="ek-grow blank"></div>';
   groc += '</div>';
   return '<div class="eink"><div class="ek-head"><div class="ek-date">' + esc(longDate(TODAY).toUpperCase()) + '</div><div class="ek-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + '</div></div>' +
-    '<div class="ek-body"><div class="ek-left">' + trackedPeople().map(einkPerson).join('') + einkStaff() + otp + '</div>' + groc + '</div></div>';
+    '<div class="ek-body"><div class="ek-left">' + trackedPeople(TODAY).map(einkPerson).join('') + einkStaff() + otp + '</div>' + groc + '</div></div>';
 }
 function fitEink() {
   var fr = document.querySelector('.eink-frame'); if (!fr) return;
@@ -1768,7 +1923,8 @@ window.addEventListener('resize', fitEink);
 /* ---------- Phone display: big, bold, with one-tap updates ---------- */
 var phEdit = null, phShop = 'Blinkit', phDay = 'tomorrow', phErr = '', phView = 'today';
 function phDate() { return phView === 'tomorrow' ? tomorrow() : TODAY; }
-var PH_ROLE_ICON = { driver: '🚗', tutor: '📚', therapist: '🩺', 'house staff': '🏠', nanny: '👩', chef: '🍳', cleaner: '🧹' };
+var PH_ROLE_ICON = { driver: '🚗', tutor: '📚', therapist: '🩺', 'house staff': '🏠', nanny: '👩', chef: '🍳', cook: '🍳', cleaner: '🧹' };
+function roleIcon(role) { var r = (role || '').toLowerCase(), k = Object.keys(PH_ROLE_ICON).filter(function (x) { return r.indexOf(x) >= 0; })[0]; return k ? PH_ROLE_ICON[k] : '👤'; }
 function phCar() {
   var date = phDate(), drv = carDriver(S, date), rows = '';
   CAR_SLOTS.forEach(function (sl) {
@@ -1803,7 +1959,7 @@ function phPerson(p) {
     if (reported) acts += '<button class="ph-btn" data-ph-restore="' + p.id + '">Back to normal</button>';
     acts += '</div>';
   }
-  return '<section class="ph-card ph-person ' + cls + '"><div class="ph-prow"><div class="ph-who"><div class="ph-ico" aria-hidden="true">' + (PH_ROLE_ICON[p.role.toLowerCase()] || '👤') + '</div><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + esc(p.role) + '</div></div></div>' +
+  return '<section class="ph-card ph-person ' + cls + '"><div class="ph-prow"><div class="ph-who"><div class="ph-ico" aria-hidden="true">' + roleIcon(p.role) + '</div><div><div class="ph-name">' + esc(p.name) + '</div><div class="ph-role">' + esc(p.role) + '</div></div></div>' +
     '<div class="ph-status"><span class="ph-sico" aria-hidden="true">' + ico + '</span><div class="ph-tcol"><span class="ph-big' + (small ? ' sm' : '') + '">' + esc(big) + '</span>' + (sub ? '<div class="ph-sub">' + esc(sub) + '</div>' : '') + '</div></div></div>' + acts + '</section>';
 }
 function phSchool() {
@@ -1820,8 +1976,8 @@ function renderPhone() {
   var h = '<div class="ph"><div class="ph-head"><div class="ph-titlebox"><h2 class="ph-title"><span class="ph-lab">' + (tom ? 'Tomorrow:' : 'Today:') + '</span> ' + DAYFULL[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MONFULL[dt.getUTCMonth()] + '</h2><div class="ph-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + ' · <span id="ph-sync">' + esc(syncLabel()) + '</span></div></div>' +
     '<button class="ph-nav" data-ph-view="' + (tom ? 'today' : 'tomorrow') + '" aria-label="' + (tom ? 'Back to today' : 'See info for tomorrow') + '"><span class="ph-nav-lab">' + (tom ? 'Today' : 'Tomorrow') + '</span><span class="ph-nav-arr" aria-hidden="true">' + (tom ? '←' : '→') + '</span></button></div>';
   h += phSchool();
-  trackedPeople().forEach(function (p) { h += phPerson(p); });
-  S.people.filter(function (p) { return p.simple; }).forEach(function (p) { h += phStaff(p); });
+  trackedPeople(vd).forEach(function (p) { h += phPerson(p); });
+  staffPeople(vd).forEach(function (p) { h += phStaff(p); });
   h += phCar();
 
   var open = S.otps.filter(function (o) { return !o.used; });
@@ -2003,7 +2159,9 @@ function renderCount() {
   var notes = '';
   if (to > TODAY) notes += '<div class="note">Counted up to today (' + labelDate(TODAY) + '). Future days are not counted.</div>';
   if (from < S.holidayFrom) notes += '<div class="note">Public holidays are only entered from ' + labelDate(S.holidayFrom) + ' ' + S.holidayFrom.slice(0, 4) + '. Earlier holidays are not removed, so this count may be too high.</div>';
-  if (from < p.start) notes += '<div class="note">' + esc(p.name) + '\'s schedule starts on ' + labelDate(p.start) + ' ' + p.start.slice(0, 4) + '. Earlier days are not counted.</div>';
+  var pst = startOf(S, p);
+  if (from < pst) notes += '<div class="note">' + esc(p.name) + '\'s schedule starts on ' + labelDate(pst) + ' ' + pst.slice(0, 4) + '. Earlier days are not counted.</div>';
+  if (p.end && to > p.end) notes += '<div class="note">' + esc(p.name) + '\'s last day was ' + labelDate(p.end) + ' ' + p.end.slice(0, 4) + '. Later days are not counted as expected.</div>';
   var rows = [
     ['Days in range', c.calendarDays, false],
     ['Came, confirmed', c.confirmedCame, false],
@@ -2023,15 +2181,146 @@ function renderCount() {
   $('c-result').innerHTML = h;
 }
 
+/* ---------- People: add, change a schedule from a date, set a leaving date ---------- */
+var peEdit = null, peDelArm = false, peErr = '';
+var PE_ORDER = [1, 2, 3, 4, 5, 6, 0];
+function ruleText(r, simple) {
+  if (!r) return '';
+  var d = r.days || [];
+  var days = d.length === 7 ? 'Every day' : PE_ORDER.filter(function (n) { return d.indexOf(n) >= 0; }).map(function (n) { return DAYN[n]; }).join(', ') || 'No days';
+  return simple ? days : (r.times ? describeRule(r) : days + (r.time ? ' at ' + fmt12(r.time) : ''));
+}
+function personState(p) {
+  var st = startOf(S, p);
+  if (p.end && p.end < TODAY) return '<span class="pill">Left ' + esc(labelDate(p.end)) + '</span>';
+  if (st > TODAY) return '<span class="pill warn">Starts ' + esc(labelDate(st)) + '</span>';
+  if (p.end) return '<span class="pill warn">Last day ' + esc(labelDate(p.end)) + '</span>';
+  return '<span class="pill good">Current</span>';
+}
 function renderPeople() {
-  var order = [1, 2, 3, 4, 5, 6, 0];
-  var h = '<thead><tr><th>Person</th><th>Days</th><th>Usual time</th><th>Holidays</th><th>Starts</th></tr></thead><tbody>';
-  S.people.forEach(function (p) {
-    h += '<tr><td><span class="dot" style="--pc:' + pc(p) + ';display:inline-block;margin-right:6px"></span><b>' + esc(p.name) + '</b><br><span class="muted small">' + esc(p.role) + '</span></td>' +
-      '<td><span class="days">' + order.map(function (n) { return '<span class="' + (p.days.indexOf(n) >= 0 ? 'on' : '') + '">' + DAYN[n].slice(0, 1) + '</span>'; }).join('') + '</span></td>' +
-      '<td class="mono">' + (p.simple ? 'Days off only' : esc(describeTimes(p))) + '</td><td>' + (p.simple ? 'n/a' : p.holidays ? 'Off' : 'Works') + '</td><td class="mono">' + labelDate(p.start) + '</td></tr>';
+  var box = $('people-list'); if (!box) return;
+  box.innerHTML = S.people.map(function (p) {
+    var vers = schedulesOf(S, p), cur = currentRule(S, p), later = vers.filter(function (v) { return v.from > TODAY && v !== cur; });
+    return '<div class="pe-row"><span class="dot" style="--pc:' + pc(p) + ';align-self:center"></span>' +
+      '<span class="grow"><b>' + esc(p.name) + '</b>' + (p.nameHi ? ' <span class="muted">' + esc(p.nameHi) + '</span>' : '') + ' <span class="muted small">' + esc(p.role || '') + (p.simple ? ' · days off only' : '') + '</span>' +
+      '<br><span class="small">' + esc(ruleText(cur, p.simple)) + (!p.simple && cur ? (p.holidays ? ' · public holidays off' : ' · works public holidays') : '') + '</span>' +
+      later.map(function (v) { return '<br><span class="pe-ver">From <b>' + esc(labelDate(v.from)) + '</b>: ' + esc(ruleText(v, p.simple)) + '</span>'; }).join('') + '</span>' +
+      personState(p) + '<button class="btn sm" data-pe-edit="' + esc(p.id) + '">Edit</button></div>';
+  }).join('') || '<p class="muted">Nobody yet.</p>';
+}
+function openPersonForm(id) {
+  peEdit = id; peDelArm = false; peErr = '';
+  var f = $('people-form'), isNew = id === 'new', p = isNew ? { name: '', nameHi: '', role: '', simple: false, holidays: true } : personById(S, id);
+  if (!p) return;
+  var r = isNew ? { days: [1, 2, 3, 4, 5], time: '09:00' } : (ruleOn(S, p, TODAY) || currentRule(S, p) || { days: [], time: null });
+  var fromVal = isNew ? addDays(TODAY, 1) : (startOf(S, p) > TODAY ? startOf(S, p) : TODAY);
+  var h = '<div class="row between"><h2>' + (isNew ? 'Add a person' : 'Edit ' + esc(p.name)) + '</h2><button class="btn sm" data-pe-cancel="1">Close</button></div>' +
+    '<div class="otp-form">' +
+    '<div><label for="pe-name">Name</label><input type="text" id="pe-name" autocomplete="off" value="' + esc(p.name) + '"></div>' +
+    '<div><label for="pe-hi">Name in Hindi (staff screen)</label><input type="text" id="pe-hi" autocomplete="off" lang="hi" value="' + esc(p.nameHi || '') + '" placeholder="e.g. जीत"></div>' +
+    '<div><label for="pe-role">Role</label><input type="text" id="pe-role" list="pe-roles" autocomplete="off" value="' + esc(p.role || '') + '" placeholder="e.g. Tutor"><datalist id="pe-roles">' +
+      ['Driver', 'Tutor', 'ABA tutor', 'Nanny', 'House staff', 'Chef', 'Cleaner'].map(function (x) { return '<option value="' + x + '">'; }).join('') + '</datalist></div>' +
+    '<div><label for="pe-kind">Tracked by</label><select id="pe-kind"><option value="timed"' + (p.simple ? '' : ' selected') + '>Days and arrival times</option><option value="simple"' + (p.simple ? ' selected' : '') + '>Days off only</option></select></div>' +
+    '</div>' +
+    '<div class="row"><label style="margin:0;display:flex;gap:8px;align-items:center;color:inherit;font-size:14px"><input type="checkbox" id="pe-hol"' + (p.holidays ? ' checked' : '') + '> Takes public holidays off</label></div>' +
+    '<h3 style="margin:6px 0 0">' + (isNew ? 'Schedule' : 'Schedule change') + '</h3>' +
+    '<div class="otp-form"><div><label for="pe-from">' + (isNew ? 'Starts on' : 'New schedule applies from') + '</label><input type="date" id="pe-from" value="' + fromVal + '"></div>' +
+    '<div><label for="pe-time">Usual time</label><input type="time" id="pe-time" value="' + esc(r.time || '') + '"></div></div>' +
+    '<div><label>Days (a time under a day overrides the usual time)</label><div class="pe-days">' + PE_ORDER.map(function (n) {
+      var on = (r.days || []).indexOf(n) >= 0, t = r.times && r.times[n] ? r.times[n] : '';
+      return '<div class="pe-day"><button class="btn" data-pe-day="' + n + '" aria-pressed="' + on + '">' + DAYN[n] + '</button><input type="time" data-pe-dt="' + n + '" value="' + esc(t) + '" aria-label="' + DAYFULL[n] + ' time"></div>';
+    }).join('') + '</div></div>' +
+    '<div class="otp-form"><div><label for="pe-end">Last day (if leaving)</label><input type="date" id="pe-end" value="' + esc(p.end || '') + '"></div><div></div></div>';
+  if (!isNew) {
+    var vers = schedulesOf(S, p);
+    h += '<div><label>Schedule history</label><div class="list">' + vers.map(function (v) {
+      return '<div><span class="grow small">From <b>' + esc(labelDate(v.from) + ' ' + v.from.slice(0, 4)) + '</b>: ' + esc(ruleText(v, p.simple)) + '</span>' +
+        (vers.length > 1 ? '<button class="btn sm" data-pe-delver="' + esc(v.id) + '" aria-label="Remove this version">Remove</button>' : '') + '</div>';
+    }).join('') + '</div></div>';
+  }
+  h += '<div class="row"><button class="btn primary" data-pe-save="1">Save</button>' + (isNew ? '' : '<button class="btn" data-pe-del="1">Delete ' + esc(p.name) + '</button>') +
+    '<span class="small" id="pe-err" style="color:var(--bad)"></span></div>';
+  f.innerHTML = h; f.hidden = false;
+  peSyncKind();
+  try { f.scrollIntoView({ block: 'start' }); } catch (e) { }
+}
+function peSyncKind() {
+  var simple = $('pe-kind').value === 'simple';
+  $('pe-time').closest('div').style.visibility = simple ? 'hidden' : '';
+  document.querySelectorAll('[data-pe-dt]').forEach(function (i) { i.style.display = simple ? 'none' : ''; });
+  $('pe-hol').closest('.row').style.display = simple ? 'none' : '';
+}
+function closePersonForm() { peEdit = null; var f = $('people-form'); f.hidden = true; f.innerHTML = ''; }
+function slugId(name) {
+  var base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'person', id = base, i = 2;
+  while (personById(S, id)) id = base + '-' + (i++);
+  return id;
+}
+function sameRule(a, b) {
+  if (!a || !b) return false;
+  var n = function (r) { return JSON.stringify({ d: (r.days || []).slice().sort(), t: r.time || null, x: tidy(r.times || null) }); };
+  return n(a) === n(b);
+}
+function savePerson() {
+  var err = function (m) { $('pe-err').textContent = m; };
+  var isNew = peEdit === 'new', name = $('pe-name').value.trim(), role = $('pe-role').value.trim(), simple = $('pe-kind').value === 'simple';
+  var from = $('pe-from').value, end = $('pe-end').value, time = $('pe-time').value;
+  var days = [], times = {};
+  document.querySelectorAll('[data-pe-day]').forEach(function (b) { if (b.getAttribute('aria-pressed') === 'true') days.push(+b.dataset.peDay); });
+  if (!name) return err('Enter a name.');
+  if (!S.people.every(function (q) { return q.id === peEdit || q.name.toLowerCase() !== name.toLowerCase(); })) return err('Someone already has that name.');
+  if (!from) return err('Pick the date the schedule starts.');
+  if (!days.length) return err('Pick at least one day.');
+  if (!simple && !time) return err('Enter the usual time.');
+  if (end && end < from && isNew) return err('The last day is before the start.');
+  if (!simple) days.forEach(function (n) { var i = document.querySelector('[data-pe-dt="' + n + '"]'); if (i && i.value && i.value !== time) times[n] = i.value; });
+  var rule = { days: days.sort(), time: simple ? null : time };
+  if (Object.keys(times).length) rule.times = times;
+  var p;
+  if (isNew) {
+    p = { id: slugId(name), color: S.people.reduce(function (m, q) { return Math.max(m, +q.color || 0); }, 0) + 1 };
+    S.people.push(p);
+  } else p = personById(S, peEdit);
+  p.name = name; p.role = role; p.simple = simple; p.holidays = simple ? false : $('pe-hol').checked;
+  var hi = $('pe-hi').value.trim(); if (hi) p.nameHi = hi; else delete p.nameHi;
+  if (end) p.end = end; else delete p.end;
+  S.schedules = S.schedules || [];
+  if (isNew || !sameRule(ruleOn(S, p, from), rule)) {
+    var same = S.schedules.filter(function (v) { return v.personId === p.id && v.from === from; })[0];
+    if (same) { same.days = rule.days; same.time = rule.time; if (rule.times) same.times = rule.times; else delete same.times; }
+    else S.schedules.push(Object.assign({ id: p.id + '-' + from, personId: p.id, from: from }, rule));
+  }
+  save(); closePersonForm(); $('c-person').innerHTML = ''; renderAll();
+  syncToast(isNew ? name + ' added. First day: ' + labelDate(firstWorkDay(p)) + '.' : name + ' saved.');
+}
+function firstWorkDay(p) { var d = startOf(S, p), g = 0; while (g++ < 60 && !worksOn(S, p, d)) d = addDays(d, 1); return d; }
+function deletePerson(btn) {
+  var p = personById(S, peEdit); if (!p) return;
+  if (!peDelArm) { peDelArm = true; btn.textContent = 'Tap again: delete ' + p.name + ' and all their entries'; return; }
+  var id = p.id;
+  S.people = S.people.filter(function (q) { return q.id !== id; });
+  S.schedules = S.schedules.filter(function (v) { return v.personId !== id; });
+  S.exceptions = S.exceptions.filter(function (e) { return e.personId !== id; });
+  Object.keys(S.attendance).forEach(function (k) { if (k.split('|')[0] === id) delete S.attendance[k]; });
+  Object.keys(S.holidayPlans).forEach(function (k) { if (k.split('|')[1] === id) delete S.holidayPlans[k]; });
+  save(); closePersonForm(); $('c-person').innerHTML = ''; renderAll();
+}
+function initPeople() {
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    var d = t.dataset;
+    if (d.peNew) return openPersonForm('new');
+    if (d.peEdit) return openPersonForm(d.peEdit);
+    if (d.peCancel) return closePersonForm();
+    if (d.peDay) { t.setAttribute('aria-pressed', t.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); return; }
+    if (d.peSave) return savePerson();
+    if (d.peDel) return deletePerson(t);
+    if (d.peDelver) {
+      S.schedules = S.schedules.filter(function (v) { return v.id !== d.peDelver; });
+      save(); renderAll(); return openPersonForm(peEdit);
+    }
   });
-  $('people-table').innerHTML = h + '</tbody>';
+  document.addEventListener('change', function (e) { if (e.target && e.target.id === 'pe-kind') peSyncKind(); });
 }
 
 var HOL_MODES = [['off', 'Not working'], ['working', 'Working'], ['sub', 'Working, substitute day off'], ['pay', 'Working, extra day-off pay']];
@@ -2066,7 +2355,7 @@ function renderCar() {
   $('p-car').innerHTML = h;
 }
 function renderStaffOff() {
-  var sel = $('so-person'), staff = S.people.filter(function (p) { return p.simple; });
+  var sel = $('so-person'), staff = S.people.filter(function (p) { return p.simple && (!p.end || p.end >= TODAY); });
   if (sel.options.length !== staff.length) sel.innerHTML = staff.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('');
   if (!$('so-from').value) { $('so-from').value = TODAY; $('so-to').value = TODAY; }
   var ls = staffLeaves(S);
@@ -2079,15 +2368,15 @@ function renderHolidays() {
   renderStaffOff();
   renderSchoolList();
   $('hol-note').textContent = 'Sample dates to check against the official list, entered from ' + labelDate(S.holidayFrom) + ' ' + S.holidayFrom.slice(0, 4) + ' only. Pick what happens for each person. Anything except "Not working" counts as a working day. The note box is for anything else.';
-  var h = '<thead><tr><th>Holiday</th>' + trackedPeople().map(function (p) {
+  var h = '<thead><tr><th>Holiday</th>' + timedPeople().map(function (p) {
     return '<th><span class="dot" style="--pc:' + pc(p) + ';display:inline-block;margin-right:6px"></span>' + esc(p.name) + '<br><span class="small muted" style="font-weight:400">' + esc(p.role) + '</span></th>';
   }).join('') + '</tr></thead><tbody>';
   S.holidays.forEach(function (x) {
     var when = x.date < TODAY ? 'Past' : (x.date === TODAY ? 'Today' : '');
     h += '<tr><td><b>' + esc(x.name) + '</b><br><span class="mono small muted">' + esc(labelDate(x.date)) + '</span>' + (when ? '<br><span class="small muted">' + when + '</span>' : '') + '</td>';
-    trackedPeople().forEach(function (p) {
+    timedPeople().forEach(function (p) {
       var key = x.date + '|' + p.id, id = 'hp_' + x.date + '_' + p.id;
-      var weekdayOk = x.date >= p.start && p.days.indexOf(dow(x.date)) >= 0;
+      var weekdayOk = worksOn(S, p, x.date);
       var lab = esc(p.name + ' (' + p.role + ')');
       if (!weekdayOk) { h += '<td class="muted small" data-label="' + lab + '">No work that day (' + DAYFULL[dow(x.date)] + ')</td>'; return; }
       var pl = S.holidayPlans[key] || {}, mode = modeOf(S, p, x.date);
@@ -2114,8 +2403,8 @@ function renderHolidays() {
     ['of which extra day-off pay', function (t) { return t.pay; }],
     ['No work that day anyway', function (t) { return t.noWork; }]
   ];
-  var tallies = trackedPeople().map(function (p) { return holidayTally(S, p); });
-  var th = '<thead><tr><th>Tally</th>' + trackedPeople().map(function (p) { return '<th style="text-align:right">' + esc(p.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
+  var tallies = timedPeople().map(function (p) { return holidayTally(S, p); });
+  var th = '<thead><tr><th>Tally</th>' + timedPeople().map(function (p) { return '<th style="text-align:right">' + esc(p.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
   rows.forEach(function (r) {
     th += '<tr><td>' + r[0] + '</td>' + tallies.map(function (t) { return '<td class="num">' + r[1](t) + '</td>'; }).join('') + '</tr>';
   });
@@ -2242,9 +2531,10 @@ function init() {
     if (d.hpn) return setPlan(d.hpn, { note: t.value.trim() });
   });
   ['c-person', 'c-from', 'c-to'].forEach(function (id) { $(id).addEventListener('change', renderCount); });
+  initPeople();
   renderAll();
   renderSyncBits();
-  if (syncOn()) { syncSet('wait'); syncPull(true); startSyncPolling(); }
+  if (syncOn()) { syncSet('wait'); syncPull(false); startSyncPolling(); }
   var narrow = false; try { narrow = !!(window.matchMedia && window.matchMedia('(max-width: 700px)').matches); } catch (e) { }
   if (narrow && !PHONE_ONLY) setTab('phone');
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMore(); });

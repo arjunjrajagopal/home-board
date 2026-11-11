@@ -4,6 +4,10 @@ A prototype household board: staff schedules and attendance, a repository of the
 
 Single file, no build step. Open `index.html`, or visit the GitHub Pages site.
 
-Everything is stored in the visitor's own browser (localStorage). Nothing is shared between devices and nothing is connected to WhatsApp yet. Do not enter real OTPs or personal details.
+With a server connected (People, then Shared board), the board is kept in tables on the Home Board Cloudflare Worker (see `home-board-api`), saved one change at a time. Without one, it stays in this browser only. Nothing is connected to WhatsApp yet.
+
+People and their schedules are edited on the People screen. A schedule change applies from a chosen date, so past days keep the schedule they had.
+
+`staff.html` is the read-only Hindi screen for house staff. It is opened once from a link of the form `staff.html#api=<server address>&k=<staff key>`.
 
 Add `?today=YYYY-MM-DD` to the address to pretend it is another day.

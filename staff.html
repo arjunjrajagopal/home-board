@@ -93,15 +93,17 @@ var LS = 'hb-staff-v1';
 /* ---------- Words. Names shown in Devanagari when known, otherwise as typed. ---------- */
 var HI_NAMES = { kamal: 'कमल', deepak: 'दीपक', suhani: 'सुहानी', jassie: 'जस्सी', sangeetha: 'संगीता',
   alok: 'आलोक', malini: 'मालिनी', makku: 'मक्कू', arjun: 'अर्जुन' };
-var HI_ROLES = { 'driver': 'ड्राइवर', 'tutor': 'टीचर', 'house staff': 'घर का काम', 'nanny': 'आया', 'cook': 'खाना', 'chef': 'खाना', 'cleaner': 'सफ़ाई' };
-var ROLE_ICON = { 'driver': '🚗', 'tutor': '📚', 'house staff': '🏠', 'nanny': '👶', 'cook': '🍳', 'chef': '🍳', 'cleaner': '🧹' };
+var HI_ROLES = { 'driver': 'ड्राइवर', 'tutor': 'टीचर', 'therapist': 'थेरेपिस्ट', 'house staff': 'घर का काम', 'nanny': 'आया', 'cook': 'खाना', 'chef': 'खाना', 'cleaner': 'सफ़ाई' };
+var ROLE_ICON = { 'driver': '🚗', 'tutor': '📚', 'therapist': '📚', 'house staff': '🏠', 'nanny': '👶', 'cook': '🍳', 'chef': '🍳', 'cleaner': '🧹' };
 var CAR_USERS = ['alok', 'malini', 'makku', 'arjun'];
 var SLOTS = [{ id: 'morning', hi: 'सुबह', em: '🌅' }, { id: 'afternoon', hi: 'दोपहर', em: '☀️' }, { id: 'evening', hi: 'शाम', em: '🌇' }, { id: 'night', hi: 'रात', em: '🌙' }];
 var DAY_HI = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
 var MON_HI = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
 
-function hiName(id, name) { return HI_NAMES[id] || name || id; }
-function roleKey(r) { return String(r || '').toLowerCase(); }
+function hiName(id, name, nameHi) { return nameHi || HI_NAMES[id] || name || id; }
+/* Role words, so "ABA tutor" shows as "ABA टीचर" with the tutor icon. */
+function roleKey(r) { r = String(r || '').toLowerCase(); return Object.keys(ROLE_ICON).filter(function (k) { return r.indexOf(k) >= 0; })[0] || r; }
+function roleHi(r) { var k = roleKey(r); return HI_ROLES[k] ? String(r || '').replace(new RegExp(k, 'i'), HI_ROLES[k]) : (r || ''); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
 /* ---------- Dates (same rules as the main board) ---------- */
@@ -129,25 +131,36 @@ function time12(t) {
 /* ---------- Status logic (mirrors dayStatusBase in index.html) ---------- */
 function holidayOn(S, date) { return (S.holidays || []).filter(function (h) { return h.date === date; })[0] || null; }
 function schoolOn(S, date) { return (S.schoolHolidays || []).filter(function (h) { return h.date === date; })[0] || null; }
+function plansMap(S) {
+  if (Array.isArray(S.holidayPlans)) { var m = {}; S.holidayPlans.forEach(function (x) { m[x.date + '|' + x.personId] = { mode: x.mode }; }); S.holidayPlans = m; }
+  return S.holidayPlans || {};
+}
 function modeOf(S, p, date) {
-  var pl = S.holidayPlans && S.holidayPlans[date + '|' + p.id];
+  var pl = plansMap(S)[date + '|' + p.id];
   return pl && pl.mode ? pl.mode : (p.holidays ? 'off' : 'working');
 }
-function timeFor(p, date) { var t = p.times && p.times[dow(date)]; return t || p.time || null; }
+/* Each person has dated schedule versions; the one in force is the latest starting on or before the date. */
+function schedulesOf(S, p) { return (S.schedules || []).filter(function (x) { return x.personId === p.id; }).sort(function (a, b) { return a.from < b.from ? -1 : 1; }); }
+function startOf(S, p) { var l = schedulesOf(S, p); return l.length ? l[0].from : '9999-12-31'; }
+function ruleOn(S, p, date) { if (p.end && date > p.end) return null; var r = null; schedulesOf(S, p).forEach(function (x) { if (x.from <= date) r = x; }); return r; }
+function activeOn(S, p, date) { return startOf(S, p) <= date && (!p.end || date <= p.end); }
+function listedOn(S, p, date) { var st = startOf(S, p); return activeOn(S, p, date) || (st > date && Math.round((pd(st) - pd(date)) / 864e5) <= 7); }
+function firstWorkDay(S, p) { var d = startOf(S, p), g = 0; while (g++ < 60 && !(ruleOn(S, p, d) && ruleOn(S, p, d).days.indexOf(dow(d)) >= 0)) d = addDays(d, 1); return d; }
+function timeFor(S, p, date) { var r = ruleOn(S, p, date); return r ? ((r.times && r.times[dow(date)]) || r.time || null) : null; }
 function dayStatus(S, p, date) {
   var hol = holidayOn(S, date);
   var ex = (S.exceptions || []).filter(function (e) { return e.personId === p.id && e.date === date; });
   var absent = ex.filter(function (e) { return e.kind === 'absent'; })[0];
   var extra = ex.filter(function (e) { return e.kind === 'extra'; })[0];
   var late = ex.filter(function (e) { return e.kind === 'late'; })[0];
-  var weekdayOk = date >= (p.start || '0000') && (p.days || []).indexOf(dow(date)) >= 0;
+  var r = ruleOn(S, p, date), weekdayOk = !!r && (r.days || []).indexOf(dow(date)) >= 0;
   var holidayOff = weekdayOk && !!hol && modeOf(S, p, date) === 'off';
   var scheduled = weekdayOk && !holidayOff;
   if (absent) return { state: 'absent' };
-  if (extra && !scheduled) return { state: 'extra', time: extra.time || timeFor(p, date) };
+  if (extra && !scheduled) return { state: 'extra', time: extra.time || timeFor(S, p, date) };
   if (!scheduled) return { state: 'off', holiday: holidayOff };
   if (late) return { state: 'late', time: late.time };
-  return { state: 'working', time: timeFor(p, date) };
+  return { state: 'working', time: timeFor(S, p, date) };
 }
 function isOut(st) { return st.state === 'absent' || st.state === 'off'; }
 /* For staff tracked by days off: the first day they are back. */
@@ -205,9 +218,13 @@ function fetchData() {
 var SPEECH = {}; /* card id -> Hindi sentence to read aloud */
 
 function personRow(S, p, date, isStaff) {
-  var st = dayStatus(S, p, date), rk = roleKey(p.role), nm = hiName(p.id, p.name), cls, mark, s1, s2 = '', say;
-  var role = HI_ROLES[rk] || p.role || '';
-  if (isOut(st)) {
+  var st = dayStatus(S, p, date), rk = roleKey(p.role), nm = hiName(p.id, p.name, p.nameHi), cls, mark, s1, s2 = '', say;
+  var role = roleHi(p.role);
+  if (startOf(S, p) > date) {
+    var fw = firstWorkDay(S, p);
+    cls = 'off'; mark = '🆕'; s1 = 'नए हैं'; s2 = longHi(fw) + ' से आएँगे';
+    say = nm + ' नए ' + role + ' हैं। ' + longHi(fw) + ' से आएँगे।';
+  } else if (isOut(st)) {
     cls = 'stop'; mark = '✕'; s1 = 'छुट्टी';
     if (isStaff) {
       var back = backOn(S, p, date);
@@ -258,19 +275,21 @@ function render() {
   h += card('school', '🏫', 'स्कूल', '<div class="big ' + sc.c + '"><div class="em" aria-hidden="true">' + sc.em + '</div><div><div class="t1">' + esc(sc.t1) + '</div>' + (sc.t2 ? '<div class="t2">' + esc(sc.t2) + '</div>' : '') + '</div></div>');
 
   /* Kamal and Deepak: come at a time */
-  var timed = (S.people || []).filter(function (p) { return !p.simple; }), rows = timed.map(function (p) { return personRow(S, p, date, false); });
+  var listed = (S.people || []).slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).filter(function (p) { return listedOn(S, p, date); });
+  var timed = listed.filter(function (p) { return !p.simple; }), rows = timed.map(function (p) { return personRow(S, p, date, false); });
   SPEECH.come = rows.map(function (r) { return r.say; }).join(' ');
   h += card('come', '🕘', 'कौन कब आएगा', rows.map(function (r) { return r.html; }).join(''));
 
   /* House staff: in or on leave */
-  var staff = (S.people || []).filter(function (p) { return p.simple; }), srows = staff.map(function (p) { return personRow(S, p, date, true); });
+  var staff = listed.filter(function (p) { return p.simple; }), srows = staff.map(function (p) { return personRow(S, p, date, true); });
   if (staff.length) {
     SPEECH.staff = srows.map(function (r) { return r.say; }).join(' ');
     h += card('staff', '👥', 'घर का स्टाफ़', srows.map(function (r) { return r.html; }).join(''));
   }
 
   /* Car */
-  var kamal = (S.people || []).filter(function (p) { return p.id === 'kamal'; })[0];
+  var drivers = (S.people || []).filter(function (p) { return !p.simple && /driver/i.test(p.role || ''); });
+  var kamal = drivers.filter(function (p) { return activeOn(S, p, date); })[0] || drivers[0];
   var carOk = !kamal || !isOut(dayStatus(S, kamal, date)), body = '', said = [];
   if (!carOk) {
     body = '<div class="big off"><div class="em" aria-hidden="true">🚫</div><div><div class="t1">गाड़ी नहीं</div><div class="t2">ड्राइवर की छुट्टी</div></div></div>';
@@ -338,11 +357,20 @@ function demoState() {
   var t = TODAY, t1 = addDays(TODAY, 1), t3 = addDays(TODAY, 3);
   return {
     people: [
-      { id: 'kamal', name: 'Kamal', role: 'Driver', days: [1, 2, 3, 4, 5, 6], time: '09:15', times: { 6: '10:00' }, start: '2026-01-01', holidays: true },
-      { id: 'deepak', name: 'Deepak', role: 'Tutor', days: [1, 2, 3, 4, 5, 6], time: '17:45', times: { 6: '10:00' }, start: '2026-01-01', holidays: true },
-      { id: 'suhani', name: 'Suhani', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-01-01', simple: true },
-      { id: 'jassie', name: 'Jassie', role: 'House staff', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-01-01', simple: true },
-      { id: 'sangeetha', name: 'Sangeetha', role: 'Nanny', days: [0, 1, 2, 3, 4, 5, 6], time: null, start: '2026-01-01', simple: true }
+      { id: 'kamal', name: 'Kamal', role: 'Driver', holidays: true, sort: 0 },
+      { id: 'deepak', name: 'Deepak', role: 'Tutor', holidays: true, sort: 1 },
+      { id: 'jeet', name: 'Jeet', nameHi: 'जीत', role: 'ABA tutor', holidays: true, sort: 2 },
+      { id: 'suhani', name: 'Suhani', role: 'House staff', simple: true, sort: 3 },
+      { id: 'jassie', name: 'Jassie', role: 'House staff', simple: true, sort: 4 },
+      { id: 'sangeetha', name: 'Sangeetha', role: 'Nanny', simple: true, sort: 5 }
+    ],
+    schedules: [
+      { personId: 'kamal', from: '2026-01-01', days: [1, 2, 3, 4, 5, 6], time: '09:15', times: { 6: '10:00' } },
+      { personId: 'deepak', from: '2026-01-01', days: [1, 2, 3, 4, 5, 6], time: '17:45', times: { 6: '10:00' } },
+      { personId: 'jeet', from: addDays(TODAY, 1), days: [3, 4, 5], time: '08:00' },
+      { personId: 'suhani', from: '2026-01-01', days: [0, 1, 2, 3, 4, 5, 6] },
+      { personId: 'jassie', from: '2026-01-01', days: [0, 1, 2, 3, 4, 5, 6] },
+      { personId: 'sangeetha', from: '2026-01-01', days: [0, 1, 2, 3, 4, 5, 6] }
     ],
     exceptions: [
       { personId: 'deepak', date: t, kind: 'late', time: '18:30' },
