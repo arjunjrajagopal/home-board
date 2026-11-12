@@ -260,6 +260,8 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .sub-l { margin: 0; font-size: 12px; }
 .warn-t { color: var(--warn); font-size: 12px; }
 .card[hidden] { display: none; }
+.nosync { border: 2px solid var(--warn, #b26a00); margin: 10px 0; }
+.nosync h3 { margin: 0 0 4px; }
 .pe-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .pe-day > * { min-width: 0; }
 .pe-day .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
@@ -449,6 +451,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <p class="dateline"><span id="dateline"></span> · <span id="sync-chip"></span></p>
     <p class="proto">Prototype. The holiday dates are samples to check, and nothing here is connected to WhatsApp yet.</p>
   </header>
+  <div class="card nosync" id="nosync" hidden></div>
 
   <nav class="tabs" role="tablist" id="tabs">
     <button class="tab" role="tab" data-tab="today" aria-selected="true">Today</button>
@@ -1796,18 +1799,25 @@ function syncDisconnect() {
   try { localStorage.removeItem('hb-token'); localStorage.removeItem(LS + '-sync'); } catch (e) { }
   SYNC.token = ''; SYNC.base = null; SYNC.seq = 0; SYNC.status = 'off'; syncSet('off'); renderSyncBits();
 }
+var DEFAULT_API = 'https://home-board-api.arjunjrajagopal.workers.dev';
 function syncFormHTML() {
   var on = syncOn();
   return '<div class="sync-form"><p class="small"><b class="sync-state">' + esc(syncLabel()) + '</b></p>' +
     (on ? '<p class="muted small">Connected to ' + esc(SYNC.url) + '</p><div class="row"><button class="btn" data-sync-disconnect="1">Disconnect this device</button></div>' :
       '<p class="muted small">Connect to the shared board so every phone shows the same thing. If a shared board already exists, it replaces what is on this device.</p>' +
-      '<div><label>Server address</label><input type="text" data-sync-url autocomplete="off" placeholder="https://home-board-api.….workers.dev" value="' + esc(SYNC.url) + '"></div>' +
+      '<div><label>Server address</label><input type="text" data-sync-url autocomplete="off" placeholder="https://home-board-api.….workers.dev" value="' + esc(SYNC.url || DEFAULT_API) + '"></div>' +
       '<div><label>Passphrase</label><input type="password" data-sync-token autocomplete="off"></div>' +
       '<div class="row"><button class="btn primary" data-sync-connect="1">Connect</button><span class="small sync-err" style="color:var(--bad)"></span></div>') + '</div>';
 }
 function renderSyncBits() {
   var c = document.getElementById('sync-card'); if (c) c.innerHTML = '<h3>Shared board</h3>' + syncFormHTML();
   var chip = document.getElementById('sync-chip'); if (chip) chip.textContent = syncLabel();
+  /* A home-screen app on an iPhone keeps its own storage, so it starts unconnected: say so plainly. */
+  var ns = document.getElementById('nosync');
+  if (ns) {
+    if (syncOn()) { ns.hidden = true; ns.innerHTML = ''; }
+    else if (!ns.querySelector('[data-sync-token]')) { ns.innerHTML = '<h3>Not connected to the shared board</h3><p class="small">This copy only shows what was entered on this phone, so other people\'s changes do not appear here. Enter the family passphrase once to connect.</p>' + syncFormHTML(); ns.hidden = false; }
+  }
   if (typeof renderPhone === 'function') renderPhone();
 }
 function startSyncPolling() {
