@@ -948,6 +948,63 @@ function resolveDate(t) {
   return { date: TODAY, explicit: false };
 }
 
+/* ---------- Spans of days, for leave ----------
+ * "from today until 21 November", "18-21 Nov", "between Mon and Wed", "till Friday",
+ * "back on Monday" (the day before is the last day off), "for 3 days", "for a week", "next week".
+ * until / till / to / through count the end day as off. Returns { from, to, back } or null. */
+var SPAN_MON = MONRE.replace(/\((?!\?)/g, '(?:');
+var SPAN_WD = '(?:sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tues|tue|wed|thurs|thur|thu|fri|sat)';
+var SPAN_D = '(?:day after tomorrow|today|tomorrow|(?:next\\s+)?' + SPAN_WD + '|\\d{1,2}(?:st|nd|rd|th)?(?:\\s+(?:of\\s+)?' + SPAN_MON + ')?|' + SPAN_MON + '\\s+\\d{1,2}(?:st|nd|rd|th)?)';
+var SPAN_NUM = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, 'a couple of': 2, couple: 2, few: 3, 'a few': 3 };
+function spanBare(w) { var m = w.trim().match(/^(\d{1,2})(?:st|nd|rd|th)?$/); return m ? +m[1] : null; }
+function spanMonthDay(day, ref) { return ref.slice(0, 8) + ('0' + day).slice(-2); }
+function spanDate(w, after) {
+  w = w.trim(); var n = spanBare(w);
+  if (n) {                                   /* a bare day number: this month, or next month if already past */
+    var base = after || TODAY, d = spanMonthDay(n, base);
+    if (d < base) { var x = pd(base); x.setUTCDate(1); x.setUTCMonth(x.getUTCMonth() + 1); d = spanMonthDay(n, fd(x)); }
+    return d;
+  }
+  var r = resolveDate(w); if (!r.explicit) return null;
+  var out = r.date;
+  if (after && out < after && new RegExp('^(?:next\\s+)?' + SPAN_WD + '$').test(w)) out = addDays(out, 7);
+  return out;
+}
+function resolveSpan(t) {
+  t = t.toLowerCase().replace(/[’']/g, "'");
+  var m, a = null, b = null, back = false, rest = t;
+  var TO = '\\s*(?:until|till|til|to|through|thru|upto|up to|-|–|—)\\s*';
+  if ((m = t.match(new RegExp('\\b(?:from\\s+)?(' + SPAN_D + ')' + TO + '(' + SPAN_D + ')\\b')))) { a = m[1]; b = m[2]; }
+  else if ((m = t.match(new RegExp('\\bbetween\\s+(' + SPAN_D + ')\\s+and\\s+(' + SPAN_D + ')\\b')))) { a = m[1]; b = m[2]; }
+  else if ((m = t.match(new RegExp('\\b(?:until|till|til|through|thru|up to|upto)\\s+(?:the\\s+)?(' + SPAN_D + ')\\b')))) { b = m[1]; rest = t.replace(m[0], ' '); }
+  else if ((m = t.match(new RegExp("\\b(?:back|returns?|returning|rejoins?|rejoining|resumes?)\\s+(?:to work\\s+)?(?:on\\s+|from\\s+)?(" + SPAN_D + ')\\b')))) { b = m[1]; back = true; rest = t.replace(m[0], ' '); }
+  else if ((m = t.match(/\bfor\s+(?:the\s+)?(next\s+)?(\d{1,2}|a couple of|a few|couple|few|an?|one|two|three|four|five|six|seven|eight|nine|ten)\s+(days?|weeks?)\b/))) {
+    var k = SPAN_NUM[m[2]] || +m[2], len = /week/.test(m[3]) ? 7 * k : k;
+    var st = resolveDate(t.replace(m[0], ' ')), f = st.explicit ? st.date : (m[1] ? addDays(TODAY, 1) : TODAY);
+    return { from: f, to: addDays(f, len - 1) };
+  }
+  else if (/\b(?:for\s+)?(?:the\s+)?(?:rest of (?:the|this) week|this week)\b/.test(t)) return { from: TODAY, to: addDays(mondayOf(TODAY), 6) };
+  else if (/\b(?:for\s+)?(?:the\s+)?(?:whole\s+)?next week\b/.test(t) && !/\bnext\s+(?:mon|tue|wed|thu|fri|sat|sun)/.test(t)) { var nm = addDays(mondayOf(TODAY), 7); return { from: nm, to: addDays(nm, 6) }; }
+  else return null;
+
+  var from, to;
+  if (a !== null) {
+    if (spanBare(a) && !spanBare(b)) {            /* "18 to 21 November": the first day takes the second's month */
+      to = spanDate(b); if (!to) return null;
+      from = spanMonthDay(spanBare(a), to); if (from > to) { var y = pd(to); y.setUTCDate(1); y.setUTCMonth(y.getUTCMonth() - 1); from = spanMonthDay(spanBare(a), fd(y)); }
+    } else {
+      from = spanDate(a); if (!from) return null;
+      to = spanDate(b, from); if (!to) return null;
+    }
+  } else {
+    var s0 = resolveDate(rest); from = s0.explicit ? s0.date : TODAY;
+    to = spanDate(b, from); if (!to) return null;
+    if (back) to = addDays(to, -1);
+  }
+  if (to < from) return null;
+  return { from: from, to: to };
+}
+
 function resolveRange(t) {
   var s = t.replace(/[?.!]+\s*$/, '');
   if (/\blast month\b/.test(s)) {
@@ -1114,6 +1171,15 @@ function interpretOne(S, text, forced, noQuestion) {
   if (!p) return { type: 'unknown', msg: 'I could not tell which person this is about. Include a name or a role such as the driver.' };
   var dd = resolveDate(t);
   d = dd.date;
+  var LEAVE = /(cancel|not coming|won't come|will not come|isn't coming|is not coming|not come|can't come|cannot come|not working|isn't working|won't work|will not work|day off|days off|\boff\b|on leave|\bleave\b|absent|holiday|vacation|no show|away|out of town|village)/;
+  var span = LEAVE.test(t) ? resolveSpan(t) : null;
+  if (span && span.from === span.to) { d = span.from; span = null; }
+  if (span) {
+    if (span.to < startOf(S, p) || (p.end && span.from > p.end)) return { type: 'info', msg: p.name + ' is not working then, so nothing changes.' };
+    if (daysBetween(span.from, span.to) > 89) return { type: 'info', msg: 'That is more than 90 days. Send it in two parts.' };
+    var sf = span.from < startOf(S, p) ? startOf(S, p) : span.from, stt = p.end && span.to > p.end ? p.end : span.to;
+    return { type: 'update', kind: 'absent', personId: p.id, date: sf, to: stt, summary: '' };
+  }
   if (!activeOn(S, p, d)) {
     var st1 = startOf(S, p);
     return { type: 'info', msg: d < st1 ? p.name + ' has not started on ' + labelDate(d) + '. Their first day is ' + labelDate(firstWorkDay(p)) + '.' : p.name + ' left on ' + labelDate(p.end) + ', so nothing changes.' };
@@ -1124,7 +1190,7 @@ function interpretOne(S, text, forced, noQuestion) {
   if (/\b(came|arrived|turned up|reached|was here|has come|is here)\b/.test(t)) {
     return { type: 'update', kind: 'came', personId: p.id, date: d, summary: p.name + ' came on ' + labelDate(d) };
   }
-  if (/(cancel|not coming|won't come|will not come|isn't coming|is not coming|not come|can't come|cannot come|not working|isn't working|won't work|will not work|day off|\boff\b|on leave|\bleave\b|absent|holiday|no show)/.test(t)) {
+  if (LEAVE.test(t)) {
     return { type: 'update', kind: 'absent', personId: p.id, date: d, summary: p.name + ' is not coming on ' + labelDate(d) };
   }
   if (p.simple) return { type: 'info', msg: p.name + ' is tracked by days off only, so there are no times to set. Try "' + p.name + ' is off tomorrow".' };
@@ -1145,11 +1211,20 @@ function interpretOne(S, text, forced, noQuestion) {
 
 function summarize(S, r) {
   var p = personById(S, r.personId), n = p ? p.name : r.personId, w = labelDate(r.date);
+  if (r.kind === 'absent' && r.to) {
+    var nd = daysBetween(r.date, r.to) + 1, work = p && !p.simple ? spanWorkDays(S, p, r.date, r.to).length : nd;
+    return n + ' is off from ' + w + ' to ' + labelDate(r.to) + ' (' + nd + ' days' + (p && !p.simple ? ', ' + work + ' of them working days' : '') + '), back on ' + labelDate(addDays(r.to, 1));
+  }
   if (r.kind === 'absent') return n + ' is not coming on ' + w;
   if (r.kind === 'late') return n + ' is coming on ' + w + ' at ' + r.time;
   if (r.kind === 'extra') return n + ' is coming on ' + w + ' as an extra day, at ' + r.time;
   if (r.kind === 'came') return n + ' came on ' + w;
   return n + ' did not come on ' + w;
+}
+function spanWorkDays(S, p, from, to) {
+  var out = [];
+  for (var d = from; d <= to; d = addDays(d, 1)) if (p.simple ? activeOn(S, p, d) : dayStatus(S, p, d).scheduled) out.push(d);
+  return out;
 }
 function swapAlt(S, r) {
   var d = r.date; r.date = r.alt; r.alt = d; r.summary = summarize(S, r);
@@ -1160,7 +1235,7 @@ function interpret(S, text, forced, noQuestion) {
   var r = interpretOne(S, text, forced, noQuestion);
   if (r.type === 'update') {
     var dd = resolveDate(text.toLowerCase());
-    r.alt = dd.alt && dd.date === r.date ? dd.alt : null;
+    r.alt = !r.to && dd.alt && dd.date === r.date ? dd.alt : null;
     r.summary = summarize(S, r);
   }
   return r;
@@ -1184,7 +1259,13 @@ function splitClauses(text) {
     }
     out.push(cur);
   });
-  return out.map(function (x) { return x.replace(/[.\s]+$/, '').trim(); }).filter(Boolean);
+  /* "..., back on 25 November" or "..., till Friday" belongs to the clause before it */
+  var joined = [];
+  out.forEach(function (x) {
+    if (joined.length && /^\s*(back|returns?|returning|rejoins?|resumes?|till|til|until|up to|through|from|for\s+(?:\d+|a|an|one|two|three|four|five|six|seven|a few|a couple)\b)/i.test(x)) joined[joined.length - 1] += ', ' + x;
+    else joined.push(x);
+  });
+  return joined.map(function (x) { return x.replace(/[.\s]+$/, '').trim(); }).filter(Boolean);
 }
 
 /* A whole message: a question gets an answer; anything else becomes a list of updates, one per person and clause. */
@@ -1448,6 +1529,18 @@ function applyResult(S, r) {
     S.attendance[key] = r.kind;
     return undo;
   }
+  if (r.kind === 'absent' && r.to) {
+    var sp = personById(S, r.personId), days = sp ? spanWorkDays(S, sp, r.date, r.to) : [];
+    undo.to = r.to; undo.addedIds = []; undo.prevList = [];
+    days.forEach(function (day) {
+      undo.prevList = undo.prevList.concat(S.exceptions.filter(function (e) { return e.personId === r.personId && e.date === day; }));
+      S.exceptions = S.exceptions.filter(function (e) { return !(e.personId === r.personId && e.date === day); });
+      var eid = 'e' + uid();
+      S.exceptions.push({ id: eid, personId: r.personId, date: day, kind: 'absent', time: null });
+      undo.addedIds.push(eid);
+    });
+    return undo;
+  }
   var prev = S.exceptions.filter(function (e) { return e.personId === r.personId && e.date === r.date; });
   S.exceptions = S.exceptions.filter(function (e) { return !(e.personId === r.personId && e.date === r.date); });
   var id = 'e' + uid();
@@ -1467,7 +1560,8 @@ function undoResult(S, u) {
     if (u.prev) S.attendance[u.key] = u.prev; else delete S.attendance[u.key];
     return;
   }
-  S.exceptions = S.exceptions.filter(function (e) { return e.id !== u.addedId; }).concat(u.prevList || []);
+  var added = u.addedIds || [u.addedId];
+  S.exceptions = S.exceptions.filter(function (e) { return added.indexOf(e.id) < 0; }).concat(u.prevList || []);
 }
 </script>
 
