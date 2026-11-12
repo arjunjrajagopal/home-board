@@ -1619,8 +1619,16 @@ function syncLoadCfg() {
     if (q && /^https:\/\//.test(decodeURIComponent(q[1]))) localStorage.setItem('hb-api', decodeURIComponent(q[1]));
     SYNC.url = localStorage.getItem('hb-api') || ''; SYNC.token = localStorage.getItem('hb-token') || '';
     var m = JSON.parse(localStorage.getItem(LS + '-sync') || 'null');
-    if (m && m.url === SYNC.url && m.base) { SYNC.seq = m.seq || 0; SYNC.base = m.base; }
+    if (m && m.url === SYNC.url && m.base) { SYNC.seq = m.seq || 0; SYNC.base = m.base; syncFillBase(); }
   } catch (e) { }
+}
+/* A sync record saved before a data type existed has no place for it, so rows of that type were skipped.
+   Give it a place and fetch every change again from the start: rows already here simply match. */
+function syncFillBase() {
+  if (!SYNC.base) return;
+  var missing = COLLS.filter(function (c) { return !SYNC.base[c]; });
+  missing.forEach(function (c) { SYNC.base[c] = {}; });
+  if (missing.length) SYNC.seq = 0;
 }
 function syncSaveMeta() { try { localStorage.setItem(LS + '-sync', JSON.stringify({ url: SYNC.url, seq: SYNC.seq, base: SYNC.base })); } catch (e) { } }
 function syncOn() { return !!(SYNC.url && SYNC.token); }
@@ -1679,7 +1687,7 @@ function diffOps(base, cur) {
   return ops;
 }
 /* If the server has not been updated for Sabzi yet, Sabzi stays on this phone and everything else keeps saving. */
-function pendingOps() { var o = SYNC.base ? diffOps(SYNC.base, toRows(S)) : []; return SYNC.noSabzi ? o.filter(function (x) { return x.c !== 'sabzi'; }) : o; }
+function pendingOps() { var o = SYNC.base ? diffOps(SYNC.base, toRows(S)) : []; return SYNC.noSabzi && Date.now() - SYNC.noSabzi < 300000 ? o.filter(function (x) { return x.c !== 'sabzi'; }) : o; }
 /* Put rows from the server into the board, keeping this phone's own settings and any unsent edits. */
 function syncAdoptRows(R, replace) {
   var keep = { otpHide: S.otpHide, lastBy: S.lastBy };
@@ -1719,13 +1727,13 @@ function syncDoPush() {
   var batch = ops.slice(0, 400);
   syncReq('POST', '/api/v2/ops', { ops: batch }).then(function (r) {
     if (r.status === 400 && /Unknown collection: sabzi/.test((r.json && r.json.error) || '')) {
-      SYNC.noSabzi = true; SYNC.dirty = true; syncToast('Sabzi is saved on this device only until the Home Board server is updated.'); return;
+      SYNC.noSabzi = Date.now(); SYNC.dirty = true; syncToast('Sabzi is saved on this device only until the Home Board server is updated.'); return;
     }
     if (r.status !== 200) return syncFail(r);
-    batch.forEach(function (o) { if (o.op === 'put') SYNC.base[o.c][o.row.id] = o.row; else delete SYNC.base[o.c][o.id]; });
+    batch.forEach(function (o) { var b = SYNC.base[o.c] || (SYNC.base[o.c] = {}); if (o.op === 'put') b[o.row.id] = o.row; else delete b[o.id]; });
     syncSaveMeta(); syncSet('ok');
     if (ops.length > batch.length) SYNC.dirty = true;
-  }, function () { syncSet('offline'); }).then(function () {
+  }, function () { syncSet('offline'); }).catch(function () { syncSet('offline'); }).then(function () {
     SYNC.busy = false;
     if (SYNC.dirty) syncDoPush(); else syncPull(false, true);
   });
@@ -1755,7 +1763,9 @@ function syncPull(force, quiet) {
     if (SYNC.busy || pendingOps().length) return; /* an edit happened meanwhile: send it first, fetch again next time */
     var cur = toRows(S);
     Object.keys(ch).forEach(function (c) {
-      if (!SYNC.base[c]) return;
+      if (COLLS.indexOf(c) < 0) return;
+      if (!SYNC.base[c]) SYNC.base[c] = {};
+      if (!cur[c]) cur[c] = {};
       ch[c].forEach(function (row) {
         any = true;
         if (row._deleted) { delete SYNC.base[c][row.id]; delete cur[c][row.id]; }
