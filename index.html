@@ -279,7 +279,12 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .ph-titlebox { flex: 1; min-width: 0; }
 .ph-title { font-family: var(--font-display); font-size: 32px; font-weight: 800; line-height: 1.05; margin: 0; }
-.ph-lab { color: var(--accent); }
+.ph-lab { text-transform: uppercase; letter-spacing: .03em; }
+.ph-lab.d0 { color: #1f8a4c; } .ph-lab.d1 { color: #2a5db0; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ph-lab.d0 { color: #4cc98a; } :root:not([data-theme="light"]) .ph-lab.d1 { color: #86aef0; } }
+:root[data-theme="dark"] .ph-lab.d0 { color: #4cc98a; } :root[data-theme="dark"] .ph-lab.d1 { color: #86aef0; }
+.ph-nav.d0 { background: #1f8a4c; border-color: #1f8a4c; color: #fff; } .ph-nav.d1 { background: #2a5db0; border-color: #2a5db0; color: #fff; }
+.ph-nav-lab { text-transform: uppercase; }
 .ph-nav { flex: none; min-width: 92px; min-height: 64px; border-radius: 16px; border: 3px solid var(--ink); background: var(--ink); color: var(--bg); font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 6px 12px; }
 .ph-nav:active { transform: scale(.97); }
 .ph-nav-lab { font-size: 15px; font-weight: 800; letter-spacing: .02em; }
@@ -2025,8 +2030,8 @@ function phSabzi(date, tom) {
 function renderPhone() {
   purgeOtps(S); purgeGroceries(S);
   var vd = phDate(), dt = pd(vd), tom = phView === 'tomorrow';
-  var h = '<div class="ph"><div class="ph-head"><div class="ph-titlebox"><h2 class="ph-title"><span class="ph-lab">' + (tom ? 'Tomorrow:' : 'Today:') + '</span> ' + DAYFULL[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MONFULL[dt.getUTCMonth()] + '</h2><div class="ph-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + ' · <span id="ph-sync">' + esc(syncLabel()) + '</span></div></div>' +
-    '<button class="ph-nav" data-ph-view="' + (tom ? 'today' : 'tomorrow') + '" aria-label="' + (tom ? 'Back to today' : 'See info for tomorrow') + '"><span class="ph-nav-lab">' + (tom ? 'Today' : 'Tomorrow') + '</span><span class="ph-nav-arr" aria-hidden="true">' + (tom ? '←' : '→') + '</span></button></div>';
+  var h = '<div class="ph"><div class="ph-head"><div class="ph-titlebox"><h2 class="ph-title"><span class="ph-lab ' + (tom ? 'd1' : 'd0') + '">' + (tom ? 'Tomorrow:' : 'Today:') + '</span> ' + DAYFULL[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MONFULL[dt.getUTCMonth()] + '</h2><div class="ph-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + ' · <span id="ph-sync">' + esc(syncLabel()) + '</span></div></div>' +
+    '<button class="ph-nav ' + (tom ? 'd0' : 'd1') + '" data-ph-view="' + (tom ? 'today' : 'tomorrow') + '" aria-label="' + (tom ? 'Back to today' : 'See info for tomorrow') + '"><span class="ph-nav-lab">' + (tom ? 'Today' : 'Tomorrow') + '</span><span class="ph-nav-arr" aria-hidden="true">' + (tom ? '←' : '→') + '</span></button></div>';
   h += phSchool();
   trackedPeople(vd).forEach(function (p) { h += phPerson(p); });
   staffPeople(vd).forEach(function (p) { h += phStaff(p); });
