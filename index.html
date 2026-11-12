@@ -361,6 +361,9 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-btn:active { transform: scale(.98); }
 .ph-edit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ph-edit input { flex: 1 1 140px; min-height: 52px; font-size: 22px; font-weight: 700; border: 2px solid var(--ink); border-radius: 14px; padding: 6px 12px; background: var(--surface); color: var(--ink); }
+.ph-sz { display: flex; align-items: center; gap: 12px; padding: 4px 0; font-size: 24px; font-weight: 800; }
+.ph-sz .sz-ico { font-size: 34px; flex: 0 0 auto; }
+.ph-sz .ph-sz-q { margin-left: auto; font-family: var(--font-mono); white-space: nowrap; }
 .ph-h { font-family: var(--font-display); font-size: 28px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
 .ph-otp { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 2px solid var(--line); padding-top: 10px; }
 .ph-otp:first-of-type { border-top: 0; padding-top: 0; }
@@ -1736,9 +1739,9 @@ var sabziCtl = null;
 function sabziRows(date) { return (S.sabzi || []).filter(function (r) { return r.date === date; }); }
 function sabziSave(row) {
   S.sabzi = (S.sabzi || []).filter(function (r) { return r.id !== row.id; }); S.sabzi.push(row);
-  save(); renderToday();
+  save(); renderToday(); renderPhone();
 }
-function sabziRemove(id) { S.sabzi = (S.sabzi || []).filter(function (r) { return r.id !== id; }); save(); renderToday(); }
+function sabziRemove(id) { S.sabzi = (S.sabzi || []).filter(function (r) { return r.id !== id; }); save(); renderToday(); renderPhone(); }
 function renderSabzi() {
   if (typeof Sabzi === 'undefined') { $('p-sabzi').innerHTML = '<div class="card"><p class="muted">The Sabzi page could not load (sabzi.js missing).</p></div>'; return; }
   var host = $('p-sabzi');
@@ -2010,6 +2013,15 @@ function phSchool() {
   else { cls = 'ph-good'; ico = '🎒'; big = 'School day'; sub = 'Normal school day'; }
   return '<section class="ph-card ph-school ' + cls + '" aria-label="School ' + esc(word.toLowerCase()) + '"><span class="ph-sico" aria-hidden="true">' + ico + '</span><div><div class="ph-sbig">' + esc(big) + '</div>' + (sub ? '<div class="ph-ssub">' + esc(sub) + '</div>' : '') + '</div></section>';
 }
+/* Vegetables wanted that day, under the staff cards. */
+function phSabzi(date, tom) {
+  if (typeof Sabzi === 'undefined') return '';
+  var rows = Sabzi.summary(sabziRows(date));
+  var h = '<section class="ph-card"><div class="ph-h"><span aria-hidden="true">🥕</span>Subzi' + (tom ? ' tomorrow' : '') + '</div>';
+  if (!rows.length) h += '<div class="ph-none">Nothing needed' + (tom ? ' for tomorrow' : ' today') + '</div>';
+  rows.forEach(function (r) { h += '<div class="ph-sz"><span class="sz-ico">' + Sabzi.iconHTML(r.veg.id) + '</span><span>' + esc(r.veg.en) + '</span><span class="ph-sz-q">' + esc(r.text) + '</span></div>'; });
+  return h + '<button class="ph-btn" data-tab="sabzi">' + (rows.length ? 'Change Subzi' : 'Add Subzi') + '</button></section>';
+}
 function renderPhone() {
   purgeOtps(S); purgeGroceries(S);
   var vd = phDate(), dt = pd(vd), tom = phView === 'tomorrow';
@@ -2018,6 +2030,7 @@ function renderPhone() {
   h += phSchool();
   trackedPeople(vd).forEach(function (p) { h += phPerson(p); });
   staffPeople(vd).forEach(function (p) { h += phStaff(p); });
+  h += phSabzi(vd, tom);
   h += phCar();
 
   var open = S.otps.filter(function (o) { return !o.used; });
