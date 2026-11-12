@@ -11,3 +11,11 @@ People and their schedules are edited on the People screen. A schedule change ap
 `staff.html` is the read-only Hindi screen for house staff. It is opened once from a link of the form `staff.html#api=<server address>&k=<staff key>`.
 
 Add `?today=YYYY-MM-DD` to the address to pretend it is another day.
+
+## Sabzi (vegetables)
+
+The Sabzi tab is a picture board for vegetables: drag a vegetable from the cart onto the drying cloth; each drag adds half a kilo (or one piece, or a quarter kilo for chilli, garlic and palak). Drag it off the cloth to remove it. Separate Today and Tomorrow pages. Today's list also appears on the Today screen, under the staff attendance, as icon, item and amount.
+
+Family (`index.html`) and staff (`staff.html`, the "सब्ज़ी लिखो" button) can both change it. The cart itself is `sabzi.js`, shared by both pages.
+
+Rows are saved in a `sabzi` collection (one row per vegetable per day, id `date|vegetable`). The Worker needs the small update in `worker/` (run `python3 worker/patch-sabzi.py worker.js`, then deploy): it adds the table, lets the staff key read it, and lets the staff key write Sabzi rows only (`POST /api/staff/sabzi`). Until the Worker is updated, Sabzi is kept on the phone that made the change and everything else keeps syncing.

@@ -450,6 +450,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <button class="tab" role="tab" data-tab="holidays" aria-selected="false">Holidays</button>
     <button class="tab" role="tab" data-tab="otps" aria-selected="false">OTPs</button>
     <button class="tab" role="tab" data-tab="groceries" aria-selected="false">Groceries</button>
+    <button class="tab" role="tab" data-tab="sabzi" aria-selected="false">Sabzi</button>
     <button class="tab" role="tab" data-tab="display" aria-selected="false">Display</button>
     <button class="tab" role="tab" data-tab="phone" aria-selected="false">Phone</button>
     <button class="tab" role="tab" data-tab="count" aria-selected="false">Count</button>
@@ -531,6 +532,8 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 
   <section class="panel" id="p-groceries" hidden></section>
 
+  <section class="panel" id="p-sabzi" hidden></section>
+
   <section class="panel" id="p-display" hidden></section>
 
   <section class="panel" id="p-phone" hidden></section>
@@ -601,6 +604,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
   <div class="more-list" role="menu" aria-label="More">
     <button class="mr" role="menuitem" data-tab="today">Overview</button>
     <button class="mr" role="menuitem" data-tab="groceries">Groceries</button>
+    <button class="mr" role="menuitem" data-tab="sabzi">Sabzi (vegetables)</button>
     <button class="mr" role="menuitem" data-tab="otps">OTPs</button>
     <button class="mr" role="menuitem" data-tab="holidays">Public holidays</button>
     <button class="mr" role="menuitem" data-tab="count">Count days</button>
@@ -618,6 +622,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="sabzi.js"></script>
 <script id="logic">
 /* The real date, unless a test or a link such as ?today=2026-10-27 sets it. */
 var TODAY = (function () {
@@ -1474,6 +1479,7 @@ function migrateState(o) {
   if (!o.schoolHolidays) o.schoolHolidays = JSON.parse(JSON.stringify(SCHOOL_HOLIDAYS));
   if (!o.otps) o.otps = [];
   if (!o.groceries) o.groceries = [];
+  if (!o.sabzi) o.sabzi = [];
   o.groceries.forEach(function (g) { if (!g.forDate) g.forDate = addDays(g.date || TODAY, 1); });
   /* A board saved by the old version keeps each weekly rule on the person: turn it into a first schedule. */
   if (!o.schedules) {
@@ -1504,7 +1510,7 @@ function save() {
  * base are sent, so two people changing different things never get in each other's way.
  * Other phones' changes arrive through /api/v2/changes?since=<seq>. */
 var SYNC = { url: '', token: '', seq: 0, base: null, status: 'off', busy: false, dirty: false, timer: null, last: '' };
-var COLLS = ['people', 'schedules', 'exceptions', 'holidays', 'schoolHolidays', 'holidayPlans', 'carBookings', 'attendance', 'groceries', 'otps', 'messages', 'settings'];
+var COLLS = ['people', 'schedules', 'exceptions', 'holidays', 'schoolHolidays', 'holidayPlans', 'carBookings', 'attendance', 'groceries', 'otps', 'messages', 'sabzi', 'settings'];
 function syncLoadCfg() {
   try {
     var q = /[?&]api=([^&#]+)/.exec(location.search);
@@ -1544,12 +1550,13 @@ function toRows(st) {
   (st.groceries || []).forEach(function (g) { var r = JSON.parse(JSON.stringify(g)); r.done = !!r.done; put('groceries', r); });
   (st.otps || []).forEach(function (o) { var r = JSON.parse(JSON.stringify(o)); r.used = !!r.used; put('otps', r); });
   (st.messages || []).forEach(function (m) { put('messages', m); });
+  (st.sabzi || []).forEach(function (r) { put('sabzi', { id: r.id, date: r.date, veg: r.veg, q: r.q, x: r.x, y: r.y }); });
   if (st.holidayFrom) put('settings', { id: 'holidayFrom', value: st.holidayFrom });
   return R;
 }
 function fromRows(R) {
   var list = function (c) { var m = R[c] || {}; return Object.keys(m).sort().map(function (id) { return JSON.parse(JSON.stringify(m[id])); }); };
-  var o = { people: [], schedules: list('schedules'), exceptions: list('exceptions'), holidays: [], schoolHolidays: [], holidayPlans: {}, carBookings: [], attendance: {}, groceries: list('groceries'), otps: list('otps'), messages: list('messages') };
+  var o = { people: [], schedules: list('schedules'), exceptions: list('exceptions'), holidays: [], schoolHolidays: [], holidayPlans: {}, carBookings: [], attendance: {}, groceries: list('groceries'), otps: list('otps'), messages: list('messages'), sabzi: list('sabzi') };
   o.people = list('people').sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).map(function (p) { delete p.sort; return p; });
   o.holidays = list('holidays').map(function (h) { return { date: h.date, name: h.name }; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
   o.schoolHolidays = list('schoolHolidays').map(function (h) { return { date: h.date, name: h.name }; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
@@ -1569,7 +1576,8 @@ function diffOps(base, cur) {
   });
   return ops;
 }
-function pendingOps() { return SYNC.base ? diffOps(SYNC.base, toRows(S)) : []; }
+/* If the server has not been updated for Sabzi yet, Sabzi stays on this phone and everything else keeps saving. */
+function pendingOps() { var o = SYNC.base ? diffOps(SYNC.base, toRows(S)) : []; return SYNC.noSabzi ? o.filter(function (x) { return x.c !== 'sabzi'; }) : o; }
 /* Put rows from the server into the board, keeping this phone's own settings and any unsent edits. */
 function syncAdoptRows(R, replace) {
   var keep = { otpHide: S.otpHide, lastBy: S.lastBy };
@@ -1598,7 +1606,7 @@ function syncPush() {
   if (!syncOn()) return;
   clearTimeout(SYNC.timer); SYNC.timer = setTimeout(syncDoPush, 250);
 }
-function syncFail(r) { syncSet(r && r.status === 401 ? 'auth' : r && r.status === 404 ? 'old' : 'offline'); }
+function syncFail(r) { syncSet(r && r.status === 401 ? 'auth' : r && (r.status === 404 || (r.status === 400 && /Unknown collection/.test((r.json && r.json.error) || ''))) ? 'old' : 'offline'); }
 function syncDoPush() {
   SYNC.timer = null;
   if (!syncOn() || !SYNC.base) return;
@@ -1608,6 +1616,9 @@ function syncDoPush() {
   SYNC.busy = true; SYNC.dirty = false; syncSet('wait');
   var batch = ops.slice(0, 400);
   syncReq('POST', '/api/v2/ops', { ops: batch }).then(function (r) {
+    if (r.status === 400 && /Unknown collection: sabzi/.test((r.json && r.json.error) || '')) {
+      SYNC.noSabzi = true; SYNC.dirty = true; syncToast('Sabzi is saved on this device only until the Home Board server is updated.'); return;
+    }
     if (r.status !== 200) return syncFail(r);
     batch.forEach(function (o) { if (o.op === 'put') SYNC.base[o.c][o.row.id] = o.row; else delete SYNC.base[o.c][o.id]; });
     syncSaveMeta(); syncSet('ok');
@@ -1712,11 +1723,39 @@ function setTab(name) {
   document.querySelectorAll('.mr').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
   closeMore();
   document.body.classList.toggle('tab-phone', name === 'phone');
-  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'groceries', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
+  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'groceries', 'sabzi', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
   if (name === 'count') renderCount();
   if (name === 'display') { renderDisplay(); }
   if (name === 'phone') { renderPhone(); }
   if (name === 'car') { renderCar(); }
+  if (name === 'sabzi') { renderSabzi(); }
+}
+
+/* ---------- Sabzi: vegetables wanted today and tomorrow ---------- */
+var sabziCtl = null;
+function sabziRows(date) { return (S.sabzi || []).filter(function (r) { return r.date === date; }); }
+function sabziSave(row) {
+  S.sabzi = (S.sabzi || []).filter(function (r) { return r.id !== row.id; }); S.sabzi.push(row);
+  save(); renderToday();
+}
+function sabziRemove(id) { S.sabzi = (S.sabzi || []).filter(function (r) { return r.id !== id; }); save(); renderToday(); }
+function renderSabzi() {
+  if (typeof Sabzi === 'undefined') { $('p-sabzi').innerHTML = '<div class="card"><p class="muted">The Sabzi page could not load (sabzi.js missing).</p></div>'; return; }
+  var host = $('p-sabzi');
+  if (!sabziCtl || !host.querySelector('.sz')) sabziCtl = Sabzi.mount(host, { lang: 'en', today: TODAY, items: sabziRows, put: sabziSave, del: sabziRemove });
+  else sabziCtl.render();
+}
+function sabziCard() {
+  if (typeof Sabzi === 'undefined') return '';
+  var rows = Sabzi.summary(sabziRows(TODAY));
+  var h = '<div class="card"><div class="row between"><h2>Subzi</h2>' + (rows.length ? '<span class="pill warn">' + rows.length + (rows.length === 1 ? ' item' : ' items') + '</span>' : '') + '</div>';
+  if (!rows.length) h += '<p class="muted small">No vegetables needed today.</p>';
+  else {
+    h += '<div class="list">' + rows.map(function (r) {
+      return '<div><span class="sz-ico">' + Sabzi.iconHTML(r.veg.id) + '</span><span class="grow"><b>' + esc(r.veg.en) + '</b></span><span class="mono"><b>' + esc(r.text) + '</b></span></div>';
+    }).join('') + '</div>';
+  }
+  return h + '<div><button class="btn sm" data-tab="sabzi">' + (rows.length ? 'Open Sabzi' : 'Add vegetables') + '</button></div></div>';
 }
 
 function renderToday() {
@@ -1739,6 +1778,7 @@ function renderToday() {
       '</span></div></div>';
   });
   h += '</div></div>';
+  h += sabziCard();
   var waiting = (S.otps || []).filter(function (o) { return o.date === TODAY && !o.used; });
   if (waiting.length) {
     h += '<div class="card"><div class="row between"><h2>OTPs waiting</h2><span class="pill warn">' + waiting.length + '</span></div><div class="list">' +
@@ -2422,7 +2462,8 @@ function setPlan(key, patch) {
   save(); renderAll();
 }
 
-function renderAll() { purgeOtps(S); purgeGroceries(S); renderToday(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderGroceries(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); }
+function purgeSabzi(S) { var keep = addDays(TODAY, -1); S.sabzi = (S.sabzi || []).filter(function (r) { return r.date >= keep; }); }
+function renderAll() { purgeOtps(S); purgeGroceries(S); purgeSabzi(S); renderToday(); renderSabzi(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderGroceries(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); }
 
 function init() {
   S = load();

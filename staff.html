@@ -77,13 +77,26 @@ button{font:inherit;color:inherit;cursor:pointer}
 .setup .em{font-size:64px}
 .setup p{font-size:20px}
 .speaking{outline:4px solid var(--go);outline-offset:3px}
+.szl .r{display:flex;align-items:center;gap:12px;padding:6px 2px;border-bottom:1px solid #eee}
+.szl .r:last-child{border-bottom:0}
+.szl .ic{flex:0 0 52px;height:52px;display:grid;place-items:center;font-size:42px;line-height:1}
+.szl .ic .sz-vi{width:46px;height:46px}
+.szl .nm2{font-size:24px;font-weight:800}
+.szl .amt{margin-left:auto;font-size:24px;font-weight:800;white-space:nowrap}
+.sz-open{display:block;width:100%;margin-top:12px;border:0;border-radius:18px;background:var(--go);color:#fff;font-size:24px;font-weight:800;padding:14px}
+#sz-ov{position:fixed;inset:0;z-index:100;background:var(--bg);overflow-y:auto;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 20px)}
+#sz-ov[hidden]{display:none}
+.sz-back{border:0;border-radius:16px;background:var(--ink);color:#fff;font-size:24px;font-weight:800;padding:10px 20px;margin-bottom:10px}
+.sz-err{background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:8px 12px;font-size:17px;font-weight:700;margin-bottom:8px}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
+<div id="sz-ov" hidden><div class="wrap"><button class="sz-back" id="sz-back">← वापस</button><div id="sz-err"></div><div id="sz-host"></div></div></div>
+<script src="sabzi.js"></script>
 
 <script>
-/* Home Board: staff screen (read-only).
+/* Home Board: staff screen. Read-only, except the Sabzi page where staff write the vegetables wanted.
  * Opened from a link like  staff.html#api=https://home-board-api.xxx.workers.dev&k=STAFF_KEY
  * The link is remembered on the phone and then removed from the address bar.
  * ?demo=1 shows sample data. ?today=YYYY-MM-DD pretends it is another day.
@@ -181,6 +194,39 @@ function groceriesFor(S, date) {
 var CFG = { api: '', key: '' }, DATA = null, FETCHED = 0, STATUS = 'ok', VIEW = TODAY;
 var DEMO = /[?&]demo=1\b/.test(location.search);
 
+/* ---------- Sabzi: server rows plus this phone's unsent changes ---------- */
+var PEND = [], FLUSHING = false, SZCTL = null;
+try { PEND = JSON.parse(localStorage.getItem('hb-staff-v1-pend') || '[]') || []; } catch (e) { PEND = []; }
+function savePend() { try { localStorage.setItem('hb-staff-v1-pend', JSON.stringify(PEND)); } catch (e) { } }
+function szRows() {
+  var m = {}; ((DATA && DATA.sabzi) || []).forEach(function (r) { m[r.id] = r; });
+  PEND.forEach(function (o) { if (o.op === 'put') m[o.row.id] = o.row; else delete m[o.id]; });
+  return Object.keys(m).map(function (k) { return m[k]; });
+}
+function szItems(date) { return szRows().filter(function (r) { return r.date === date; }); }
+function szPut(row) { PEND.push({ op: 'put', row: row }); savePend(); szFlush(); render(); }
+function szDel(id) { PEND.push({ op: 'del', id: id }); savePend(); szFlush(); render(); }
+function szFlush() {
+  if (DEMO || FLUSHING || !PEND.length || !CFG.api || !CFG.key) return;
+  FLUSHING = true;
+  var sent = PEND.length, last = {}, ops = [];
+  PEND.slice(0, sent).forEach(function (o) { last[o.op === 'put' ? o.row.id : o.id] = o; });   /* the latest change to each row wins */
+  Object.keys(last).forEach(function (k) { ops.push(last[k]); });
+  fetch(CFG.api.replace(/\/+$/, '') + '/api/staff/sabzi', { method: 'POST', headers: { Authorization: 'Bearer ' + CFG.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ ops: ops }), cache: 'no-store' })
+    .then(function (r) {
+      FLUSHING = false;
+      if (r.ok) { PEND.splice(0, sent); savePend(); szNote(''); fetchData(); }
+      else szNote(r.status === 404 ? 'सर्वर अभी तैयार नहीं है। घर वालों को बताइए।' : 'सेव नहीं हुआ। थोड़ी देर में फिर कोशिश होगी।');
+    }, function () { FLUSHING = false; szNote('इंटरनेट नहीं है। नेट आने पर सेव होगा।'); });
+}
+function szNote(t) { var e = document.getElementById('sz-err'); if (e) e.innerHTML = t ? '<div class="sz-err">' + esc(t) + '</div>' : ''; }
+function szOpen() {
+  var ov = document.getElementById('sz-ov'); ov.hidden = false; document.body.style.overflow = 'hidden';
+  if (!SZCTL) SZCTL = Sabzi.mount(document.getElementById('sz-host'), { lang: 'hi', today: TODAY, items: szItems, put: szPut, del: szDel });
+  SZCTL.show(VIEW === TODAY ? 'today' : 'tomorrow'); ov.scrollTop = 0;
+}
+function szClose() { document.getElementById('sz-ov').hidden = true; document.body.style.overflow = ''; render(); }
+
 function loadCfg() {
   try {
     var h = location.hash.replace(/^#/, ''), m;
@@ -208,9 +254,11 @@ function fetchData() {
     .then(function (j) {
       if (j && j.state) {
         DATA = j.state; FETCHED = Date.now(); STATUS = 'ok';
+        if (PEND.length) szFlush();
         try { localStorage.setItem(LS + '-data', JSON.stringify({ state: DATA, at: FETCHED })); } catch (e) { }
       }
       render();
+      if (SZCTL && !document.getElementById('sz-ov').hidden) SZCTL.render();
     }, function () { STATUS = 'offline'; render(); });
 }
 
@@ -287,6 +335,15 @@ function render() {
     h += card('staff', '👥', 'घर का स्टाफ़', srows.map(function (r) { return r.html; }).join(''));
   }
 
+  /* Sabzi: what to buy. Staff can change it. */
+  var sr = typeof Sabzi === 'undefined' ? [] : Sabzi.summary(szItems(date));
+  var sb = sr.length ? '<div class="szl">' + sr.map(function (r) {
+      return '<div class="r"><span class="ic" aria-hidden="true">' + Sabzi.iconHTML(r.veg.id) + '</span><span class="nm2">' + esc(r.veg.n) + '</span><span class="amt">' + esc(r.text) + '</span></div>';
+    }).join('') + '</div>' : '<div class="none">अभी कुछ नहीं लिखा</div>';
+  sb += '<button class="sz-open" data-sz-open="1">✏️ सब्ज़ी लिखो</button>';
+  SPEECH.sabzi = sr.length ? word + ' की सब्ज़ी: ' + sr.map(function (r) { return r.veg.n + ' ' + r.hindi; }).join(', ') + '।' : word + ' सब्ज़ी कुछ नहीं लिखी है।';
+  h += card('sabzi', '🥕', 'सब्ज़ी', sb);
+
   /* Car */
   var drivers = (S.people || []).filter(function (p) { return !p.simple && /driver/i.test(p.role || ''); });
   var kamal = drivers.filter(function (p) { return activeOn(S, p, date); })[0] || drivers[0];
@@ -344,11 +401,13 @@ function speak(ids) {
 
 document.addEventListener('click', function (e) {
   var b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.szOpen) { if (window.speechSynthesis) speechSynthesis.cancel(); szOpen(); return; }
+  if (b.id === 'sz-back') { szClose(); return; }
   if (b.dataset.view) { VIEW = b.dataset.view; if (window.speechSynthesis) speechSynthesis.cancel(); render(); return; }
   if (b.dataset.say) { speak([b.dataset.say]); return; }
   if (b.id === 'speak-all') {
     if (b.getAttribute('aria-pressed') === 'true') { speechSynthesis.cancel(); b.setAttribute('aria-pressed', 'false'); document.querySelectorAll('.speaking').forEach(function (c) { c.classList.remove('speaking'); }); return; }
-    speak(['school', 'come', 'staff', 'car', 'groc'].filter(function (k) { return SPEECH[k]; }));
+    speak(['school', 'come', 'staff', 'sabzi', 'car', 'groc'].filter(function (k) { return SPEECH[k]; }));
   }
 });
 
@@ -380,6 +439,10 @@ function demoState() {
     holidays: [], holidayPlans: {},
     schoolHolidays: [{ date: t1, name: 'Guru Nanak Jayanti' }],
     carBookings: [{ date: t, slot: 'morning', who: 'malini' }, { date: t, slot: 'evening', who: 'arjun' }, { date: t, slot: 'evening', who: 'makku' }, { date: t1, slot: 'afternoon', who: 'alok' }],
+    sabzi: [
+      { id: t + '|tomato', date: t, veg: 'tomato', q: 1, x: .3, y: .3 }, { id: t + '|karela', date: t, veg: 'karela', q: 0.5, x: .7, y: .35 }, { id: t + '|corn', date: t, veg: 'corn', q: 3, x: .5, y: .7 },
+      { id: t1 + '|potato', date: t1, veg: 'potato', q: 2, x: .4, y: .5 }
+    ],
     groceries: [
       { id: 'g1', item: 'Carrot', vendor: 'Blinkit', forDate: t }, { id: 'g2', item: 'Dahi', vendor: 'Blinkit', forDate: t }, { id: 'g3', item: 'Gobi', vendor: 'Blinkit', forDate: t },
       { id: 'g4', item: 'Milk', vendor: 'Milkbasket', forDate: t1 }, { id: 'g5', item: 'Eggs', vendor: 'Blinkit', forDate: t1 }
@@ -399,7 +462,7 @@ document.addEventListener('visibilitychange', function () {
   if (!/[?&]today=/.test(location.search) && d !== TODAY) { location.reload(); return; }
   fetchData();
 });
-window.addEventListener('online', fetchData);
+window.addEventListener('online', function () { fetchData(); szFlush(); });
 </script>
 </body>
 </html>
