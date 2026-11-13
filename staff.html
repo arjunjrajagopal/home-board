@@ -315,11 +315,12 @@ function render() {
 
   /* School */
   var sh = schoolOn(S, date), sc;
-  if (dow(date) === 0) { sc = { c: 'off', em: '🏠', t1: 'स्कूल नहीं', t2: 'रविवार' }; }
+  var wkend = dow(date) === 0 || dow(date) === 6;   /* same rule as the family app: no school on Saturday or Sunday */
+  if (wkend) { sc = { c: 'off', em: '🏠', t1: 'स्कूल नहीं', t2: DAY_HI[dow(date)] }; }
   else if (sh) { sc = { c: 'warn', em: '🏖️', t1: 'स्कूल की छुट्टी', t2: sh.name }; }
   else { sc = { c: 'go', em: '🎒', t1: 'स्कूल है', t2: '' }; }
   SPEECH.school = word + ' ' + sc.t1 + (sc.c === 'go' ? '।' : ' है।');
-  if (dow(date) === 0) SPEECH.school = word + ' रविवार है, स्कूल नहीं है।';
+  if (wkend) SPEECH.school = word + ' ' + DAY_HI[dow(date)] + ' है, स्कूल नहीं है।';
   h += card('school', '🏫', 'स्कूल', '<div class="big ' + sc.c + '"><div class="em" aria-hidden="true">' + sc.em + '</div><div><div class="t1">' + esc(sc.t1) + '</div>' + (sc.t2 ? '<div class="t2">' + esc(sc.t2) + '</div>' : '') + '</div></div>');
 
   /* Kamal and Deepak: come at a time */
