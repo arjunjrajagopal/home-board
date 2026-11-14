@@ -44,6 +44,7 @@
     yoghurt: `<svg viewBox="0 0 34 54" width="34" height="54"><rect x="4" y="18" width="26" height="5" rx="2" fill="#cfd8dc" stroke="#7f949f" stroke-width="2"/><path d="M6 23 L28 23 L25 50 Q25 52 23 52 L11 52 Q9 52 9 50 Z" fill="#fff" stroke="#7f949f" stroke-width="2" stroke-linejoin="round"/><path d="M7.2 32 L26.8 32 L25.6 44 L8.4 44 Z" fill="#3f8fe0"/><circle cx="17" cy="38" r="3.4" fill="#fff"/></svg>`,
     bread: `<svg viewBox="0 0 84 46" width="84" height="46"><path d="M8 40 Q2 40 2 32 Q2 14 14 10 Q22 3 42 3 Q62 3 70 10 Q82 14 82 32 Q82 40 76 40 Z" fill="#b9793b" stroke="#7a4a1c" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 38 Q6 36 6 31 Q6 18 16 15 Q24 8 42 8 Q60 8 68 15 Q78 18 78 31 Q78 36 74 38 Z" fill="#d79a5a"/><path d="M26 10 L26 38 M42 8 L42 38 M58 10 L58 38" stroke="#b9793b" stroke-width="1.4" opacity=".6"/></svg>`,
     paneer: `<svg viewBox="0 0 56 36" width="56" height="36"><path d="M4 12 L16 3 L54 3 L42 12 Z" fill="#fffdf6" stroke="#cfc7ad" stroke-width="2" stroke-linejoin="round"/><rect x="4" y="12" width="38" height="22" rx="2" fill="#f7f2e1" stroke="#cfc7ad" stroke-width="2"/><path d="M42 12 L54 3 L54 25 L42 34 Z" fill="#e9e2c9" stroke="#cfc7ad" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="20" r="1.3" fill="#d8cfae"/><circle cx="28" cy="25" r="1.3" fill="#d8cfae"/><circle cx="33" cy="17" r="1.1" fill="#d8cfae"/></svg>`,
+    banana: `<svg viewBox="0 0 40 36" width="40" height="36"><path d="M7 7 Q3 27 22 33 Q35 36 38 22 Q28 28 19 22 Q13 16 15 6 Z" fill="#f7d13a" stroke="#b08a12" stroke-width="2" stroke-linejoin="round"/><path d="M7 7 L9.5 2.5 L15 4 L15 6 Z" fill="#6b5a1e" stroke="#4a3e12" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 12 Q10 24 24 29" fill="none" stroke="#fbe98a" stroke-width="2" stroke-linecap="round"/></svg>`,
     cheese: `<svg viewBox="0 0 60 44" width="60" height="44"><path d="M4 16 L20 4 L56 4 L40 16 Z" fill="#ffe27a" stroke="#c99a12" stroke-width="2" stroke-linejoin="round"/><rect x="4" y="16" width="36" height="24" rx="2" fill="#f9c933" stroke="#c99a12" stroke-width="2"/><path d="M40 16 L56 4 L56 28 L40 40 Z" fill="#e5b017" stroke="#c99a12" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="26" r="3" fill="#e0a812"/><circle cx="27" cy="31" r="2.2" fill="#e0a812"/><circle cx="30" cy="22" r="1.6" fill="#e0a812"/></svg>`
   };
 
@@ -56,7 +57,8 @@
     { id:'yoghurt', en:"Maya's yoghurt", hi:'माया का दही', art:'yoghurt', groups:[8], note:'8 cups', start:false },
     { id:'bread',  en:'Brown bread', hi:'ब्रेड',     art:'bread',  groups:[3],       note:'3 loaves', levels:true, steps:4, start:0 },
     { id:'paneer', en:'Paneer',      hi:'पनीर',     art:'paneer', groups:[3],       note:'3 blocks', levels:true, steps:2, start:0 },
-    { id:'cheese', en:'Amul cheese', hi:'चीज़',      art:'cheese', groups:[3],       note:'3 tins', levels:true, steps:4, start:0, slices:true }
+    { id:'banana', en:'Bananas', hi:'केले', art:'banana', groups:[6], note:'6 bananas', start:false },
+  { id:'cheese', en:'Amul cheese', hi:'चीज़',      art:'cheese', groups:[3],       note:'3 tins', levels:true, steps:4, start:0, slices:true }
   ];
 
   const FRAC = ['', '¼', '½', '¾'];
@@ -135,5 +137,13 @@
     return { render: render };
   }
 
-  global.Fridge = { CATS: CATS, mount: mount };
+  /* One row per shelf for the phone screen: what is in the fridge now. */
+  function summary() {
+    return CATS.map(function (c) {
+      var have = present(c), left = c.levels ? have.reduce(function (a, b) { return a + b; }, 0) / c.steps : have.filter(Boolean).length;
+      return { id: c.id, en: c.en, hi: c.hi, left: left, all: have.length, text: fmt(left) + ' / ' + have.length, icon: c.slices ? tinSVG(4) : ART[c.art] };
+    });
+  }
+
+  global.Fridge = { CATS: CATS, mount: mount, summary: summary };
 })(window);
