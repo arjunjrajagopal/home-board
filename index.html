@@ -639,7 +639,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="sabzi.js"></script>
-<script src="fridge.js"></script>
+<script src="fridge.js?v=3"></script>
 <script id="logic">
 /* The real date, unless a test or a link such as ?today=2026-10-27 sets it. */
 var TODAY = (function () {
@@ -2159,7 +2159,10 @@ function phSabzi(date, tom) {
 }
 /* What is in the fridge, under the vegetables. */
 function phFridge() {
-  if (typeof Fridge === 'undefined') return '';
+  if (typeof Fridge === 'undefined' || typeof Fridge.summary !== 'function') return '';
+  try { return phFridgeCard(); } catch (e) { return ''; }
+}
+function phFridgeCard() {
   var h = '<section class="ph-card ph-fr"><div class="ph-h"><span aria-hidden="true">🧊</span>Fridge</div>';
   Fridge.summary().forEach(function (r) {
     h += '<div class="ph-sz' + (r.left ? '' : ' none') + '"><span class="fr-ico">' + r.icon + '</span><span>' + esc(r.en) + '</span><span class="ph-sz-q">' + esc(r.text) + '</span></div>';
