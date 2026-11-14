@@ -460,7 +460,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <button class="tab" role="tab" data-tab="car" aria-selected="false">Car</button>
     <button class="tab" role="tab" data-tab="holidays" aria-selected="false">Holidays</button>
     <button class="tab" role="tab" data-tab="otps" aria-selected="false">OTPs</button>
-    <button class="tab" role="tab" data-tab="groceries" aria-selected="false">Groceries</button>
+    <button class="tab" role="tab" data-tab="fridge" aria-selected="false">Fridge</button>
     <button class="tab" role="tab" data-tab="sabzi" aria-selected="false">Sabzi</button>
     <button class="tab" role="tab" data-tab="display" aria-selected="false">Display</button>
     <button class="tab" role="tab" data-tab="phone" aria-selected="false">Phone</button>
@@ -541,7 +541,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
   <section class="panel" id="p-car" hidden></section>
   <section class="panel" id="p-otps" hidden></section>
 
-  <section class="panel" id="p-groceries" hidden></section>
+  <section class="panel" id="p-fridge" hidden></section>
 
   <section class="panel" id="p-sabzi" hidden></section>
 
@@ -614,7 +614,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
   <button class="more-back" data-more="close" aria-label="Close menu"></button>
   <div class="more-list" role="menu" aria-label="More">
     <button class="mr" role="menuitem" data-tab="today">Overview</button>
-    <button class="mr" role="menuitem" data-tab="groceries">Groceries</button>
+    <button class="mr" role="menuitem" data-tab="fridge">Fridge</button>
     <button class="mr" role="menuitem" data-tab="sabzi">Sabzi (vegetables)</button>
     <button class="mr" role="menuitem" data-tab="otps">OTPs</button>
     <button class="mr" role="menuitem" data-tab="holidays">Public holidays</button>
@@ -634,6 +634,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="sabzi.js"></script>
+<script src="fridge.js"></script>
 <script id="logic">
 /* The real date, unless a test or a link such as ?today=2026-10-27 sets it. */
 var TODAY = (function () {
@@ -1845,12 +1846,22 @@ function setTab(name) {
   document.querySelectorAll('.mr').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
   closeMore();
   document.body.classList.toggle('tab-phone', name === 'phone');
-  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'groceries', 'sabzi', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
+  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'fridge', 'sabzi', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
   if (name === 'count') renderCount();
   if (name === 'display') { renderDisplay(); }
   if (name === 'phone') { renderPhone(); }
   if (name === 'car') { renderCar(); }
   if (name === 'sabzi') { renderSabzi(); }
+  if (name === 'fridge') { renderFridge(); }
+}
+
+/* ---------- Fridge: what is in the fridge (kept on this device) ---------- */
+var fridgeCtl = null;
+function renderFridge() {
+  var host = $('p-fridge');
+  if (typeof Fridge === 'undefined') { host.innerHTML = '<div class="card"><p class="muted">The Fridge page could not load (fridge.js missing).</p></div>'; return; }
+  if (!fridgeCtl || !host.querySelector('.fr')) fridgeCtl = Fridge.mount(host, {});
+  else fridgeCtl.render();
 }
 
 /* ---------- Sabzi: vegetables wanted today and tomorrow ---------- */
@@ -1913,7 +1924,7 @@ function renderToday() {
     gd.forEach(function (dy) {
       dy.groups.forEach(function (x) { h += '<div><span class="when">' + esc(dy.label) + '</span><span class="grow"><b>' + esc(x.vendor || 'Other') + '</b>: ' + esc(x.items.map(function (i) { return i.item; }).join(', ')) + '</span></div>'; });
     });
-    h += '</div><div><button class="btn sm" data-tab="groceries">Open groceries</button></div></div>';
+    h += '</div></div>';
   }
   var up = [];
   var lim = addDays(TODAY, 14);
@@ -2595,7 +2606,7 @@ function setPlan(key, patch) {
 }
 
 function purgeSabzi(S) { var keep = addDays(TODAY, -1); S.sabzi = (S.sabzi || []).filter(function (r) { return r.date >= keep; }); }
-function renderAll() { purgeOtps(S); purgeGroceries(S); purgeSabzi(S); renderToday(); renderSabzi(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderGroceries(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); }
+function renderAll() { purgeOtps(S); purgeGroceries(S); purgeSabzi(S); renderToday(); renderSabzi(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderFridge(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); }
 
 function init() {
   S = load();
