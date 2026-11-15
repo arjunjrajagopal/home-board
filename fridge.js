@@ -2,8 +2,9 @@
  * Every slot starts greyed out. Tap an item to show what is in the fridge.
  *   eggs, Maya's milk, Maya's yoghurt: tap = in / out
  *   paneer: half, full, none     butter, bread, cheese tin: quarter, half, three quarters, full, none
- * Fridge.mount(host) -> { render() }
- * Saved on this device only (localStorage "hb-fridge-v1") until the Home Board server has a fridge table.
+ * Fridge.use({ get(id) -> array|null, put(id, array) }) plugs in where it is kept (the family board and the staff screen
+ * keep it in the shared board: one row per shelf, {id, v: [0..steps per slot]}). Without it, this device only (localStorage).
+ * Fridge.mount(host, { lang: 'en'|'hi', reset: true|false }) -> { render() }   Fridge.summary() -> rows for a read-only list
  */
 (function (global) {
   'use strict';
@@ -34,6 +35,9 @@
 .fr-stack .fr-base { display: block; opacity: .22; filter: grayscale(1); }
 .fr-stack .fr-fill { position: absolute; left: 0; top: 0; display: block; }
 .fr-frac { display: block; min-height: 20px; margin-top: 3px; font-size: 15px; font-weight: 800; color: var(--accent); line-height: 20px; }
+.fr-hi .fr-name b { font-size: 24px; }
+.fr-hi .fr-count { font-size: 20px; }
+.fr-hi .fr-hint { font-size: 17px; }
 .fr-hint { margin: 10px 6px 0; font-size: 13px; color: var(--muted); text-align: center; }
 `;
 
@@ -51,18 +55,18 @@
   // ---------- what's in the fridge ----------
   // groups: array of group sizes (eggs sit in trays of 6); total units = sum
   const CATS = [
-    { id:'eggs',   en:'Eggs',        hi:'अंडे',     art:'egg',    groups:[6,6,6],   note:'3 trays × 6', start:false },
-    { id:'butter', en:'Butter',      hi:'मक्खन',    art:'butter', groups:[3],       note:'3 sticks', levels:true, steps:4, start:0 },
-    { id:'milk',   en:"Maya's milk", hi:'माया का दूध',      art:'milk',   groups:[8],       note:'8 small cartons', start:false },
-    { id:'yoghurt', en:"Maya's yoghurt", hi:'माया का दही', art:'yoghurt', groups:[8], note:'8 cups', start:false },
-    { id:'bread',  en:'Brown bread', hi:'ब्रेड',     art:'bread',  groups:[3],       note:'3 loaves', levels:true, steps:4, start:0 },
-    { id:'paneer', en:'Paneer',      hi:'पनीर',     art:'paneer', groups:[3],       note:'3 blocks', levels:true, steps:2, start:0 },
-    { id:'banana', en:'Bananas', hi:'केले', art:'banana', groups:[6], note:'6 bananas', start:false },
-  { id:'cheese', en:'Amul cheese', hi:'चीज़',      art:'cheese', groups:[3],       note:'3 tins', levels:true, steps:4, start:0, slices:true }
+    { id:'eggs',   en:'Eggs',        hi:'अंडे',     art:'egg',    groups:[6,6,6],   note:'3 trays × 6' },
+    { id:'butter', en:'Butter',      hi:'मक्खन',    art:'butter', groups:[3],       note:'3 sticks', levels:true, steps:4 },
+    { id:'milk',   en:"Maya's milk", hi:'माया का दूध',      art:'milk',   groups:[8],       note:'8 small cartons' },
+    { id:'yoghurt', en:"Maya's yoghurt", hi:'माया का दही', art:'yoghurt', groups:[8], note:'8 cups' },
+    { id:'bread',  en:'Brown bread', hi:'ब्रेड',     art:'bread',  groups:[3],       note:'3 loaves', levels:true, steps:4 },
+    { id:'paneer', en:'Paneer',      hi:'पनीर',     art:'paneer', groups:[3],       note:'3 blocks', levels:true, steps:2 },
+    { id:'banana', en:'Bananas', hi:'केले', art:'banana', groups:[6], note:'6 bananas' },
+  { id:'cheese', en:'Amul cheese', hi:'चीज़',      art:'cheese', groups:[3],       note:'3 tins', levels:true, steps:4, slices:true }
   ];
 
   const FRAC = ['', '¼', '½', '¾'];
-  const levelLabel = (c, q) => q === 0 ? '' : (q === c.steps ? 'full' : (c.steps === 2 ? '½' : FRAC[q]));
+  const levelLabel = (c, q, hi) => q === 0 ? '' : (q === c.steps ? (hi ? 'पूरा' : 'full') : (c.steps === 2 ? '½' : FRAC[q]));
   function tinSVG(q){
     let slabs = '';
     for(let i=0;i<4;i++){
@@ -81,18 +85,34 @@
     if (document.getElementById('fr-css')) return;
     var st = document.createElement('style'); st.id = 'fr-css'; st.textContent = CSS; document.head.appendChild(st);
   }
-  var state = {};
-  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { } }
+
+  /* ---------- where it is kept ---------- */
+  var local = {};
+  try { local = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { local = {}; }
+  var store = {
+    get: function (id) { return local[id] || null; },
+    put: function (id, arr) { local[id] = arr; try { localStorage.setItem(KEY, JSON.stringify(local)); } catch (e) { } }
+  };
+  function use(s) { store = s; }
+  /* A shelf's slots as numbers: 0 = none in the fridge; 1 = in the fridge (eggs, milk, yoghurt, bananas); 1..steps = amount (the others). */
   function present(c) {
-    if (!Array.isArray(state[c.id]) || state[c.id].length !== total(c)) state[c.id] = Array(total(c)).fill(c.start !== undefined ? c.start : true);
-    return state[c.id];
+    var a = store.get(c.id), n = total(c), out = [];
+    for (var i = 0; i < n; i++) {
+      var v = a && a.length === n ? Number(a[i]) : 0;
+      out.push(isFinite(v) && v >= 0 ? Math.min(v, c.levels ? c.steps : 1) : 0);
+    }
+    return out;
   }
+  function amount(c, have) { return c.levels ? have.reduce(function (a, b) { return a + b; }, 0) / c.steps : have.filter(Boolean).length; }
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
   function mount(host, o) {
-    inject();
+    o = o || {}; inject();
+    var hi = o.lang === 'hi';
     function render() {
-      host.innerHTML = '<div class="fr"><div class="fr-head"><h2>What\'s in the fridge<small>फ्रिज में क्या है</small></h2><button class="btn sm" data-fr="reset">Clear all · सब खाली</button></div><div class="fr-fridge" data-fr="fridge"></div><p class="fr-hint">Tap an item to show what is in the fridge · tap again to change it.<br>फ्रिज में जो है उसे दबाएँ।</p></div>';
+      host.innerHTML = '<div class="fr' + (hi ? ' fr-hi' : '') + '"><div class="fr-head"><h2>' + (hi ? 'फ्रिज में क्या है' : 'What\'s in the fridge<small>फ्रिज में क्या है</small>') + '</h2>' +
+        (o.reset === false ? '' : '<button class="btn sm" data-fr="reset">Clear all · सब खाली</button>') + '</div><div class="fr-fridge" data-fr="fridge"></div>' +
+        '<p class="fr-hint">' + (hi ? 'फ्रिज में जो है उसे दबाइए।' : 'Tap an item to show what is in the fridge · tap again to change it.<br>फ्रिज में जो है उसे दबाएँ।') + '</p></div>';
       var fridge = host.querySelector('[data-fr="fridge"]');
       CATS.forEach(function (c) {
         var have = present(c), cat = document.createElement('div'); cat.className = 'fr-cat';
@@ -103,47 +123,47 @@
           if (c.id === 'eggs') box.className = 'fr-tray';
           for (var i = 0; i < size; i++) {
             (function (n) {
-              var b = document.createElement('button');
+              var b = document.createElement('button'), q = have[n];
               if (c.levels) {
-                var q = have[n];
                 b.className = 'fr-unit lvl';
                 b.setAttribute('aria-label', c.en + ' ' + (n + 1) + ': ' + (q ? levelLabel(c, q) + ' in fridge' : 'none in fridge'));
                 var art = c.slices ? tinSVG(q) :
                   '<span class="fr-stack"><span class="fr-base">' + ART[c.art] + '</span><span class="fr-fill" style="clip-path:inset(0 ' + (100 - q * 100 / c.steps) + '% 0 0)">' + ART[c.art] + '</span></span>';
-                b.innerHTML = art + '<span class="fr-frac">' + levelLabel(c, q) + '</span>';
-                b.onclick = function () { have[n] = (have[n] + 1) % (c.steps + 1); save(); render(); };
+                b.innerHTML = art + '<span class="fr-frac">' + levelLabel(c, q, hi) + '</span>';
+                b.onclick = function () { var a = present(c); a[n] = (a[n] + 1) % (c.steps + 1); store.put(c.id, a); render(); };
               } else {
-                b.className = 'fr-unit' + (have[n] ? '' : ' gone');
-                b.setAttribute('aria-label', c.en + ' ' + (n + 1) + (have[n] ? ' (in fridge)' : ' (taken out)'));
+                b.className = 'fr-unit' + (q ? '' : ' gone');
+                b.setAttribute('aria-label', c.en + ' ' + (n + 1) + (q ? ' (in fridge)' : ' (taken out)'));
                 b.innerHTML = ART[c.art];
-                b.onclick = function () { have[n] = !have[n]; save(); render(); };
+                b.onclick = function () { var a = present(c); a[n] = a[n] ? 0 : 1; store.put(c.id, a); render(); };
               }
               box.appendChild(b);
             })(idx++);
           }
           if (c.id === 'eggs') items.appendChild(box);
         });
-        var left = c.levels ? have.reduce(function (a, b) { return a + b; }, 0) / c.steps : have.filter(Boolean).length, all = have.length;
+        var left = amount(c, have), all = have.length;
         var cls = left === 0 ? 'out' : (left <= Math.ceil(all * 0.25) ? 'low' : '');
         var top = document.createElement('div'); top.className = 'fr-top';
-        top.innerHTML = '<div class="fr-name"><b>' + c.en.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</b><span>' + c.hi + '</span></div><div class="fr-count ' + cls + '">' + fmt(left) + ' / ' + all + '</div>';
+        top.innerHTML = '<div class="fr-name">' + (hi ? '<b>' + c.hi + '</b>' : '<b>' + esc(c.en) + '</b><span>' + c.hi + '</span>') + '</div><div class="fr-count ' + cls + '">' + fmt(left) + ' / ' + all + '</div>';
         cat.appendChild(top); cat.appendChild(items);
         var sh = document.createElement('div'); sh.className = 'fr-shelf'; cat.appendChild(sh);
         fridge.appendChild(cat);
       });
-      host.querySelector('[data-fr="reset"]').onclick = function () { state = {}; save(); render(); };
+      var rs = host.querySelector('[data-fr="reset"]');
+      if (rs) rs.onclick = function () { CATS.forEach(function (c) { store.put(c.id, Array(total(c)).fill(0)); }); render(); };
     }
     render();
     return { render: render };
   }
 
-  /* One row per shelf for the phone screen: what is in the fridge now. */
+  /* One row per shelf for a read-only list (phone screen, staff screen). */
   function summary() {
     return CATS.map(function (c) {
-      var have = present(c), left = c.levels ? have.reduce(function (a, b) { return a + b; }, 0) / c.steps : have.filter(Boolean).length;
+      var have = present(c), left = amount(c, have);
       return { id: c.id, en: c.en, hi: c.hi, left: left, all: have.length, text: fmt(left) + ' / ' + have.length, icon: c.slices ? tinSVG(4) : ART[c.art] };
     });
   }
 
-  global.Fridge = { CATS: CATS, mount: mount, summary: summary };
+  global.Fridge = { CATS: CATS, mount: mount, summary: summary, use: use };
 })(window);

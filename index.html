@@ -639,7 +639,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="sabzi.js"></script>
-<script src="fridge.js?v=3"></script>
+<script src="fridge.js?v=4"></script>
 <script id="logic">
 /* The real date, unless a test or a link such as ?today=2026-10-27 sets it. */
 var TODAY = (function () {
@@ -1591,6 +1591,7 @@ function migrateState(o) {
   if (!o.otps) o.otps = [];
   if (!o.groceries) o.groceries = [];
   if (!o.sabzi) o.sabzi = [];
+  if (!o.fridge) o.fridge = [];
   o.groceries.forEach(function (g) { if (!g.forDate) g.forDate = addDays(g.date || TODAY, 1); });
   /* A board saved by the old version keeps each weekly rule on the person: turn it into a first schedule. */
   if (!o.schedules) {
@@ -1621,7 +1622,7 @@ function save() {
  * base are sent, so two people changing different things never get in each other's way.
  * Other phones' changes arrive through /api/v2/changes?since=<seq>. */
 var SYNC = { url: '', token: '', seq: 0, base: null, status: 'off', busy: false, dirty: false, timer: null, last: '' };
-var COLLS = ['people', 'schedules', 'exceptions', 'holidays', 'schoolHolidays', 'holidayPlans', 'carBookings', 'attendance', 'groceries', 'otps', 'messages', 'sabzi', 'settings'];
+var COLLS = ['people', 'schedules', 'exceptions', 'holidays', 'schoolHolidays', 'holidayPlans', 'carBookings', 'attendance', 'groceries', 'otps', 'messages', 'sabzi', 'fridge', 'settings'];
 function syncLoadCfg() {
   try {
     var q = /[?&]api=([^&#]+)/.exec(location.search);
@@ -1669,13 +1670,14 @@ function toRows(st) {
   (st.groceries || []).forEach(function (g) { var r = JSON.parse(JSON.stringify(g)); r.done = !!r.done; put('groceries', r); });
   (st.otps || []).forEach(function (o) { var r = JSON.parse(JSON.stringify(o)); r.used = !!r.used; put('otps', r); });
   (st.messages || []).forEach(function (m) { put('messages', m); });
+  (st.fridge || []).forEach(function (r) { put('fridge', { id: r.id, v: r.v }); });
   (st.sabzi || []).forEach(function (r) { put('sabzi', { id: r.id, date: r.date, veg: r.veg, q: r.q, x: r.x, y: r.y }); });
   if (st.holidayFrom) put('settings', { id: 'holidayFrom', value: st.holidayFrom });
   return R;
 }
 function fromRows(R) {
   var list = function (c) { var m = R[c] || {}; return Object.keys(m).sort().map(function (id) { return JSON.parse(JSON.stringify(m[id])); }); };
-  var o = { people: [], schedules: list('schedules'), exceptions: list('exceptions'), holidays: [], schoolHolidays: [], holidayPlans: {}, carBookings: [], attendance: {}, groceries: list('groceries'), otps: list('otps'), messages: list('messages'), sabzi: list('sabzi') };
+  var o = { people: [], schedules: list('schedules'), exceptions: list('exceptions'), holidays: [], schoolHolidays: [], holidayPlans: {}, carBookings: [], attendance: {}, groceries: list('groceries'), otps: list('otps'), messages: list('messages'), sabzi: list('sabzi'), fridge: list('fridge') };
   o.people = list('people').sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).map(function (p) { delete p.sort; return p; });
   o.holidays = list('holidays').map(function (h) { return { date: h.date, name: h.name }; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
   o.schoolHolidays = list('schoolHolidays').map(function (h) { return { date: h.date, name: h.name }; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
@@ -1695,8 +1697,8 @@ function diffOps(base, cur) {
   });
   return ops;
 }
-/* If the server has not been updated for Sabzi yet, Sabzi stays on this phone and everything else keeps saving. */
-function pendingOps() { var o = SYNC.base ? diffOps(SYNC.base, toRows(S)) : []; return SYNC.noSabzi && Date.now() - SYNC.noSabzi < 300000 ? o.filter(function (x) { return x.c !== 'sabzi'; }) : o; }
+/* If the server has not been updated for Sabzi or the Fridge yet, they stay on this phone and everything else keeps saving. */
+function pendingOps() { var o = SYNC.base ? diffOps(SYNC.base, toRows(S)) : []; var nc = SYNC.noColl || {}; return o.filter(function (x) { return !(nc[x.c] && Date.now() - nc[x.c] < 300000); }); }
 /* Put rows from the server into the board, keeping this phone's own settings and any unsent edits. */
 function syncAdoptRows(R, replace) {
   var keep = { otpHide: S.otpHide, lastBy: S.lastBy };
@@ -1735,8 +1737,9 @@ function syncDoPush() {
   SYNC.busy = true; SYNC.dirty = false; syncSet('wait');
   var batch = ops.slice(0, 400);
   syncReq('POST', '/api/v2/ops', { ops: batch }).then(function (r) {
-    if (r.status === 400 && /Unknown collection: sabzi/.test((r.json && r.json.error) || '')) {
-      SYNC.noSabzi = Date.now(); SYNC.dirty = true; syncToast('Sabzi is saved on this device only until the Home Board server is updated.'); return;
+    var unk = r.status === 400 && /Unknown collection: (sabzi|fridge)/.exec((r.json && r.json.error) || '');
+    if (unk) {
+      (SYNC.noColl = SYNC.noColl || {})[unk[1]] = Date.now(); SYNC.dirty = true; syncToast((unk[1] === 'fridge' ? 'The fridge' : 'Sabzi') + ' is saved on this device only until the Home Board server is updated.'); return;
     }
     if (r.status !== 200) return syncFail(r);
     batch.forEach(function (o) { var b = SYNC.base[o.c] || (SYNC.base[o.c] = {}); if (o.op === 'put') b[o.row.id] = o.row; else delete b[o.id]; });
@@ -1871,6 +1874,11 @@ function renderFridge() {
 
 /* ---------- Sabzi: vegetables wanted today and tomorrow ---------- */
 var sabziCtl = null;
+/* The fridge lives in the board: one row per shelf, {id, v: [slot amounts]}. */
+if (typeof Fridge !== 'undefined' && Fridge.use) Fridge.use({
+  get: function (id) { var r = (S.fridge || []).filter(function (x) { return x.id === id; })[0]; return r ? r.v : null; },
+  put: function (id, arr) { S.fridge = (S.fridge || []).filter(function (x) { return x.id !== id; }); S.fridge.push({ id: id, v: arr }); save(); }
+});
 function sabziRows(date) { return (S.sabzi || []).filter(function (r) { return r.date === date; }); }
 function sabziSave(row) {
   S.sabzi = (S.sabzi || []).filter(function (r) { return r.id !== row.id; }); S.sabzi.push(row);

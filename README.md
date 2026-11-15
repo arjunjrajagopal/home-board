@@ -19,3 +19,9 @@ The Sabzi tab is a picture board for vegetables: drag a vegetable from the cart 
 Family (`index.html`) and staff (`staff.html`, the "सब्ज़ी लिखो" button) can both change it. The cart itself is `sabzi.js`, shared by both pages.
 
 Rows are saved in a `sabzi` collection (one row per vegetable per day, id `date|vegetable`). The Worker needs the small update in `worker/` (run `python3 worker/patch-sabzi.py worker.js`, then deploy): it adds the table, lets the staff key read it, and lets the staff key write Sabzi rows only (`POST /api/staff/sabzi`). Until the Worker is updated, Sabzi is kept on the phone that made the change and everything else keeps syncing.
+
+## Fridge
+
+The Fridge tab is a picture board of what is in the fridge: eggs (18), Maya's milk (8), Maya's yoghurt (8), butter, bread, paneer, bananas and Amul cheese tins. Every slot starts greyed out; tap to show what is in the fridge (butter, bread and cheese in quarters, paneer in halves). It also shows as a card on the Phone tab, and as the "फ्रिज" card on the staff screen (`staff.html`), where staff can tap to change it. The pictures and logic are in `fridge.js`, shared by both pages.
+
+The fridge is saved in a `fridge` collection (one row per shelf, `{id, v: [slot amounts]}`). The Worker needs the small update in `worker/` (run `python3 worker/patch-fridge.py worker.js`, then deploy): it adds the table, lets the staff key read it, and lets the staff key save fridge rows only (`POST /api/staff/fridge`). Until then the fridge is kept on the phone that made the change and everything else keeps syncing.

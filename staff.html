@@ -15,6 +15,7 @@
   --go:#1f8a4c; --go-bg:#e3f4e9; --stop:#c62828; --stop-bg:#fde7e7;
   --warn:#b26a00; --warn-bg:#fff2d6; --off:#6b7280; --off-bg:#eceef1;
   --r:22px;
+  --surface:#fff; --line:#dcd8cc; --soft:#eceef1; --bad:#c62828; --bad-bg:#fde7e7; --accent:#1f6fd1;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Devanagari","Mukta",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
@@ -84,16 +85,21 @@ button{font:inherit;color:inherit;cursor:pointer}
 .szl .nm2{font-size:24px;font-weight:800}
 .szl .amt{margin-left:auto;font-size:24px;font-weight:800;white-space:nowrap}
 .sz-open{display:block;width:100%;margin-top:12px;border:0;border-radius:18px;background:var(--go);color:#fff;font-size:24px;font-weight:800;padding:14px}
-#sz-ov{position:fixed;inset:0;z-index:100;background:var(--bg);overflow-y:auto;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 20px)}
-#sz-ov[hidden]{display:none}
-.sz-back{border:0;border-radius:16px;background:var(--ink);color:#fff;font-size:24px;font-weight:800;padding:10px 20px;margin-bottom:10px}
+#sz-ov,#fr-ov{position:fixed;inset:0;z-index:100;background:var(--bg);overflow-y:auto;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 20px)}
+#sz-ov[hidden],#fr-ov[hidden]{display:none}
+.szl .ic svg{width:44px;height:40px}
+.szl .r.none{opacity:.5}
+.btn.sm{border:2px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font-size:16px;font-weight:700}
+.sz-back,.fr-back{border:0;border-radius:16px;background:var(--ink);color:#fff;font-size:24px;font-weight:800;padding:10px 20px;margin-bottom:10px}
 .sz-err{background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:8px 12px;font-size:17px;font-weight:700;margin-bottom:8px}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 <div id="sz-ov" hidden><div class="wrap"><button class="sz-back" id="sz-back">← वापस</button><div id="sz-err"></div><div id="sz-host"></div></div></div>
+<div id="fr-ov" hidden><div class="wrap"><button class="fr-back" id="fr-back">← वापस</button><div id="fr-err"></div><div id="fr-host"></div></div></div>
 <script src="sabzi.js"></script>
+<script src="fridge.js?v=4"></script>
 
 <script>
 /* Home Board: staff screen. Read-only, except the Sabzi page where staff write the vegetables wanted.
@@ -227,6 +233,41 @@ function szOpen() {
 }
 function szClose() { document.getElementById('sz-ov').hidden = true; document.body.style.overflow = ''; render(); }
 
+/* ---------- Fridge: server rows plus this phone's unsent changes (one row per shelf, the latest tap wins) ---------- */
+var FPEND = [], FFLUSHING = false, FRCTL = null;
+try { FPEND = JSON.parse(localStorage.getItem('hb-staff-v1-fpend') || '[]') || []; } catch (e) { FPEND = []; }
+function saveFPend() { try { localStorage.setItem('hb-staff-v1-fpend', JSON.stringify(FPEND)); } catch (e) { } }
+function frGet(id) {
+  var v = null;
+  ((DATA && DATA.fridge) || []).forEach(function (r) { if (r.id === id) v = r.v; });
+  FPEND.forEach(function (o) { if (o.row.id === id) v = o.row.v; });
+  return v;
+}
+function frPut(id, arr) { FPEND.push({ op: 'put', row: { id: id, v: arr } }); saveFPend(); frFlush(); }
+function frFlush() {
+  if (DEMO || FFLUSHING || !FPEND.length || !CFG.api || !CFG.key) return;
+  FFLUSHING = true;
+  var sent = FPEND.length, last = {}, ops = [];
+  FPEND.slice(0, sent).forEach(function (o) { last[o.row.id] = o; });
+  Object.keys(last).forEach(function (k) { ops.push(last[k]); });
+  fetch(CFG.api.replace(/\/+$/, '') + '/api/staff/fridge', { method: 'POST', headers: { Authorization: 'Bearer ' + CFG.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ ops: ops }), cache: 'no-store' })
+    .then(function (r) {
+      FFLUSHING = false;
+      if (r.ok) { FPEND.splice(0, sent); saveFPend(); frNote(''); fetchData(); }
+      else frNote(r.status === 404 ? 'सर्वर अभी तैयार नहीं है। घर वालों को बताइए।' : 'सेव नहीं हुआ। थोड़ी देर में फिर कोशिश होगी।');
+    }, function () { FFLUSHING = false; frNote('इंटरनेट नहीं है। नेट आने पर सेव होगा।'); });
+}
+function frNote(t) { var e = document.getElementById('fr-err'); if (e) e.innerHTML = t ? '<div class="sz-err">' + esc(t) + '</div>' : ''; }
+if (typeof Fridge !== 'undefined' && Fridge.use) Fridge.use({ get: frGet, put: frPut });
+function frOpen() {
+  var ov = document.getElementById('fr-ov'); ov.hidden = false; document.body.style.overflow = 'hidden';
+  if (!FRCTL) FRCTL = Fridge.mount(document.getElementById('fr-host'), { lang: 'hi', reset: false }); else FRCTL.render();
+  ov.scrollTop = 0;
+}
+function frClose() { document.getElementById('fr-ov').hidden = true; document.body.style.overflow = ''; render(); }
+/* Hindi words for an amount, for reading aloud. */
+function frSay(left) { var w = Math.floor(left), q = Math.round((left - w) * 4), W = ['', 'चौथाई', 'आधा', 'पौन'], p = []; if (w) p.push(w); if (q) p.push(W[q]); return p.join(' और '); }
+
 function loadCfg() {
   try {
     var h = location.hash.replace(/^#/, ''), m;
@@ -255,10 +296,12 @@ function fetchData() {
       if (j && j.state) {
         DATA = j.state; FETCHED = Date.now(); STATUS = 'ok';
         if (PEND.length) szFlush();
+        if (FPEND.length) frFlush();
         try { localStorage.setItem(LS + '-data', JSON.stringify({ state: DATA, at: FETCHED })); } catch (e) { }
       }
       render();
       if (SZCTL && !document.getElementById('sz-ov').hidden) SZCTL.render();
+      if (FRCTL && !document.getElementById('fr-ov').hidden) FRCTL.render();
     }, function () { STATUS = 'offline'; render(); });
 }
 
@@ -345,6 +388,16 @@ function render() {
   SPEECH.sabzi = sr.length ? word + ' की सब्ज़ी: ' + sr.map(function (r) { return r.veg.n + ' ' + r.hindi; }).join(', ') + '।' : word + ' सब्ज़ी कुछ नहीं लिखी है।';
   h += card('sabzi', '🥕', 'सब्ज़ी', sb);
 
+  /* Fridge: what is in the fridge. Staff can change it. */
+  if (typeof Fridge !== 'undefined' && Fridge.summary) {
+    var fr = Fridge.summary(), have = fr.filter(function (r) { return r.left; }), gone = fr.filter(function (r) { return !r.left; });
+    var fb = '<div class="szl">' + fr.map(function (r) {
+      return '<div class="r' + (r.left ? '' : ' none') + '"><span class="ic" aria-hidden="true">' + r.icon + '</span><span class="nm2">' + esc(r.hi) + '</span><span class="amt">' + esc(r.text) + '</span></div>';
+    }).join('') + '</div><button class="sz-open" data-fr-open="1">✏️ फ्रिज देखो</button>';
+    SPEECH.fridge = 'फ्रिज में ' + (have.length ? have.map(function (r) { return r.hi + ' ' + frSay(r.left); }).join(', ') : 'कुछ नहीं है') + '।' + (gone.length ? ' ख़त्म: ' + gone.map(function (r) { return r.hi; }).join(', ') + '।' : '');
+    h += card('fridge', '🧊', 'फ्रिज', fb);
+  }
+
   /* Car */
   var drivers = (S.people || []).filter(function (p) { return !p.simple && /driver/i.test(p.role || ''); });
   var kamal = drivers.filter(function (p) { return activeOn(S, p, date); })[0] || drivers[0];
@@ -404,11 +457,13 @@ document.addEventListener('click', function (e) {
   var b = e.target.closest('button'); if (!b) return;
   if (b.dataset.szOpen) { if (window.speechSynthesis) speechSynthesis.cancel(); szOpen(); return; }
   if (b.id === 'sz-back') { szClose(); return; }
+  if (b.dataset.frOpen) { if (window.speechSynthesis) speechSynthesis.cancel(); frOpen(); return; }
+  if (b.id === 'fr-back') { frClose(); return; }
   if (b.dataset.view) { VIEW = b.dataset.view; if (window.speechSynthesis) speechSynthesis.cancel(); render(); return; }
   if (b.dataset.say) { speak([b.dataset.say]); return; }
   if (b.id === 'speak-all') {
     if (b.getAttribute('aria-pressed') === 'true') { speechSynthesis.cancel(); b.setAttribute('aria-pressed', 'false'); document.querySelectorAll('.speaking').forEach(function (c) { c.classList.remove('speaking'); }); return; }
-    speak(['school', 'come', 'staff', 'sabzi', 'car', 'groc'].filter(function (k) { return SPEECH[k]; }));
+    speak(['school', 'come', 'staff', 'sabzi', 'fridge', 'car', 'groc'].filter(function (k) { return SPEECH[k]; }));
   }
 });
 
@@ -444,6 +499,7 @@ function demoState() {
       { id: t + '|tomato', date: t, veg: 'tomato', q: 1, x: .3, y: .3 }, { id: t + '|karela', date: t, veg: 'karela', q: 0.5, x: .7, y: .35 }, { id: t + '|corn', date: t, veg: 'corn', q: 3, x: .5, y: .7 },
       { id: t1 + '|potato', date: t1, veg: 'potato', q: 2, x: .4, y: .5 }
     ],
+    fridge: [{ id: 'eggs', v: [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0] }, { id: 'milk', v: [1,1,1,1,0,0,0,0] }, { id: 'bread', v: [4,2,0] }, { id: 'cheese', v: [4,3,1] }],
     groceries: [
       { id: 'g1', item: 'Carrot', vendor: 'Blinkit', forDate: t }, { id: 'g2', item: 'Dahi', vendor: 'Blinkit', forDate: t }, { id: 'g3', item: 'Gobi', vendor: 'Blinkit', forDate: t },
       { id: 'g4', item: 'Milk', vendor: 'Milkbasket', forDate: t1 }, { id: 'g5', item: 'Eggs', vendor: 'Blinkit', forDate: t1 }
@@ -463,7 +519,7 @@ document.addEventListener('visibilitychange', function () {
   if (!/[?&]today=/.test(location.search) && d !== TODAY) { location.reload(); return; }
   fetchData();
 });
-window.addEventListener('online', function () { fetchData(); szFlush(); });
+window.addEventListener('online', function () { fetchData(); szFlush(); frFlush(); });
 </script>
 </body>
 </html>
