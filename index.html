@@ -366,27 +366,6 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-btn { flex: 1 1 140px; min-height: 52px; border-radius: 14px; border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; padding: 8px 12px; }
 .ph-btn.pri { background: var(--ink); color: var(--bg); }
 
-/* Jeet checklist */
-.jc-top { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.jc-title { margin: 4px 0 2px; }
-.jc-bar { height: 14px; border-radius: 999px; background: var(--line); overflow: hidden; margin: 10px 0 6px; }
-.jc-bar > span { display: block; height: 100%; background: var(--good); border-radius: 999px; transition: width .2s; }
-.jc-count { font-weight: 700; font-size: 17px; margin-bottom: 10px; }
-.jc-list { display: flex; flex-direction: column; gap: 10px; }
-.jc-item { border: 3px solid var(--line); border-radius: 18px; background: var(--surface); overflow: hidden; }
-.jc-item.done { border-color: var(--good); background: var(--good-bg); }
-.jc-main { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 76px; padding: 10px 12px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
-.jc-box { flex: none; width: 38px; height: 38px; border-radius: 10px; border: 3px solid var(--ink); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; color: var(--good); background: var(--surface); }
-.jc-item.done .jc-box { border-color: var(--good); }
-.jc-ico { flex: none; display: flex; align-items: center; gap: 2px; font-size: 34px; line-height: 1; width: 80px; justify-content: center; }
-.jc-ico svg { display: block; flex: none; width: 37px; height: 37px; }
-.jc-txt { display: flex; flex-direction: column; gap: 2px; font-size: 17px; min-width: 0; }
-.jc-item.done .jc-txt b { text-decoration: line-through; }
-.jc-num { display: none; }
-.jc-hi { font-size: 15px; color: var(--muted); }
-.jc-pic { display: block; width: 100%; padding: 0 12px 12px; border: 0; background: transparent; cursor: zoom-in; }
-.jc-pic img { display: block; width: 100%; max-height: 150px; object-fit: cover; border-radius: 12px; border: 2px solid var(--line); }
-.jc-pic.zoom img { max-height: none; object-fit: contain; }
 
 .ph-btn:active { transform: scale(.98); }
 .ph-edit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -667,6 +646,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 
 <script src="sabzi.js"></script>
 <script src="fridge.js?v=4"></script>
+<script src="jeet.js?v=1"></script>
 <script id="logic">
 /* The real date, unless a test or a link such as ?today=2026-10-27 sets it. */
 var TODAY = (function () {
@@ -1902,50 +1882,19 @@ function renderFridge() {
 
 /* ---------- Jeet checklist: Sangeetha's list for getting ready for Jeet's session ---------- */
 function isJeet(p) { return !!p && (p.id === 'jeet' || String(p.name || '').trim().toLowerCase() === 'jeet'); }
-var JEET_ITEMS = [
-  { id: 'treat', ico: '<svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true"><circle cx="20" cy="23" r="14" fill="#f58a1f"/><circle cx="15" cy="18" r="4" fill="#fbb35a" opacity=".7"/><path d="M20 9c0-3 2-5 4-5 0 3-1 5-4 5z" fill="#3c8a3e"/><rect x="19" y="7" width="2" height="4" rx="1" fill="#5a3d1e"/></svg><svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true"><rect x="5" y="26" width="30" height="8" rx="2.5" fill="#e3b565" stroke="#b98036" stroke-width="1.5"/><path d="M6 24h28v3H6z" fill="#c4142f"/><path d="M6 24c3 3 5-1 8 1s5-2 8 1 5-2 8 0 3 0 4-1v3H6z" fill="#c4142f"/><path d="M6 12c0-3 3-5 14-5s14 2 14 5v10H6z" fill="#e3b565" stroke="#b98036" stroke-width="1.5" stroke-linejoin="round"/><rect x="5" y="22" width="30" height="3" fill="#c4142f"/></svg>', en: 'Prepare baby treat food', hi: 'बेबी ट्रीट (खाना) तैयार करो' },
-  { id: 'water', ico: '🥛', en: 'Bring a glass of warm water for Jeet', hi: 'जीत के लिए गरम पानी का गिलास लाओ' },
-  { id: 'furn', ico: '🛋️', en: 'Arrange furniture', hi: 'फ़र्नीचर ठीक से लगाओ' },
-  { id: 'small', ico: '<svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true"><path d="M4 17h32c0 11-7 17-16 17S4 28 4 17z" fill="#3f8fd2"/><ellipse cx="20" cy="17" rx="16" ry="3.5" fill="#8cc4f0"/><ellipse cx="20" cy="17.5" rx="12.5" ry="2" fill="#2d6ea8"/></svg><svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true"><polygon points="20,5 35,13 20,21 5,13" fill="#ecc98f"/><polygon points="5,13 20,21 20,36 5,28" fill="#c99a5b"/><polygon points="20,21 35,13 35,28 20,36" fill="#a8763a"/><path d="M5 13l15 8 15-8M20 21v15" fill="none" stroke="#7a5326" stroke-width="1" stroke-linejoin="round"/></svg>', en: 'Bring bowl of small toys', hi: 'छोटे खिलौनों का कटोरा लाओ' },
-  { id: 'large', ico: '🥁', en: 'Arrange large toys', hi: 'बड़े खिलौने लगाओ', pic: 'jeet-toys.jpg' }
-];
-var JEET_KEY = 'homeboard.jeetChecklist';
-function jeetLoad() {
-  var o = null;
-  try { o = JSON.parse(localStorage.getItem(JEET_KEY) || 'null'); } catch (e) { }
-  if (!o || o.date !== TODAY || !Array.isArray(o.done)) o = { date: TODAY, done: [] };
-  return o;
-}
-function jeetSave(o) { try { localStorage.setItem(JEET_KEY, JSON.stringify(o)); } catch (e) { } }
 var jeetZoom = false;
 function renderJeet() {
   var host = $('p-jeet'); if (!host) return;
-  var st = jeetLoad(), n = 0;
-  JEET_ITEMS.forEach(function (it) { if (st.done.indexOf(it.id) >= 0) n++; });
-  var all = n === JEET_ITEMS.length;
-  var h = '<div class="card jc"><div class="jc-top"><button class="btn sm" data-tab="phone">&larr; Back</button><button class="btn sm" data-jeet-reset="1">Start again</button></div>' +
+  if (typeof JeetList === 'undefined') { host.innerHTML = '<div class="card"><p class="muted">The Jeet checklist could not load (jeet.js missing).</p></div>'; return; }
+  host.innerHTML = '<div class="card jc"><div class="jc-top"><button class="btn sm" data-tab="phone">&larr; Back</button><button class="btn sm" data-jeet-reset="1">Start again</button></div>' +
     '<h2 class="jc-title">Jeet checklist</h2><p class="muted small">Getting ready for the session with Jeet. Tap each step when it is done. The list starts fresh every day.</p>' +
-    '<div class="jc-bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + JEET_ITEMS.length + '" aria-valuenow="' + n + '"><span style="width:' + Math.round(100 * n / JEET_ITEMS.length) + '%"></span></div>' +
-    '<div class="jc-count">' + (all ? '🎉 All ready for Jeet!' : n + ' of ' + JEET_ITEMS.length + ' done') + '</div><div class="jc-list">';
-  JEET_ITEMS.forEach(function (it, i) {
-    var on = st.done.indexOf(it.id) >= 0;
-    h += '<div class="jc-item' + (on ? ' done' : '') + '"><button class="jc-main" data-jeet-item="' + it.id + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
-      '<span class="jc-box" aria-hidden="true">' + (on ? '✓' : '') + '</span><span class="jc-ico" aria-hidden="true">' + it.ico + '</span>' +
-      '<span class="jc-txt"><span class="jc-num">' + (i + 1) + '</span> <b>' + esc(it.en) + '</b><span class="jc-hi">' + esc(it.hi) + '</span></span></button>' +
-      (it.pic ? '<button class="jc-pic' + (jeetZoom ? ' zoom' : '') + '" data-jeet-zoom="1" aria-label="Show the large toys picture ' + (jeetZoom ? 'smaller' : 'bigger') + '"><img src="' + it.pic + '" alt="How the large toys should be arranged"></button>' : '') +
-      '</div>';
-  });
-  h += '</div></div>';
-  host.innerHTML = h;
+    JeetList.html(TODAY, 'en', jeetZoom) + '</div>';
   if (!host._jeetBound) {
     host._jeetBound = true;
     host.addEventListener('click', function (e) {
       var t = e.target.closest('button'); if (!t) return;
-      if (t.dataset.jeetItem) {
-        var s = jeetLoad(), k = s.done.indexOf(t.dataset.jeetItem);
-        if (k >= 0) s.done.splice(k, 1); else s.done.push(t.dataset.jeetItem);
-        jeetSave(s); renderJeet();
-      } else if (t.dataset.jeetReset) { jeetSave({ date: TODAY, done: [] }); renderJeet(); }
+      if (t.dataset.jeetItem) { JeetList.toggle(TODAY, t.dataset.jeetItem); renderJeet(); }
+      else if (t.dataset.jeetReset) { JeetList.reset(TODAY); renderJeet(); }
       else if (t.dataset.jeetZoom) { jeetZoom = !jeetZoom; renderJeet(); }
     });
   }

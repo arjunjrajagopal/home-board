@@ -85,8 +85,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .szl .nm2{font-size:24px;font-weight:800}
 .szl .amt{margin-left:auto;font-size:24px;font-weight:800;white-space:nowrap}
 .sz-open{display:block;width:100%;margin-top:12px;border:0;border-radius:18px;background:var(--go);color:#fff;font-size:24px;font-weight:800;padding:14px}
-#sz-ov,#fr-ov{position:fixed;inset:0;z-index:100;background:var(--bg);overflow-y:auto;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 20px)}
-#sz-ov[hidden],#fr-ov[hidden]{display:none}
+#sz-ov,#fr-ov,#jc-ov{position:fixed;inset:0;z-index:100;background:var(--bg);overflow-y:auto;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 20px)}
+#sz-ov[hidden],#fr-ov[hidden],#jc-ov[hidden]{display:none}
+.jc-h{font-size:28px;font-weight:800;margin:4px 0 6px}
 .szl .ic svg{width:44px;height:40px}
 .szl .r.none{opacity:.5}
 .btn.sm{border:2px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font-size:16px;font-weight:700}
@@ -97,9 +98,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 <body>
 <div class="wrap" id="app"></div>
 <div id="sz-ov" hidden><div class="wrap"><button class="sz-back" id="sz-back">← वापस</button><div id="sz-err"></div><div id="sz-host"></div></div></div>
+<div id="jc-ov" hidden><div class="wrap"><button class="fr-back" id="jc-back">← वापस</button><h2 class="jc-h">✅ जीत की तैयारी</h2><div id="jc-host"></div></div></div>
 <div id="fr-ov" hidden><div class="wrap"><button class="fr-back" id="fr-back">← वापस</button><div id="fr-err"></div><div id="fr-host"></div></div></div>
 <script src="sabzi.js"></script>
 <script src="fridge.js?v=4"></script>
+<script src="jeet.js?v=1"></script>
 
 <script>
 /* Home Board: staff screen. Read-only, except the Sabzi page where staff write the vegetables wanted.
@@ -264,6 +267,10 @@ function frOpen() {
   if (!FRCTL) FRCTL = Fridge.mount(document.getElementById('fr-host'), { lang: 'hi', reset: false }); else FRCTL.render();
   ov.scrollTop = 0;
 }
+var JCZOOM = false;
+function jcRender() { document.getElementById('jc-host').innerHTML = JeetList.html(VIEW, 'hi', JCZOOM); }
+function jcOpen() { var ov = document.getElementById('jc-ov'); ov.hidden = false; document.body.style.overflow = 'hidden'; jcRender(); ov.scrollTop = 0; }
+function jcClose() { document.getElementById('jc-ov').hidden = true; document.body.style.overflow = ''; render(); }
 function frClose() { document.getElementById('fr-ov').hidden = true; document.body.style.overflow = ''; render(); }
 /* Hindi words for an amount, for reading aloud. */
 function frSay(left) { var w = Math.floor(left), q = Math.round((left - w) * 4), W = ['', 'चौथाई', 'आधा', 'पौन'], p = []; if (w) p.push(w); if (q) p.push(W[q]); return p.join(' और '); }
@@ -368,7 +375,14 @@ function render() {
 
   /* Kamal and Deepak: come at a time */
   var listed = (S.people || []).slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).filter(function (p) { return listedOn(S, p, date); });
-  var timed = listed.filter(function (p) { return !p.simple; }), rows = timed.map(function (p) { return personRow(S, p, date, false); });
+  var timed = listed.filter(function (p) { return !p.simple; }), rows = timed.map(function (p) {
+    var r = personRow(S, p, date, false);
+    if ((p.id === 'jeet' || String(p.name || '').trim().toLowerCase() === 'jeet') && !isOut(dayStatus(S, p, date)) && typeof JeetList !== 'undefined') {
+      var jn = JeetList.count(date), jt = JeetList.items.length;
+      r.html += '<button class="sz-open" data-jc-open="1" style="margin-top:8px">✅ जीत की तैयारी · ' + (jn === jt ? 'सब हो गया' : jn + '/' + jt) + '</button>';
+    }
+    return r;
+  });
   SPEECH.come = rows.map(function (r) { return r.say; }).join(' ');
   h += card('come', '🕘', 'कौन कब आएगा', rows.map(function (r) { return r.html; }).join(''));
 
@@ -459,6 +473,10 @@ document.addEventListener('click', function (e) {
   if (b.id === 'sz-back') { szClose(); return; }
   if (b.dataset.frOpen) { if (window.speechSynthesis) speechSynthesis.cancel(); frOpen(); return; }
   if (b.id === 'fr-back') { frClose(); return; }
+  if (b.dataset.jcOpen) { if (window.speechSynthesis) speechSynthesis.cancel(); jcOpen(); return; }
+  if (b.id === 'jc-back') { jcClose(); return; }
+  if (b.dataset.jeetItem) { JeetList.toggle(VIEW, b.dataset.jeetItem); jcRender(); return; }
+  if (b.dataset.jeetZoom) { JCZOOM = !JCZOOM; jcRender(); return; }
   if (b.dataset.view) { VIEW = b.dataset.view; if (window.speechSynthesis) speechSynthesis.cancel(); render(); return; }
   if (b.dataset.say) { speak([b.dataset.say]); return; }
   if (b.id === 'speak-all') {
