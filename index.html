@@ -365,6 +365,28 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .ph-btn { flex: 1 1 140px; min-height: 52px; border-radius: 14px; border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; padding: 8px 12px; }
 .ph-btn.pri { background: var(--ink); color: var(--bg); }
+
+/* Jeet checklist */
+.jc-top { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.jc-title { margin: 4px 0 2px; }
+.jc-bar { height: 14px; border-radius: 999px; background: var(--line); overflow: hidden; margin: 10px 0 6px; }
+.jc-bar > span { display: block; height: 100%; background: var(--good); border-radius: 999px; transition: width .2s; }
+.jc-count { font-weight: 700; font-size: 17px; margin-bottom: 10px; }
+.jc-list { display: flex; flex-direction: column; gap: 10px; }
+.jc-item { border: 3px solid var(--line); border-radius: 18px; background: var(--surface); overflow: hidden; }
+.jc-item.done { border-color: var(--good); background: var(--good-bg); }
+.jc-main { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 76px; padding: 10px 12px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.jc-box { flex: none; width: 38px; height: 38px; border-radius: 10px; border: 3px solid var(--ink); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; color: var(--good); background: var(--surface); }
+.jc-item.done .jc-box { border-color: var(--good); }
+.jc-ico { flex: none; font-size: 34px; line-height: 1; }
+.jc-txt { display: flex; flex-direction: column; gap: 2px; font-size: 17px; min-width: 0; }
+.jc-item.done .jc-txt b { text-decoration: line-through; }
+.jc-num { display: none; }
+.jc-hi { font-size: 15px; color: var(--muted); }
+.jc-pic { display: block; width: 100%; padding: 0 12px 12px; border: 0; background: transparent; cursor: zoom-in; }
+.jc-pic img { display: block; width: 100%; max-height: 150px; object-fit: cover; border-radius: 12px; border: 2px solid var(--line); }
+.jc-pic.zoom img { max-height: none; object-fit: contain; }
+
 .ph-btn:active { transform: scale(.98); }
 .ph-edit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ph-edit input { flex: 1 1 140px; min-height: 52px; font-size: 22px; font-weight: 700; border: 2px solid var(--ink); border-radius: 14px; padding: 6px 12px; background: var(--surface); color: var(--ink); }
@@ -467,6 +489,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <button class="tab" role="tab" data-tab="otps" aria-selected="false">OTPs</button>
     <button class="tab" role="tab" data-tab="fridge" aria-selected="false">Fridge</button>
     <button class="tab" role="tab" data-tab="sabzi" aria-selected="false">Sabzi</button>
+    <button class="tab" role="tab" data-tab="jeet" aria-selected="false">Jeet checklist</button>
     <button class="tab" role="tab" data-tab="display" aria-selected="false">Display</button>
     <button class="tab" role="tab" data-tab="phone" aria-selected="false">Phone</button>
     <button class="tab" role="tab" data-tab="count" aria-selected="false">Count</button>
@@ -550,6 +573,8 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 
   <section class="panel" id="p-sabzi" hidden></section>
 
+  <section class="panel" id="p-jeet" hidden></section>
+
   <section class="panel" id="p-display" hidden></section>
 
   <section class="panel" id="p-phone" hidden></section>
@@ -621,6 +646,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <button class="mr" role="menuitem" data-tab="today">Overview</button>
     <button class="mr" role="menuitem" data-tab="fridge">Fridge</button>
     <button class="mr" role="menuitem" data-tab="sabzi">Sabzi (vegetables)</button>
+    <button class="mr" role="menuitem" data-tab="jeet">Jeet checklist</button>
     <button class="mr" role="menuitem" data-tab="otps">OTPs</button>
     <button class="mr" role="menuitem" data-tab="holidays">Public holidays</button>
     <button class="mr" role="menuitem" data-tab="count">Count days</button>
@@ -1854,13 +1880,14 @@ function setTab(name) {
   document.querySelectorAll('.mr').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
   closeMore();
   document.body.classList.toggle('tab-phone', name === 'phone');
-  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'fridge', 'sabzi', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
+  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'fridge', 'sabzi', 'jeet', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
   if (name === 'count') renderCount();
   if (name === 'display') { renderDisplay(); }
   if (name === 'phone') { renderPhone(); }
   if (name === 'car') { renderCar(); }
   if (name === 'sabzi') { renderSabzi(); }
   if (name === 'fridge') { renderFridge(); }
+  if (name === 'jeet') { renderJeet(); }
 }
 
 /* ---------- Fridge: what is in the fridge (kept on this device) ---------- */
@@ -1870,6 +1897,57 @@ function renderFridge() {
   if (typeof Fridge === 'undefined') { host.innerHTML = '<div class="card"><p class="muted">The Fridge page could not load (fridge.js missing).</p></div>'; return; }
   if (!fridgeCtl || !host.querySelector('.fr')) fridgeCtl = Fridge.mount(host, {});
   else fridgeCtl.render();
+}
+
+/* ---------- Jeet checklist: Sangeetha's list for getting ready for Jeet's session ---------- */
+function isJeet(p) { return !!p && (p.id === 'jeet' || String(p.name || '').trim().toLowerCase() === 'jeet'); }
+var JEET_ITEMS = [
+  { id: 'treat', ico: '🍪', en: 'Prepare baby treat food', hi: 'बेबी ट्रीट (खाना) तैयार करो' },
+  { id: 'water', ico: '🥛', en: 'Bring a glass of warm water for Jeet', hi: 'जीत के लिए गरम पानी का गिलास लाओ' },
+  { id: 'furn', ico: '🛋️', en: 'Arrange furniture', hi: 'फ़र्नीचर ठीक से लगाओ' },
+  { id: 'small', ico: '🧸', en: 'Bring bowl of small toys', hi: 'छोटे खिलौनों का कटोरा लाओ' },
+  { id: 'large', ico: '🥁', en: 'Arrange large toys', hi: 'बड़े खिलौने लगाओ', pic: 'jeet-toys.jpg' }
+];
+var JEET_KEY = 'homeboard.jeetChecklist';
+function jeetLoad() {
+  var o = null;
+  try { o = JSON.parse(localStorage.getItem(JEET_KEY) || 'null'); } catch (e) { }
+  if (!o || o.date !== TODAY || !Array.isArray(o.done)) o = { date: TODAY, done: [] };
+  return o;
+}
+function jeetSave(o) { try { localStorage.setItem(JEET_KEY, JSON.stringify(o)); } catch (e) { } }
+var jeetZoom = false;
+function renderJeet() {
+  var host = $('p-jeet'); if (!host) return;
+  var st = jeetLoad(), n = 0;
+  JEET_ITEMS.forEach(function (it) { if (st.done.indexOf(it.id) >= 0) n++; });
+  var all = n === JEET_ITEMS.length;
+  var h = '<div class="card jc"><div class="jc-top"><button class="btn sm" data-tab="phone">&larr; Back</button><button class="btn sm" data-jeet-reset="1">Start again</button></div>' +
+    '<h2 class="jc-title">Jeet checklist</h2><p class="muted small">Getting ready for the session with Jeet. Tap each step when it is done. The list starts fresh every day.</p>' +
+    '<div class="jc-bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + JEET_ITEMS.length + '" aria-valuenow="' + n + '"><span style="width:' + Math.round(100 * n / JEET_ITEMS.length) + '%"></span></div>' +
+    '<div class="jc-count">' + (all ? '🎉 All ready for Jeet!' : n + ' of ' + JEET_ITEMS.length + ' done') + '</div><div class="jc-list">';
+  JEET_ITEMS.forEach(function (it, i) {
+    var on = st.done.indexOf(it.id) >= 0;
+    h += '<div class="jc-item' + (on ? ' done' : '') + '"><button class="jc-main" data-jeet-item="' + it.id + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
+      '<span class="jc-box" aria-hidden="true">' + (on ? '✓' : '') + '</span><span class="jc-ico" aria-hidden="true">' + it.ico + '</span>' +
+      '<span class="jc-txt"><span class="jc-num">' + (i + 1) + '</span> <b>' + esc(it.en) + '</b><span class="jc-hi">' + esc(it.hi) + '</span></span></button>' +
+      (it.pic ? '<button class="jc-pic' + (jeetZoom ? ' zoom' : '') + '" data-jeet-zoom="1" aria-label="Show the large toys picture ' + (jeetZoom ? 'smaller' : 'bigger') + '"><img src="' + it.pic + '" alt="How the large toys should be arranged"></button>' : '') +
+      '</div>';
+  });
+  h += '</div></div>';
+  host.innerHTML = h;
+  if (!host._jeetBound) {
+    host._jeetBound = true;
+    host.addEventListener('click', function (e) {
+      var t = e.target.closest('button'); if (!t) return;
+      if (t.dataset.jeetItem) {
+        var s = jeetLoad(), k = s.done.indexOf(t.dataset.jeetItem);
+        if (k >= 0) s.done.splice(k, 1); else s.done.push(t.dataset.jeetItem);
+        jeetSave(s); renderJeet();
+      } else if (t.dataset.jeetReset) { jeetSave({ date: TODAY, done: [] }); renderJeet(); }
+      else if (t.dataset.jeetZoom) { jeetZoom = !jeetZoom; renderJeet(); }
+    });
+  }
 }
 
 /* ---------- Sabzi: vegetables wanted today and tomorrow ---------- */
@@ -2142,6 +2220,7 @@ function phPerson(p) {
     acts = '<div class="ph-acts">';
     if (st.state !== 'absent' && st.state !== 'off') acts += '<button class="ph-btn" data-ph-absent="' + p.id + '">Not coming ' + word + '</button>';
     acts += '<button class="ph-btn" data-ph-edit="' + p.id + '">' + (st.state === 'off' ? 'Coming ' + word : 'Change time') + '</button>';
+    if (isJeet(p)) acts += '<button class="ph-btn pri" data-tab="jeet">&#9989; Jeet checklist</button>';
     if (reported) acts += '<button class="ph-btn" data-ph-restore="' + p.id + '">Back to normal</button>';
     acts += '</div>';
   }

@@ -25,3 +25,7 @@ Rows are saved in a `sabzi` collection (one row per vegetable per day, id `date|
 The Fridge tab is a picture board of what is in the fridge: eggs (18), Maya's milk (8), Maya's yoghurt (8), butter, bread, paneer, bananas and Amul cheese tins. Every slot starts greyed out; tap to show what is in the fridge (butter, bread and cheese in quarters, paneer in halves). It also shows as a card on the Phone tab, and as the "फ्रिज" card on the staff screen (`staff.html`), where staff can tap to change it. The pictures and logic are in `fridge.js`, shared by both pages.
 
 The fridge is saved in a `fridge` collection (one row per shelf, `{id, v: [slot amounts]}`). The Worker needs the small update in `worker/` (run `python3 worker/patch-fridge.py worker.js`, then deploy): it adds the table, lets the staff key read it, and lets the staff key save fridge rows only (`POST /api/staff/fridge`). Until then the fridge is kept on the phone that made the change and everything else keeps syncing.
+
+## Jeet checklist
+
+The Jeet checklist tab (also under More on the phone) is Sangeetha's step-by-step list for getting ready for Jeet's session: prepare baby treat food, bring a glass of warm water, arrange furniture, bring the bowl of small toys, arrange large toys. Each step is a big tap-to-tick card, with a progress bar. A "Jeet checklist" button appears inside Jeet's tile on the Phone tab. Ticks are kept on the phone and reset each day. The photo for "Arrange large toys" is `jeet-toys.jpg`; replace that file to change the picture.
