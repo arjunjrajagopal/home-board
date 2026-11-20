@@ -673,6 +673,7 @@ var MONFULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', '
 function pd(s) { var a = s.split('-').map(Number); return new Date(Date.UTC(a[0], a[1] - 1, a[2])); }
 function fd(d) { return d.toISOString().slice(0, 10); }
 function addDays(s, n) { var d = pd(s); d.setUTCDate(d.getUTCDate() + n); return fd(d); }
+function tomorrow() { return addDays(TODAY, 1); }
 function dow(s) { return pd(s).getUTCDay(); }
 function daysBetween(a, b) { return Math.round((pd(b) - pd(a)) / 864e5); }
 function labelDate(s) { var d = pd(s); return DAYN[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MONN[d.getUTCMonth()]; }
