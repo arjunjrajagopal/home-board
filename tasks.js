@@ -17,7 +17,12 @@
   function dow(date) { return new Date(date + 'T00:00:00Z').getUTCDay(); }
   function out(st) { return !st || st.state === 'absent' || st.state === 'off'; }
   /* An icon is an emoji or a small drawing (svg). Only our own drawings are allowed through as markup. */
-  function icon(x) { x = String(x || ''); return /^<svg[\s>]/.test(x) && !/<script|on\w+\s*=|javascript:/i.test(x) ? x : esc(x); }
+  function icon(x) {
+    x = String(x || '');
+    if (/<script|on\w+\s*=|javascript:|<foreignObject/i.test(x)) return esc(x);
+    /* Emoji and drawings can be mixed, e.g. a teacup emoji next to a drawn bowl. */
+    return x.split(/(<svg[\s>][\s\S]*?<\/svg>)/).map(function (part) { return /^<svg[\s>]/.test(part) ? part : esc(part); }).join('');
+  }
 
   var JEET_STEPS = [
   { id: 'treat', ico: '<svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true"><circle cx="20" cy="23" r="14" fill="#f58a1f"/><circle cx="15" cy="18" r="4" fill="#fbb35a" opacity=".7"/><path d="M20 9c0-3 2-5 4-5 0 3-1 5-4 5z" fill="#3c8a3e"/><rect x="19" y="7" width="2" height="4" rx="1" fill="#5a3d1e"/></svg><svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true"><rect x="5" y="26" width="30" height="8" rx="2.5" fill="#e3b565" stroke="#b98036" stroke-width="1.5"/><path d="M6 24h28v3H6z" fill="#c4142f"/><path d="M6 24c3 3 5-1 8 1s5-2 8 1 5-2 8 0 3 0 4-1v3H6z" fill="#c4142f"/><path d="M6 12c0-3 3-5 14-5s14 2 14 5v10H6z" fill="#e3b565" stroke="#b98036" stroke-width="1.5" stroke-linejoin="round"/><rect x="5" y="22" width="30" height="3" fill="#c4142f"/></svg>', en: 'Prepare baby treat food', hi: 'बेबी ट्रीट (खाना) तैयार करो' },

@@ -1,6 +1,6 @@
 /* Fridge: what is in the fridge, shared by the family board (index.html) and later the staff page.
  * Every slot starts greyed out. Tap an item to show what is in the fridge.
- *   eggs, Maya's milk, Maya's yoghurt: tap = in / out
+ *   eggs, Baby's milk, Baby's yoghurt: tap = in / out
  *   paneer: half, full, none     butter, bread, cheese tin: quarter, half, three quarters, full, none
  * Fridge.use({ get(id) -> array|null, put(id, array) }) plugs in where it is kept (the family board and the staff screen
  * keep it in the shared board: one row per shelf, {id, v: [0..steps per slot]}). Without it, this device only (localStorage).
@@ -57,8 +57,8 @@
   const CATS = [
     { id:'eggs',   en:'Eggs',        hi:'अंडे',     art:'egg',    groups:[6,6,6],   note:'3 trays × 6' },
     { id:'butter', en:'Butter',      hi:'मक्खन',    art:'butter', groups:[3],       note:'3 sticks', levels:true, steps:4 },
-    { id:'milk',   en:"Maya's milk", hi:'माया का दूध',      art:'milk',   groups:[8],       note:'8 small cartons' },
-    { id:'yoghurt', en:"Maya's yoghurt", hi:'माया का दही', art:'yoghurt', groups:[8], note:'8 cups' },
+    { id:'milk',   en:"Baby's milk", hi:'बेबी का दूध',      art:'milk',   groups:[8],       note:'8 small cartons' },
+    { id:'yoghurt', en:"Baby's yoghurt", hi:'बेबी का दही', art:'yoghurt', groups:[8], note:'8 cups' },
     { id:'bread',  en:'Brown bread', hi:'ब्रेड',     art:'bread',  groups:[3],       note:'3 loaves', levels:true, steps:4 },
     { id:'paneer', en:'Paneer',      hi:'पनीर',     art:'paneer', groups:[3],       note:'3 blocks', levels:true, steps:2 },
     { id:'banana', en:'Bananas', hi:'केले', art:'banana', groups:[6], note:'6 bananas' },
