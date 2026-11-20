@@ -105,7 +105,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <div id="fr-ov" hidden><div class="wrap"><button class="fr-back" id="fr-back">← वापस</button><div id="fr-err"></div><div id="fr-host"></div></div></div>
 <script src="sabzi.js"></script>
 <script src="fridge.js?v=4"></script>
-<script src="tasks.js?v=1"></script>
+<script src="tasks.js?v=2"></script>
 
 <script>
 /* Home Board: staff screen. Read-only, except the Sabzi page where staff write the vegetables wanted.
@@ -329,11 +329,33 @@ function jcRender() {
   var t = tkList().filter(function (x) { return x.id === TOPEN; })[0], host = document.getElementById('jc-host');
   if (!t) { host.innerHTML = '<div class="none">यह काम अब नहीं है।</div>'; document.getElementById('jc-title').textContent = ''; return; }
   document.getElementById('jc-title').innerHTML = '<span aria-hidden="true">' + Tasks.icon(t.icon || '📋') + '</span>' + esc(t.titleHi || t.title);
-  host.innerHTML = '<div id="jc-err"></div>' + Tasks.view(t, Tasks.doneSet(tkTicks(), VIEW, t.id), { lang: 'hi', zoom: TZOOM });
+  document.getElementById('jc-title').innerHTML += '<button class="say" id="jc-say-all" aria-label="पूरा काम सुनिए" style="margin-left:auto">🔊</button>';
+  host.innerHTML = '<div id="jc-err"></div>' + Tasks.view(t, Tasks.doneSet(tkTicks(), VIEW, t.id), { lang: 'hi', zoom: TZOOM, speak: true });
   Tasks.photoCfg(CFG.api, CFG.key); Tasks.fillPhotos(host);
 }
 function jcOpen(id) { TOPEN = id; TZOOM = {}; var ov = document.getElementById('jc-ov'); ov.hidden = false; document.body.style.overflow = 'hidden'; jcRender(); ov.scrollTop = 0; }
-function jcClose() { TOPEN = null; document.getElementById('jc-ov').hidden = true; document.body.style.overflow = ''; render(); }
+/* Read a task aloud in Hindi: the whole task, or one step. */
+var NTH = ['पहला', 'दूसरा', 'तीसरा', 'चौथा', 'पाँचवाँ', 'छठा', 'सातवाँ', 'आठवाँ', 'नौवाँ', 'दसवाँ'];
+function tkSay(stepId) {
+  if (!window.speechSynthesis) return;
+  var t = tkList().filter(function (x) { return x.id === TOPEN; })[0]; if (!t) return;
+  var done = Tasks.doneSet(tkTicks(), VIEW, t.id), parts = [];
+  if (!stepId) {
+    parts.push({ text: (t.titleHi || t.title) + '। ' + (t.noteHi || '') });
+    (t.steps || []).forEach(function (s, i) { parts.push({ id: s.id, text: (NTH[i] ? NTH[i] + ' काम: ' : (i + 1) + ': ') + (s.hi || s.en) + (done[s.id] ? '। यह हो गया है।' : '।') }); });
+    var left = (t.steps || []).filter(function (s) { return !done[s.id]; }).length;
+    parts.push({ text: left ? left + ' काम बाकी हैं।' : 'सब काम हो गए।' });
+  } else (t.steps || []).forEach(function (s) { if (s.id === stepId) parts.push({ id: s.id, text: (s.hi || s.en) + (done[s.id] ? '। यह हो गया है।' : '।') }); });
+  speechSynthesis.cancel();
+  parts.forEach(function (p) {
+    var u = new SpeechSynthesisUtterance(p.text); u.lang = 'hi-IN'; if (VOICE) u.voice = VOICE; u.rate = 0.9;
+    var el = function () { return p.id ? document.querySelector('#jc-host [data-tk-item="' + p.id + '"]') : null; };
+    u.onstart = function () { var e = el(); if (e) { e.classList.add('speaking'); e.scrollIntoView({ block: 'center', behavior: 'smooth' }); } };
+    u.onend = u.onerror = function () { var e = el(); if (e) e.classList.remove('speaking'); };
+    speechSynthesis.speak(u);
+  });
+}
+function jcClose() { if (window.speechSynthesis) speechSynthesis.cancel(); TOPEN = null; document.getElementById('jc-ov').hidden = true; document.body.style.overflow = ''; render(); }
 function frClose() { document.getElementById('fr-ov').hidden = true; document.body.style.overflow = ''; render(); }
 /* Hindi words for an amount, for reading aloud. */
 function frSay(left) { var w = Math.floor(left), q = Math.round((left - w) * 4), W = ['', 'चौथाई', 'आधा', 'पौन'], p = []; if (w) p.push(w); if (q) p.push(W[q]); return p.join(' और '); }
@@ -538,6 +560,8 @@ document.addEventListener('click', function (e) {
   if (b.dataset.tkOpen) { if (window.speechSynthesis) speechSynthesis.cancel(); jcOpen(b.dataset.tkOpen); return; }
   if (b.id === 'jc-back') { jcClose(); return; }
   if (b.dataset.tkStep && TOPEN) { var tt = tkList().filter(function (x) { return x.id === TOPEN; })[0]; if (tt) tkToggle(tt, b.dataset.tkStep); jcRender(); return; }
+  if (b.id === 'jc-say-all') { tkSay(null); return; }
+  if (b.dataset.tkSay) { tkSay(b.dataset.tkSay); return; }
   if (b.dataset.tkZoom) { TZOOM[b.dataset.tkZoom] = !TZOOM[b.dataset.tkZoom]; jcRender(); return; }
   if (b.dataset.view) { VIEW = b.dataset.view; if (window.speechSynthesis) speechSynthesis.cancel(); render(); return; }
   if (b.dataset.say) { speak([b.dataset.say]); return; }
