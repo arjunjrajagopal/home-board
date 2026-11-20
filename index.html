@@ -132,7 +132,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .ek-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 4px solid #000; padding-bottom: 8px; }
 .ek-date { font-size: 34px; font-weight: 800; letter-spacing: .02em; }
 .ek-upd { font-size: 18px; font-weight: 600; }
-.ek-body { flex: 1; display: grid; grid-template-columns: 1fr 296px; gap: 14px; min-height: 0; }
+.ek-body { flex: 1; display: grid; grid-template-columns: 1fr; gap: 14px; min-height: 0; }
 .ek-left { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .ek-person { display: flex; align-items: center; justify-content: space-between; border: 3px solid #000; border-radius: 6px; padding: 10px 16px; height: 92px; }
 .ek-person .nm { font-size: 34px; font-weight: 800; }
@@ -156,11 +156,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .ek-orow .cd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 38px; font-weight: 800; letter-spacing: .1em; }
 .ek-more { font-size: 16px; font-weight: 700; padding-top: 4px; }
 .ek-none { font-size: 22px; font-weight: 600; padding-top: 8px; }
-.ek-groc { border: 3px solid #000; border-radius: 6px; padding: 8px 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-.ek-day { font-size: 15px; font-weight: 800; letter-spacing: .12em; height: 26px; margin-top: 4px; display: flex; align-items: center; justify-content: center; border: 2px solid #000; border-radius: 3px; }
-.ek-gv { font-size: 17px; font-weight: 800; letter-spacing: .12em; height: 28px; margin-top: 2px; display: flex; align-items: flex-end; padding-bottom: 2px; border-bottom: 3px solid #000; }
-.ek-grow { font-size: 24px; font-weight: 700; height: 36px; border-bottom: 1px solid #000; display: flex; align-items: flex-end; padding-bottom: 4px; }
-.ek-grow.blank { border-bottom: 1px dashed #000; height: 38px; }
 
 .otp { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .otp-code { font-family: var(--font-mono); font-size: 30px; font-weight: 500; letter-spacing: .08em; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -356,7 +351,6 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-sico { font-size: 40px; line-height: 1; }
 .ph-big { font-family: var(--font-display); font-size: 52px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
 .ph-big.sm { font-size: 36px; }
-.ph-add > .ph-btn { flex: none; }
 .ph-good .ph-big { color: var(--good); }
 .ph-warn .ph-big { color: var(--warn); }
 .ph-bad .ph-big { color: var(--bad); }
@@ -406,22 +400,6 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-src { font-size: 20px; font-weight: 800; }
 .ph-small { font-size: 14px; color: var(--muted); font-weight: 600; }
 .ph-none { font-size: 20px; font-weight: 700; color: var(--muted); }
-.ph-day { font-size: 14px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: var(--ink); color: var(--bg); padding: 4px 10px; border-radius: 8px; align-self: flex-start; }
-.ph-shop { font-size: 18px; font-weight: 800; border-bottom: 3px solid var(--ink); padding-bottom: 2px; }
-.ph-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; font-size: 24px; font-weight: 700; text-align: left; padding: 8px 12px; cursor: pointer; }
-.ph-irow { display: flex; gap: 8px; align-items: stretch; }
-.ph-irow .ph-item { flex: 1; width: auto; min-width: 0; }
-.ph-x { flex: none; width: 56px; min-height: 56px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--bad); font: inherit; font-size: 24px; font-weight: 800; cursor: pointer; }
-.ph-item .bx { width: 30px; height: 30px; border: 3px solid var(--ink); border-radius: 8px; flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }
-.ph-item.done { opacity: .55; text-decoration: line-through; }
-.ph-item.done .bx { background: var(--good); border-color: var(--good); color: var(--bg); }
-.ph-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.ph-chip { min-height: 44px; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
-.ph-chip[data-ph-shop] { color: #3f78d6; border-color: #3f78d6; }
-.ph-chip[data-ph-shop][aria-pressed="true"] { background: #3f78d6; color: #fff; }
-.ph-chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
-.ph-add input[type="text"] { min-height: 56px; font-size: 20px; font-weight: 600; border: 2px solid var(--ink); border-radius: 14px; padding: 8px 12px; background: var(--surface); color: var(--ink); width: 100%; }
-.ph-err { color: var(--bad); font-weight: 700; font-size: 15px; }
 .ph-sync { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 10px 14px; }
 .ph-sync summary { font-weight: 700; cursor: pointer; font-size: 16px; }
 .ph-sync .sync-form { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
@@ -1321,10 +1299,6 @@ function interpretMessage(S, text) {
   var t = text.trim(), low = t.toLowerCase();
   var otp = readOtp(S, t);
   if (otp) return otp;
-  var ga = groceryAnswer(S, t);
-  if (ga) return ga;
-  var gro = readGroceries(S, t);
-  if (gro) return gro;
   var isQ = /\?\s*$/.test(low) || /^(how many|how much|is |are |does |did |will |when |was |has |have |can )/.test(low);
   if (isQ) return interpretOne(S, t);
   var all = findPeople(S, low);
@@ -1347,157 +1321,6 @@ function interpretMessage(S, text) {
   });
   if (!items.length && !notes.length) return { type: 'unknown', msg: 'I could not tell what changed. Try something like "Kamal cancelled today" or "Kamal is coming at 11:15".' };
   return { type: 'updates', items: items, notes: notes, unclear: unclear };
-}
-
-/* ---------- Groceries ---------- */
-var GROC_VENDORS = { 'blinkit': 'Blinkit', 'zepto': 'Zepto', 'instamart': 'Instamart', 'swiggy instamart': 'Instamart', 'bigbasket': 'BigBasket', 'big basket': 'BigBasket', 'bb': 'BigBasket', 'amazon fresh': 'Amazon Fresh', 'amazon': 'Amazon', 'flipkart': 'Flipkart', 'flipkart minutes': 'Flipkart Minutes', 'jiomart': 'JioMart', 'dmart': 'DMart', 'milkbasket': 'Milkbasket', 'milk basket': 'Milkbasket', 'gopala': 'Gopala', 'country delight': 'Country Delight', 'mother dairy': 'Mother Dairy', 'licious': 'Licious', 'kirana': 'Kirana', 'sabzi': 'Sabzi', 'sabzi wala': 'Sabzi wala', 'sabziwala': 'Sabzi wala', 'sabzi mandi': 'Sabzi mandi', 'dairy': 'Dairy', 'chemist': 'Chemist', 'pharmacy': 'Pharmacy', 'pharmeasy': 'PharmEasy', '1mg': '1mg', 'supermarket': 'Supermarket', 'market': 'Market', 'grofers': 'Blinkit' };
-var GROC_WORDS = /^(groceries|grocery|grocery list|shopping|shopping list|order|to order|to buy|buy|need|needed|required|list)$/;
-function titleCase(t) { return t.replace(/\b([a-z])/gi, function (c) { return c.toUpperCase(); }); }
-function splitItems(body) {
-  return body.split(/\s*(?:[,;\n]|&|\+|\band\b)\s*/i).map(function (x) {
-    x = x.replace(/^\s*(?:[-•*]|\d+[.)])\s*/, '').replace(/^and\s+/i, '').replace(/[.!\s]+$/, '').trim();
-    return x ? x.charAt(0).toUpperCase() + x.slice(1) : '';
-  }).filter(function (x) { return x && x.length <= 40; }).slice(0, 30);
-}
-var GROC_DATE = /\b(?:(?:for|on|by)\s+)?(day after tomorrow|tomorrow|today|(?:next\s+)?(?:sunday|monday|tuesday|wednesday|thursday|friday|saturday))\b/i;
-function tomorrow() { return addDays(TODAY, 1); }
-/* Pull a day word out of a message. Returns the text without it, and the date if one was named. */
-function takeGroceryDate(text) {
-  var m = text.match(GROC_DATE);
-  if (!m) return { text: text, date: null };
-  var d = resolveDate(m[1].toLowerCase().replace(/^next\s+/, ''));
-  var rest = text.replace(GROC_DATE, ' ').replace(/\s{2,}/g, ' ').replace(/\s+([,:;])/g, '$1').replace(/[:\-,\s]+$/, '').replace(/^[:\-,\s]+/, '').trim();
-  return { text: rest, date: d.explicit ? d.date : null };
-}
-function dayLabel(d) { return d <= TODAY ? 'Today' : d === tomorrow() ? 'Tomorrow' : labelDate(d); }
-function openGroceries(S) { return (S.groceries || []).filter(function (g) { return !g.done; }); }
-function purgeGroceries(S) { S.groceries = (S.groceries || []).filter(function (g) { return !g.done || g.doneOn === TODAY; }); }
-/* Open items by day (overdue ones count as Today), then by shop. */
-function groceryDays(S) {
-  var days = {}, keys = [];
-  openGroceries(S).forEach(function (g) {
-    var d = g.forDate && g.forDate > TODAY ? g.forDate : TODAY;
-    if (!days[d]) { days[d] = {}; keys.push(d); }
-    var k = g.vendor || ''; (days[d][k] = days[d][k] || []).push(g);
-  });
-  keys.sort();
-  return keys.map(function (d) {
-    return { date: d, label: dayLabel(d), groups: Object.keys(days[d]).map(function (k) { return { vendor: k, items: days[d][k] }; }) };
-  });
-}
-function groceryDup(S, vendor, item, date) {
-  var v = (vendor || '').toLowerCase(), i = item.toLowerCase(), d = date || tomorrow();
-  d = d < TODAY ? TODAY : d;
-  return openGroceries(S).some(function (g) { var gd = g.forDate && g.forDate > TODAY ? g.forDate : TODAY; return (g.vendor || '').toLowerCase() === v && g.item.toLowerCase() === i && gd === d; });
-}
-function vendorFromText(t) {
-  var k = t.toLowerCase().replace(/\s+/g, ' ').replace(/[.!]+$/, '').replace(/^the\s+/, '').replace(/\s+list$/, '').trim();
-  return GROC_VENDORS[k] !== undefined ? GROC_VENDORS[k] : null;
-}
-/* "Blinkit: Carrot, Dahi, Gobi" adds to a list. "Blinkit ordered" or "Ordered: Carrot" ticks things off. */
-function readGroceries(S, text) {
-  var t = text.trim().replace(/^\s*[-•*]\s*/, '');
-  if (!t || /\?\s*$/.test(t)) return null;
-  var low = t.toLowerCase(), m, vendor = null, body = null, v;
-
-  var dd = takeGroceryDate(t), want = dd.date, tl = dd.text.toLowerCase();
-
-  // remove / cancel / clear
-  var rm = tl.match(/^(?:please\s+)?(?:remove|delete|cancel|drop|cross off|take off|no need(?: for)?|do not need|don'?t need|clear)\s+(.+?)[.!]?$/);
-  if (rm && !findPeople(S, tl).length) {
-    var rest0 = rm[1].replace(/^(?:the|all|everything on the|everything from the)\s+/, '').trim(), vFilter = null, namePart = rest0, openAll = openGroceries(S);
-    var dayOfR = function (g) { return g.forDate && g.forDate > TODAY ? g.forDate : TODAY; };
-    var fm = rest0.match(/^(.+?)\s+(?:from|off|on)\s+(?:the\s+)?(.+?)$/);
-    if (fm && vendorFromText(fm[2]) !== null) { namePart = fm[1]; vFilter = vendorFromText(fm[2]); }
-    var cm = rest0.match(/^(?:([a-z0-9 ]+?)\s*:\s*)?(.+)$/);
-    if (!fm && cm && cm[1] && vendorFromText(cm[1]) !== null) { vFilter = vendorFromText(cm[1]); namePart = cm[2]; }
-    var wholeList = /^(?:everything|all|(?:the\s+)?(?:grocery|groceries|shopping)\s+list|(?:grocery|groceries|shopping)(?:\s+list)?|list)$/.test(namePart.trim());
-    var vOnly = vendorFromText(namePart);
-    var pool = openAll.filter(function (g) { return (vFilter === null || g.vendor === vFilter) && (!want || dayOfR(g) === (want < TODAY ? TODAY : want)); });
-    var hit = [], missing = [];
-    if (wholeList) hit = pool;
-    else if (vOnly !== null && vFilter === null) hit = openAll.filter(function (g) { return g.vendor === vOnly && (!want || dayOfR(g) === (want < TODAY ? TODAY : want)); });
-    else {
-      var plain = function (x) { x = x.toLowerCase().trim(); return x.length > 3 ? x.replace(/(?:es|s)$/, '') : x; };
-      splitItems(namePart).forEach(function (nm) {
-        var found = pool.filter(function (g) { return plain(g.item) === plain(nm); });
-        if (found.length) hit = hit.concat(found); else missing.push(nm);
-      });
-    }
-    var seenId = {}; hit = hit.filter(function (g) { if (seenId[g.id]) return false; seenId[g.id] = 1; return true; });
-    if (!hit.length) return { type: 'unknown', msg: 'Nothing on the grocery list matches that, so nothing was removed.' };
-    var desc = hit.length > 6 && wholeList ? hit.length + ' items' : hit.map(function (g) { return g.item + ' (' + (g.vendor || 'Other') + ', ' + dayLabel(dayOfR(g)).toLowerCase() + ')'; }).join(', ');
-    return { type: 'updates', notes: missing.length ? ['Not on the list: ' + missing.join(', ') + '.'] : [], unclear: [], items: [{ type: 'update', kind: 'grocery-remove', ids: hit.map(function (g) { return g.id; }), summary: 'Remove from the grocery list: ' + desc }] };
-  }
-  m = tl.match(/^(?:(.+?)\s+)?(?:ordered|order placed|order done|placed)(?:\s*[:\-]\s*(.+))?$/) || tl.match(/^(?:ordered|order placed)\s*[:\-]?\s*(.+)$/);
-  if (m) {
-    var open = openGroceries(S), picked = [], what = '', dayOf = function (g) { return g.forDate && g.forDate > TODAY ? g.forDate : TODAY; };
-    var two = m.length === 3, left = two ? m[1] : null, rest = two ? m[2] : m[1];
-    var byVendor = function (ven) {
-      var pool = open.filter(function (g) { return g.vendor === ven; });
-      var day = want ? (want < TODAY ? TODAY : want) : pool.map(dayOf).sort()[0];
-      return pool.filter(function (g) { return dayOf(g) === day; });
-    };
-    if (left && (v = vendorFromText(left)) !== null) { picked = byVendor(v); what = 'the ' + v + ' list'; }
-    else if (rest && !left) {
-      var vv = vendorFromText(rest);
-      if (vv !== null) { picked = byVendor(vv); what = 'the ' + vv + ' list'; }
-      else {
-        var names = splitItems(rest).map(function (x) { return x.toLowerCase(); }), got = {};
-        picked = open.slice().sort(function (a, b) { return dayOf(a) < dayOf(b) ? -1 : 1; }).filter(function (g) {
-          var k = g.item.toLowerCase(); if (names.indexOf(k) < 0 || got[k]) return false;
-          if (want && dayOf(g) !== (want < TODAY ? TODAY : want)) return false;
-          got[k] = 1; return true;
-        });
-        what = picked.map(function (g) { return g.item; }).join(', ');
-      }
-    }
-    if (picked.length) {
-      var dts = {}; picked.forEach(function (g) { dts[dayOf(g)] = 1; });
-      var multi = openGroceries(S).some(function (g) { return dayOf(g) !== dayOf(picked[0]); });
-      return { type: 'updates', notes: [], unclear: [], items: [{ type: 'update', kind: 'grocery-done', ids: picked.map(function (g) { return g.id; }), summary: 'Mark as ordered: ' + what + (multi ? ' for ' + dayLabel(dayOf(picked[0])).toLowerCase() : '') + ' (' + picked.length + (picked.length === 1 ? ' item' : ' items') + ')' }] };
-    }
-    return null;
-  }
-  t = dd.text;
-  if (!t) return null;
-  low = t.toLowerCase();
-
-  m = t.match(/^([^:\n]{2,30}?)\s*(?::|\s[-–—]\s)\s*([\s\S]+)$/);
-  if (m) {
-    var l = m[1].trim(), ll = l.toLowerCase().replace(/\s+/g, ' ');
-    if (GROC_VENDORS[ll] !== undefined) { vendor = GROC_VENDORS[ll]; body = m[2]; }
-    else if (GROC_WORDS.test(ll)) { vendor = ''; body = m[2]; }
-    else if (!findPeople(S, ll).length && !/\d/.test(l) && !CUE.test(ll) && splitItems(m[2]).length >= 2) { vendor = titleCase(l); body = m[2]; }
-  }
-  if (body === null) {
-    m = low.match(/^(?:please\s+)?(?:order|buy|need|add)\s+(.+?)(?:\s+(?:from|on|via|at|to|in)\s+(?:the\s+)?([a-z0-9 ]+?))?[.!]?$/);
-    if (m && !findPeople(S, low).length && !CUE.test(m[1])) {
-      var ven = m[2] ? vendorFromText(m[2]) : '';
-      var stripped = t.replace(/^(?:please\s+)?(?:order|buy|need|add)\s+/i, '').replace(/[.!\s]+$/, '');
-      if (ven === null) ven = '';
-      else if (m[2]) stripped = stripped.replace(/\s+(?:from|on|via|at|to|in)\s+(?:the\s+)?[A-Za-z0-9 ]+?$/i, '');
-      vendor = ven; body = stripped;
-    }
-  }
-  if (body === null) return null;
-  var all = splitItems(body);
-  if (!all.length) return null;
-  var forDate = want && want >= TODAY ? want : tomorrow();
-  var seen = {}, fresh = all.filter(function (x) { var k = x.toLowerCase(); if (seen[k] || groceryDup(S, vendor, x, forDate)) return false; seen[k] = 1; return true; });
-  var skipped = all.filter(function (x) { return groceryDup(S, vendor, x, forDate); });
-  if (!fresh.length) return { type: 'unknown', msg: 'Nothing new. ' + (all.length === 1 ? 'That item is' : 'Those items are') + ' already on the ' + (vendor || 'grocery') + ' list for ' + dayLabel(forDate).toLowerCase() + '.' };
-  return { type: 'updates', notes: skipped.length ? ['Already on the list, skipped: ' + skipped.join(', ') + '.'] : [], unclear: [], items: [{ type: 'update', kind: 'grocery', vendor: vendor, list: fresh, forDate: forDate, summary: 'Add ' + fresh.length + (fresh.length === 1 ? ' item' : ' items') + ' to the ' + (vendor || 'grocery') + ' list for ' + dayLabel(forDate).toLowerCase() + ': ' + fresh.join(', ') }] };
-}
-function groceryAnswer(S, text) {
-  var t = text.trim();
-  if (!/\?\s*$/.test(t) && !/^(what|which|show|list)\b/i.test(t)) return null;
-  if (!/(grocer|to order|need to (?:order|buy)|order list|shopping list|what.*(?:order|buy))/i.test(t)) return null;
-  var days = groceryDays(S);
-  if (!days.length) return { type: 'answer', text: 'Nothing is waiting to be ordered.' };
-  return { type: 'answer', text: days.map(function (d) {
-    return d.label + ': ' + d.groups.map(function (x) { return (x.vendor || 'Other') + ' (' + x.items.map(function (i) { return i.item; }).join(', ') + ')'; }).join('; ');
-  }).join('. ') + '.' };
 }
 
 /* ---------- OTPs ---------- */
@@ -1540,28 +1363,6 @@ function purgeOtps(S) { S.otps = (S.otps || []).filter(function (o) { return o.d
 
 /* Apply a confirmed update. Returns what is needed to undo it. */
 function applyResult(S, r) {
-  if (r.kind === 'grocery') {
-    if (!S.groceries) S.groceries = [];
-    var ids = [];
-    r.list.forEach(function (x) {
-      var fdt = r.forDate && r.forDate >= TODAY ? r.forDate : tomorrow();
-      if (groceryDup(S, r.vendor, x, fdt)) return;
-      var gid = 'g' + uid();
-      S.groceries.push({ id: gid, item: x, vendor: r.vendor || '', by: r.by || '', date: TODAY, forDate: fdt, done: false });
-      ids.push(gid);
-    });
-    return { kind: 'grocery', ids: ids };
-  }
-  if (r.kind === 'grocery-remove') {
-    var gone = (S.groceries || []).filter(function (g) { return r.ids.indexOf(g.id) >= 0; });
-    S.groceries = S.groceries.filter(function (g) { return r.ids.indexOf(g.id) < 0; });
-    return { kind: 'grocery-remove', removed: gone };
-  }
-  if (r.kind === 'grocery-done') {
-    var did = [];
-    (S.groceries || []).forEach(function (g) { if (r.ids.indexOf(g.id) >= 0 && !g.done) { g.done = true; g.doneOn = TODAY; did.push(g.id); } });
-    return { kind: 'grocery-done', ids: did };
-  }
   if (r.kind === 'otp') {
     if (!S.otps) S.otps = [];
     var dup = S.otps.some(function (o) { return o.code === r.code && o.source === r.source && o.date === TODAY; });
@@ -1600,9 +1401,6 @@ function undoMany(S, list) {
   (Array.isArray(list) ? list : [list]).slice().reverse().forEach(function (u) { undoResult(S, u); });
 }
 function undoResult(S, u) {
-  if (u.kind === 'grocery') { S.groceries = (S.groceries || []).filter(function (g) { return u.ids.indexOf(g.id) < 0; }); return; }
-  if (u.kind === 'grocery-remove') { S.groceries = (S.groceries || []).concat(u.removed || []); return; }
-  if (u.kind === 'grocery-done') { (S.groceries || []).forEach(function (g) { if (u.ids.indexOf(g.id) >= 0) { g.done = false; delete g.doneOn; } }); return; }
   if (u.kind === 'otp') { if (u.otpId) S.otps = S.otps.filter(function (o) { return o.id !== u.otpId; }); return; }
   if (u.key) {
     if (u.prev) S.attendance[u.key] = u.prev; else delete S.attendance[u.key];
@@ -2228,14 +2026,6 @@ function renderToday() {
       waiting.map(function (o) { return '<div><span class="when">' + esc(o.at ? fmt12(o.at) : '') + '</span><span class="grow">' + esc(o.source) + (o.by ? ' <span class="muted">· sent by ' + esc(o.by) + '</span>' : '') + '</span><span class="mono"><b>' + (S.otpHide ? '••••' : esc(o.code)) + '</b></span></div>'; }).join('') +
       '</div><div><button class="btn sm" data-tab="otps">Open OTPs</button></div></div>';
   }
-  var gd = groceryDays(S);
-  if (gd.length) {
-    h += '<div class="card"><div class="row between"><h2>To order</h2><span class="pill warn">' + openGroceries(S).length + '</span></div><div class="list">';
-    gd.forEach(function (dy) {
-      dy.groups.forEach(function (x) { h += '<div><span class="when">' + esc(dy.label) + '</span><span class="grow"><b>' + esc(x.vendor || 'Other') + '</b>: ' + esc(x.items.map(function (i) { return i.item; }).join(', ')) + '</span></div>'; });
-    });
-    h += '</div></div>';
-  }
   var up = [];
   var lim = addDays(TODAY, 14);
   S.exceptions.forEach(function (e) {
@@ -2327,7 +2117,7 @@ function doApply() {
   var items = pending.r.items, at = nowHM();
   var by = ($('by') && $('by').value.trim()) || (pending.by || '');
   S.lastBy = by || S.lastBy || '';
-  items.forEach(function (it) { if (it.kind === 'otp') { it.at = at; it.by = by; } else if (it.kind === 'grocery') it.by = by; });
+  items.forEach(function (it) { if (it.kind === 'otp') { it.at = at; it.by = by; } });
   var undo = items.map(function (it) { return applyResult(S, it); });
   var detail = items.map(logSummary).join('; ');
   logMsg(pending.sensitive ? maskDigits(pending.text) : pending.text, 'applied', detail, undo);
@@ -2364,28 +2154,8 @@ function einkHTML() {
   shown.forEach(function (o) { otp += '<div class="ek-orow"><span class="who">' + esc(o.source) + (o.by ? ' <small>(' + esc(o.by) + ')</small>' : '') + '</span><span class="cd">' + esc(o.code) + '</span></div>'; });
   if (open.length > shown.length) otp += '<div class="ek-more">+ ' + (open.length - shown.length) + ' more</div>';
   otp += '</div>';
-  var rows = [], BUDGET = 336, gdays = groceryDays(S).filter(function (d) { return d.date <= tomorrow(); });
-  var hasToday = gdays.some(function (d) { return d.date <= TODAY; }), hasTom = gdays.some(function (d) { return d.date > TODAY; });
-  var gTitle = hasToday && hasTom ? 'TO ORDER' : hasToday ? 'ORDER TODAY' : 'ORDER FOR TOMORROW';
-  gdays.forEach(function (dy) {
-    if (hasToday && hasTom) rows.push({ h: 28, html: '<div class="ek-day">' + esc(dy.label.toUpperCase()) + '</div>', item: false });
-    dy.groups.forEach(function (gr) {
-      rows.push({ h: 30, html: '<div class="ek-gv">' + esc((gr.vendor || 'Other').toUpperCase()) + '</div>', item: false });
-      gr.items.forEach(function (i) { rows.push({ h: 36, html: '<div class="ek-grow">' + esc(i.item) + '</div>', item: true }); });
-    });
-  });
-  var used = rows.reduce(function (a, r) { return a + r.h; }, 0), groc = '<div class="ek-groc"><div class="ek-h">' + gTitle + '</div>';
-  if (used > BUDGET) {
-    var cut = 0;
-    while (used > BUDGET - 28 && rows.length) { var r0 = rows.pop(); used -= r0.h; if (r0.item) cut++; }
-    while (rows.length && !rows[rows.length - 1].item) { used -= rows.pop().h; }
-    rows.push({ h: 28, html: '<div class="ek-more">+ ' + cut + ' more</div>', item: false });
-  }
-  rows.forEach(function (r) { groc += r.html; });
-  if (!rows.length) for (var i = 0; i < 9; i++) groc += '<div class="ek-grow blank"></div>';
-  groc += '</div>';
   return '<div class="eink"><div class="ek-head"><div class="ek-date">' + esc(longDate(TODAY).toUpperCase()) + '</div><div class="ek-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + '</div></div>' +
-    '<div class="ek-body"><div class="ek-left">' + trackedPeople(TODAY).map(einkPerson).join('') + einkStaff() + otp + '</div>' + groc + '</div></div>';
+    '<div class="ek-body"><div class="ek-left">' + trackedPeople(TODAY).map(einkPerson).join('') + einkStaff() + otp + '</div></div></div>';
 }
 function fitEink() {
   var fr = document.querySelector('.eink-frame'); if (!fr) return;
@@ -2398,13 +2168,13 @@ function fitEink() {
 function renderDisplay() {
   $('p-display').innerHTML = '<div class="card"><h2>Wall display</h2><p class="muted small">How today\'s screen would look on a TRMNL e-ink display (800 by 480, black and white only). It reads from the same data as the other tabs.</p>' +
     '<div class="eink-frame">' + einkHTML() + '</div>' +
-    '<p class="muted small">Black blocks mean a cancellation, thick borders mean a changed time, dashed borders mean a day off. The grocery box lists what is still to order, grouped by shop.</p></div>';
+    '<p class="muted small">Black blocks mean a cancellation, thick borders mean a changed time, dashed borders mean a day off.</p></div>';
   fitEink();
 }
 window.addEventListener('resize', fitEink);
 
 /* ---------- Phone display: big, bold, with one-tap updates ---------- */
-var phEdit = null, phShop = 'Blinkit', phDay = 'tomorrow', phErr = '', phView = 'today';
+var phEdit = null, phView = 'today';
 function phDate() { return phView === 'tomorrow' ? tomorrow() : TODAY; }
 var PH_ROLE_ICON = { driver: '🚗', tutor: '📚', therapist: '🩺', 'house staff': '🏠', nanny: '👩', chef: '🍳', cook: '🍳', cleaner: '🧹' };
 function roleIcon(role) { var r = (role || '').toLowerCase(), k = Object.keys(PH_ROLE_ICON).filter(function (x) { return r.indexOf(x) >= 0; })[0]; return k ? PH_ROLE_ICON[k] : '👤'; }
@@ -2475,7 +2245,7 @@ function phFridgeCard() {
   return h + '<button class="ph-btn" data-tab="fridge">Change fridge</button></section>';
 }
 function renderPhone() {
-  purgeOtps(S); purgeGroceries(S);
+  purgeOtps(S);
   var vd = phDate(), dt = pd(vd), tom = phView === 'tomorrow';
   var h = '<div class="ph"><div class="ph-head"><div class="ph-titlebox"><h2 class="ph-title"><span class="ph-lab ' + (tom ? 'd1' : 'd0') + '">' + (tom ? 'Tomorrow:' : 'Today:') + '</span> ' + DAYFULL[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MONFULL[dt.getUTCMonth()] + '</h2><div class="ph-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + ' · <span id="ph-sync">' + esc(syncLabel()) + '</span></div></div>' +
     '<button class="ph-nav ' + (tom ? 'd0' : 'd1') + '" data-ph-view="' + (tom ? 'today' : 'tomorrow') + '" aria-label="' + (tom ? 'Back to today' : 'See info for tomorrow') + '"><span class="ph-nav-lab">' + (tom ? 'Today' : 'Tomorrow') + '</span><span class="ph-nav-arr" aria-hidden="true">' + (tom ? '←' : '→') + '</span></button></div>';
@@ -2494,29 +2264,6 @@ function renderPhone() {
   });
   if (!tom) h += '</section>';
 
-  var days = groceryDays(S).filter(function (d) { return !tom || d.date === vd; }), done = tom ? [] : S.groceries.filter(function (g) { return g.done; });
-  h += '<section class="ph-card"><div class="ph-h"><span aria-hidden="true">🛒</span>' + (tom ? 'To order tomorrow' : 'To order') + '</div>';
-  if (!days.length) h += '<div class="ph-none">Nothing to order' + (tom ? ' for tomorrow' : '') + '</div>';
-  days.forEach(function (dy) {
-    if (!tom) h += '<div class="ph-day">' + esc(dy.label) + '</div>';
-    dy.groups.forEach(function (gr) {
-      h += '<div class="ph-shop">' + esc(gr.vendor || 'Other') + '</div>';
-      gr.items.forEach(function (g) { h += '<div class="ph-irow"><button class="ph-item" data-groc-done="' + g.id + '"><span class="bx" aria-hidden="true"></span><span>' + esc(g.item) + '</span></button><button class="ph-x" data-groc-del="' + g.id + '" aria-label="Delete ' + esc(g.item) + '">✕</button></div>'; });
-    });
-  });
-  if (done.length) {
-    h += '<div class="ph-small">Ordered today (tap to undo)</div>';
-    done.forEach(function (g) { h += '<button class="ph-item done" data-groc-undo="' + g.id + '"><span class="bx" aria-hidden="true">✓</span><span>' + esc(g.item) + (g.vendor ? ' · ' + esc(g.vendor) : '') + '</span></button>'; });
-  }
-  h += '</section>';
-
-  var shops = ['Blinkit', 'Instamart', 'BigBasket', 'Milkbasket', 'Gopala', 'Dairy'];
-  h += '<section class="ph-card ph-add"><div class="ph-h"><span aria-hidden="true">➕</span>Add to order</div><div class="ph-chips" role="group" aria-label="Day">' +
-    ['today', 'tomorrow'].map(function (d) { return '<button class="ph-chip" data-ph-day="' + d + '" aria-pressed="' + (phDay === d) + '">' + (d === 'today' ? 'Today' : 'Tomorrow') + '</button>'; }).join('') + '</div>' +
-    '<div class="ph-chips" role="group" aria-label="Shop">' + shops.map(function (v) { return '<button class="ph-chip" data-ph-shop="' + esc(v) + '" aria-pressed="' + (phShop === v) + '">' + esc(v) + '</button>'; }).join('') + '</div>' +
-    '<input type="text" id="ph-items" autocomplete="off" aria-label="Items" placeholder="Carrot, Dahi, Gobi">' +
-    '<button class="ph-btn pri" data-ph-add="1">Add</button>' + (phErr ? '<div class="ph-err">' + esc(phErr) + '</div>' : '') + '</section>';
-
   h += '<details class="ph-sync"><summary>Shared board</summary>' + syncFormHTML() + '</details>';
   h += '<div class="ph-foot">' + (PHONE_ONLY ? '<a href="' + esc(location.pathname) + '">Open the full board</a>' : 'Tip: add <b>?view=phone</b> to the page address to show only this screen.') + '</div></div>';
   $('p-phone').innerHTML = h;
@@ -2525,38 +2272,6 @@ function renderPhone() {
 var PHONE_ONLY = false;
 try { PHONE_ONLY = /[?&]view=phone\b/.test(location.search); } catch (e) { }
 
-var grocClearArm = false;
-function renderGroceries() {
-  purgeGroceries(S);
-  var days = groceryDays(S), done = S.groceries.filter(function (g) { return g.done; }), n = openGroceries(S).length;
-  var h = '<div class="card"><div class="row between"><h2>To order</h2><span class="pill ' + (n ? 'warn' : 'good') + '">' + n + (n === 1 ? ' item' : ' items') + '</span></div>' +
-    '<p class="muted small">Items are for tomorrow unless the message names another day. Send "Blinkit: Carrot, Dahi, Gobi" to add, "Blinkit: eggs today" for today, "Blinkit ordered" to tick off the nearest day\'s list, and "Remove carrot" to take an item off.</p>';
-  if (!days.length) h += '<p class="muted">Nothing to order yet.</p>';
-  days.forEach(function (dy) {
-    h += '<div class="row between" style="margin-top:10px"><h3>' + esc(dy.label) + (dy.label !== 'Today' && dy.label !== 'Tomorrow' ? '' : ' <span class="muted small" style="font-weight:400">' + esc(labelDate(dy.date)) + '</span>') + '</h3></div>';
-    dy.groups.forEach(function (gr) {
-      h += '<div class="row between" style="margin-top:4px"><b>' + esc(gr.vendor || 'Other') + '</b><button class="btn sm" data-groc-vendor="' + esc(gr.vendor) + '" data-groc-day="' + dy.date + '">All ordered</button></div><div class="list">';
-      gr.items.forEach(function (g) {
-        h += '<div><span class="grow"><b>' + esc(g.item) + '</b>' + (g.by ? ' <span class="muted small">sent by ' + esc(g.by) + '</span>' : '') + (g.forDate && g.forDate < TODAY ? ' <span class="pill bad">late</span>' : '') + '</span><button class="btn sm primary" data-groc-done="' + g.id + '">Ordered</button><button class="btn sm" data-groc-del="' + g.id + '" aria-label="Delete ' + esc(g.item) + '">Delete</button></div>';
-      });
-      h += '</div>';
-    });
-  });
-  h += '</div>';
-  h += '<div class="card"><h3>Add items</h3><div><label for="groc-vendor">Where from</label><input type="text" id="groc-vendor" list="groc-vendors" autocomplete="off" placeholder="e.g. Blinkit"><datalist id="groc-vendors">' +
-    ['Blinkit', 'Instamart', 'BigBasket', 'Milkbasket', 'Gopala', 'Dairy'].map(function (v) { return '<option value="' + v + '">'; }).join('') + '</datalist></div>' +
-    '<div><label for="groc-items">Items (commas or new lines)</label><textarea id="groc-items" rows="3" placeholder="Carrot, Dahi, Gobi"></textarea></div>' +
-    '<div class="otp-form"><div><label for="groc-date">Order for</label><input type="date" id="groc-date" min="' + TODAY + '" value="' + tomorrow() + '"></div>' +
-    '<div><label for="groc-by">Sent by</label><input type="text" id="groc-by" autocomplete="off" value="' + esc(S.lastBy || '') + '" placeholder="Name"></div></div>' +
-    '<div class="row"><button class="btn primary" id="groc-add">Add to list</button><span class="small" id="groc-err" style="color:var(--bad)"></span></div></div>';
-  if (done.length) {
-    h += '<div class="card"><h3>Ordered today</h3><div class="list">' + done.map(function (g) {
-      return '<div><span class="grow muted" style="text-decoration:line-through">' + esc(g.item) + (g.vendor ? ' <span class="small">(' + esc(g.vendor) + ')</span>' : '') + '</span><button class="btn sm" data-groc-undo="' + g.id + '">Not ordered</button></div>';
-    }).join('') + '</div></div>';
-  }
-  if (S.groceries.length) h += '<div class="card"><div class="row"><button class="btn" id="groc-clear">' + (grocClearArm ? 'Tap again to remove all' : 'Clear the whole list') + '</button></div></div>';
-  $('p-groceries').innerHTML = h;
-}
 
 var resetArm = false;
 var otpClearArm = false;
@@ -2932,7 +2647,7 @@ function setPlan(key, patch) {
 
 function purgeTicks(S) { var keep = addDays(TODAY, -30); S.taskTicks = (S.taskTicks || []).filter(function (k) { return k.date >= keep; }); }
 function purgeSabzi(S) { var keep = addDays(TODAY, -1); S.sabzi = (S.sabzi || []).filter(function (r) { return r.date >= keep; }); }
-function renderAll() { purgeOtps(S); purgeGroceries(S); purgeSabzi(S); purgeTicks(S); renderToday(); renderSabzi(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderFridge(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); if (!$('p-tasks').hidden) renderTasks(); if (!$('p-task').hidden) renderTaskView(); }
+function renderAll() { purgeOtps(S); purgeSabzi(S); purgeTicks(S); renderToday(); renderSabzi(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderFridge(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); if (!$('p-tasks').hidden) renderTasks(); if (!$('p-task').hidden) renderTaskView(); }
 
 function init() {
   S = load();
@@ -2945,7 +2660,7 @@ function init() {
     if (t.dataset.more === 'close') return closeMore();
     if (t.dataset.more === 'toggle') { var mm = $('more'); mm.hidden = !mm.hidden; t.setAttribute('aria-expanded', mm.hidden ? 'false' : 'true'); return; }
     if (taskClick(t)) return;
-    if (t.dataset.tab) { otpClearArm = false; grocClearArm = false; resetArm = false; setTab(t.dataset.tab); try { window.scrollTo(0, 0); } catch (e) { } return; }
+    if (t.dataset.tab) { otpClearArm = false; resetArm = false; setTab(t.dataset.tab); try { window.scrollTo(0, 0); } catch (e) { } return; }
     if (t.dataset.act) {
       var key = t.dataset.pid + '|' + TODAY;
       if (t.dataset.act === 'clear') delete S.attendance[key]; else S.attendance[key] = t.dataset.act;
@@ -2981,11 +2696,6 @@ function init() {
       applyResult(S, { kind: 'otp', code: c, source: src, at: nowHM(), by: ob });
       save(); return renderAll();
     }
-    if (t.dataset.grocDone) { var gd = S.groceries.filter(function (g) { return g.id === t.dataset.grocDone; })[0]; if (gd) { gd.done = true; gd.doneOn = TODAY; } save(); return renderAll(); }
-    if (t.dataset.grocUndo) { var gu = S.groceries.filter(function (g) { return g.id === t.dataset.grocUndo; })[0]; if (gu) { gu.done = false; delete gu.doneOn; } save(); return renderAll(); }
-    if (t.dataset.grocDel) { S.groceries = S.groceries.filter(function (g) { return g.id !== t.dataset.grocDel; }); save(); return renderAll(); }
-    if (t.dataset.grocVendor !== undefined) { S.groceries.forEach(function (g) { var gd = g.forDate && g.forDate > TODAY ? g.forDate : TODAY; if (!g.done && (g.vendor || '') === t.dataset.grocVendor && gd === t.dataset.grocDay) { g.done = true; g.doneOn = TODAY; } }); save(); return renderAll(); }
-    if (t.id === 'groc-clear') { if (!grocClearArm) { grocClearArm = true; return renderGroceries(); } grocClearArm = false; S.groceries = []; save(); return renderAll(); }
     if (t.dataset.carNav !== undefined) { var cn = +t.dataset.carNav; carDate = cn === 0 ? TODAY : addDays(carDate, cn); return renderCar(); }
     if (t.dataset.carCell) { var cc = t.dataset.carCell.split('|'); if (carDate < TODAY) return; carToggle(S, carDate, cc[1], cc[0]); save(); return renderAll(); }
     if (t.id === 'so-add') {
@@ -2994,34 +2704,15 @@ function init() {
       $('so-err').textContent = ''; save(); renderAll(); return;
     }
     if (t.dataset.soDel) { var sp = t.dataset.soDel.split('|'); removeStaffLeave(S, sp[0], sp[1], sp[2]); save(); return renderAll(); }
-    if (t.id === 'groc-add') {
-      var gv = $('groc-vendor').value.trim(), items = splitItems($('groc-items').value), gb = $('groc-by').value.trim();
-      if (!items.length) { $('groc-err').textContent = 'Type at least one item.'; return; }
-      var known = vendorFromText(gv);
-      S.lastBy = gb || S.lastBy || '';
-      var gdt = $('groc-date').value || tomorrow();
-      if (gdt < TODAY) { $('groc-err').textContent = 'Pick today or a later day.'; return; }
-      applyResult(S, { kind: 'grocery', vendor: known !== null ? known : titleCase(gv), list: items, by: gb, forDate: gdt });
-      save(); return renderAll();
-    }
     if (t.dataset.phAbsent) { applyResult(S, { kind: 'absent', personId: t.dataset.phAbsent, date: phDate() }); phEdit = null; save(); return renderAll(); }
     if (t.dataset.phRestore) { S.exceptions = S.exceptions.filter(function (e) { return !(e.personId === t.dataset.phRestore && e.date === phDate() && !e.subFor); }); phEdit = null; save(); return renderAll(); }
-    if (t.dataset.phView) { phView = t.dataset.phView === 'tomorrow' ? 'tomorrow' : 'today'; phEdit = null; if (phView === 'tomorrow') phDay = 'tomorrow'; renderPhone(); window.scrollTo && window.scrollTo(0, 0); return; }
+    if (t.dataset.phView) { phView = t.dataset.phView === 'tomorrow' ? 'tomorrow' : 'today'; phEdit = null; renderPhone(); window.scrollTo && window.scrollTo(0, 0); return; }
     if (t.dataset.phEdit) { phEdit = t.dataset.phEdit; return renderPhone(); }
     if (t.dataset.phCancel) { phEdit = null; return renderPhone(); }
     if (t.dataset.phSave) {
       var pp = personById(S, t.dataset.phSave), tv = $('ph-time-' + t.dataset.phSave).value;
       if (pp && /^\d{2}:\d{2}$/.test(tv)) { applyResult(S, { kind: dayStatus(S, pp, phDate()).scheduled ? 'late' : 'extra', personId: pp.id, date: phDate(), time: tv }); phEdit = null; save(); return renderAll(); }
       return;
-    }
-    if (t.dataset.phDay) { phDay = t.dataset.phDay; var keep = $('ph-items') ? $('ph-items').value : ''; renderPhone(); $('ph-items').value = keep; return; }
-    if (t.dataset.phShop) { phShop = t.dataset.phShop; var keep2 = $('ph-items') ? $('ph-items').value : ''; renderPhone(); $('ph-items').value = keep2; return; }
-    if (t.dataset.phAdd) {
-      var its = splitItems($('ph-items').value);
-      if (!its.length) { phErr = 'Type at least one item.'; return renderPhone(); }
-      phErr = '';
-      applyResult(S, { kind: 'grocery', vendor: phShop, list: its, by: '', forDate: phDay === 'today' ? TODAY : tomorrow() });
-      save(); return renderAll();
     }
     if (t.id === 'apply') return doApply();
     if (t.id === 'discard') return doDiscard();

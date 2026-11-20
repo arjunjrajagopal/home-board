@@ -65,10 +65,6 @@ button{font:inherit;color:inherit;cursor:pointer}
 .slot.busy{background:#e7eefb;color:#1d3f8f}
 .slot.clash{background:var(--warn-bg);color:var(--warn)}
 
-.shop{font-size:18px;font-weight:800;color:var(--muted);margin:12px 0 6px;display:flex;align-items:center;gap:8px}
-.shop:first-child{margin-top:0}
-.items{display:flex;flex-wrap:wrap;gap:8px}
-.item{background:#f6f3ea;border:2px solid #e3dccb;border-radius:14px;padding:8px 12px;font-size:21px;font-weight:700}
 .none{font-size:21px;font-weight:600;color:var(--muted);padding:6px 2px}
 
 .foot{text-align:center;color:var(--muted);font-size:15px;margin-top:6px}
@@ -194,14 +190,6 @@ function backOn(S, p, date) {
   while (n++ < 120 && isOut(dayStatus(S, p, d))) d = addDays(d, 1);
   return d;
 }
-function groceriesFor(S, date) {
-  var dayOf = function (g) { var f = g.forDate || addDays(g.date || TODAY, 1); return f < TODAY ? TODAY : f; };
-  var list = (S.groceries || []).filter(function (g) { return !g.done && (date === TODAY ? dayOf(g) <= TODAY : dayOf(g) === date); });
-  var by = {};
-  list.forEach(function (g) { var v = g.vendor || 'Other'; (by[v] = by[v] || []).push(g.item); });
-  return by;
-}
-
 /* ---------- Data: fetch the staff view, keep the last copy for when the phone is offline ---------- */
 var CFG = { api: '', key: '' }, DATA = null, FETCHED = 0, STATUS = 'ok', VIEW = TODAY;
 var DEMO = /[?&]demo=1\b/.test(location.search);
@@ -514,15 +502,6 @@ function render() {
   }
   h += card('car', '🚗', 'बड़ी गाड़ी', body);
 
-  /* Groceries */
-  var g = groceriesFor(S, date), shops = Object.keys(g), gb = '';
-  if (!shops.length) { gb = '<div class="none">✓ कुछ नहीं मँगाना</div>'; SPEECH.groc = word + ' कुछ नहीं मँगाना है।'; }
-  else {
-    gb = shops.map(function (v) { return '<div class="shop">🛍️ ' + esc(v) + '</div><div class="items">' + g[v].map(function (i) { return '<span class="item">' + esc(i) + '</span>'; }).join('') + '</div>'; }).join('');
-    SPEECH.groc = word + ' मँगाना है: ' + shops.map(function (v) { return v + ' से ' + g[v].join(', '); }).join('। ') + '।';
-  }
-  h += card('groc', '🛒', 'सामान मँगाना', gb);
-
   /* Freshness */
   var age = FETCHED ? Math.round((Date.now() - FETCHED) / 60000) : null, dot = STATUS === 'ok' ? '' : age !== null && age < 60 ? ' old' : ' bad';
   var ft = STATUS === 'ok' ? 'अभी की जानकारी' : STATUS === 'auth' ? 'लिंक बंद है · पुरानी जानकारी' : 'इंटरनेट नहीं · ' + (age === null ? '' : age < 60 ? age + ' मिनट पुरानी' : 'पुरानी') + ' जानकारी';
@@ -567,7 +546,7 @@ document.addEventListener('click', function (e) {
   if (b.dataset.say) { speak([b.dataset.say]); return; }
   if (b.id === 'speak-all') {
     if (b.getAttribute('aria-pressed') === 'true') { speechSynthesis.cancel(); b.setAttribute('aria-pressed', 'false'); document.querySelectorAll('.speaking').forEach(function (c) { c.classList.remove('speaking'); }); return; }
-    speak(['school', 'come', 'staff', 'sabzi', 'fridge', 'car', 'groc'].filter(function (k) { return SPEECH[k]; }));
+    speak(['school', 'come', 'staff', 'sabzi', 'fridge', 'car'].filter(function (k) { return SPEECH[k]; }));
   }
 });
 

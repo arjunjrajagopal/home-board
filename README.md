@@ -1,6 +1,6 @@
 # Home Board
 
-A prototype household board: staff schedules and attendance, a repository of the day's delivery OTPs, a grocery list, and a TRMNL-style wall display. Messages are typed or pasted in English and read into updates.
+A prototype household board: staff schedules and attendance, a repository of the day's delivery OTPs, tasks, and a TRMNL-style wall display. (The grocery "To order" list was removed on 20 Nov 2026, to be rebuilt; its saved items are kept on the server.) Messages are typed or pasted in English and read into updates.
 
 Single file, no build step. Open `index.html`, or visit the GitHub Pages site.
 
