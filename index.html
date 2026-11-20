@@ -366,6 +366,27 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 .ph-btn { flex: 1 1 140px; min-height: 52px; border-radius: 14px; border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; padding: 8px 12px; }
 .ph-btn.pri { background: var(--ink); color: var(--bg); }
 
+/* Tasks */
+.ph-tasks { margin-top: 6px; flex-basis: 100%; width: 100%; }
+.ph-tasks .tk-chip { font-size: 17px; }
+.tk-person { margin-top: 8px; }
+.tk-row { display: flex; align-items: center; gap: 10px; }
+.tk-ri { font-size: 26px; line-height: 1; display: flex; } .tk-ri svg { width: 30px; height: 30px; }
+.tk-title { display: flex; align-items: center; gap: 8px; } .tk-title svg { width: 32px; height: 32px; }
+.pe-tasks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pe-task { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; padding: 4px 10px; cursor: pointer; display: inline-block; text-align: left; }
+.pe-task svg { width: 18px; height: 18px; vertical-align: -4px; }
+.pe-task.add { border-style: dashed; color: var(--muted); }
+.te-step { border: 2px solid var(--line); border-radius: 14px; padding: 10px; margin: 8px 0; display: flex; flex-direction: column; gap: 8px; }
+.te-grid { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 8px; }
+@media (max-width: 560px) { .te-grid { grid-template-columns: 1fr; } }
+.te-svg svg { width: 34px; height: 34px; display: block; }
+.te-photo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.te-thumb { width: 96px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+.te-check { margin: 0; display: flex; gap: 8px; align-items: center; color: inherit; font-size: 14px; }
+.te-days .btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+
 
 .ph-btn:active { transform: scale(.98); }
 .ph-edit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -469,11 +490,12 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <button class="tab" role="tab" data-tab="otps" aria-selected="false">OTPs</button>
     <button class="tab" role="tab" data-tab="fridge" aria-selected="false">Fridge</button>
     <button class="tab" role="tab" data-tab="sabzi" aria-selected="false">Sabzi</button>
-    <button class="tab" role="tab" data-tab="jeet" aria-selected="false">Jeet checklist</button>
+    <button class="tab" role="tab" data-tab="tasks" aria-selected="false">Tasks</button>
     <button class="tab" role="tab" data-tab="display" aria-selected="false">Display</button>
     <button class="tab" role="tab" data-tab="phone" aria-selected="false">Phone</button>
     <button class="tab" role="tab" data-tab="count" aria-selected="false">Count</button>
-    <button class="tab" role="tab" data-tab="people" aria-selected="false">People</button>
+    <button class="tab" role="tab" data-tab="people" aria-selected="false">People and Tasks</button>
+    <button class="tab" role="tab" data-tab="admin" aria-selected="false">Admin</button>
   </nav>
 
   <section class="panel" id="p-today"></section>
@@ -553,7 +575,12 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 
   <section class="panel" id="p-sabzi" hidden></section>
 
-  <section class="panel" id="p-jeet" hidden></section>
+  <section class="panel" id="p-tasks" hidden>
+    <div class="card" id="task-form" hidden></div>
+    <div id="tasks-body"></div>
+  </section>
+
+  <section class="panel" id="p-task" hidden></section>
 
   <section class="panel" id="p-display" hidden></section>
 
@@ -608,9 +635,13 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <div class="card" id="people-form" hidden></div>
     <div class="card">
       <div class="row between"><h2>People</h2><button class="btn primary" data-pe-new="1">Add a person</button></div>
-      <p class="muted small">Each person's days and times are kept as dated versions. Changing a schedule "from" a date leaves the days before it as they were.</p>
+      <p class="muted small">Each person's tasks are listed under them; add and change tasks on the Tasks tab. Each person's days and times are kept as dated versions. Changing a schedule "from" a date leaves the days before it as they were.</p>
       <div class="list" id="people-list"></div>
     </div>
+  </section>
+
+  <section class="panel" id="p-admin" hidden>
+    <div class="card"><h2>Admin</h2><p class="muted small">Sharing this board between phones, and starting again.</p></div>
     <div class="card" id="sync-card"></div>
     <div class="card">
       <h3>Start again</h3>
@@ -626,12 +657,13 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
     <button class="mr" role="menuitem" data-tab="today">Overview</button>
     <button class="mr" role="menuitem" data-tab="fridge">Fridge</button>
     <button class="mr" role="menuitem" data-tab="sabzi">Sabzi (vegetables)</button>
-    <button class="mr" role="menuitem" data-tab="jeet">Jeet checklist</button>
+    <button class="mr" role="menuitem" data-tab="tasks">Tasks</button>
     <button class="mr" role="menuitem" data-tab="otps">OTPs</button>
     <button class="mr" role="menuitem" data-tab="holidays">Public holidays</button>
     <button class="mr" role="menuitem" data-tab="count">Count days</button>
     <button class="mr" role="menuitem" data-tab="display">Wall display preview</button>
-    <button class="mr" role="menuitem" data-tab="people">People and sharing</button>
+    <button class="mr" role="menuitem" data-tab="people">People and Tasks</button>
+    <button class="mr" role="menuitem" data-tab="admin">Admin (sharing)</button>
   </div>
 </div>
 <nav class="bnav" id="bnav" aria-label="Main">
@@ -646,7 +678,7 @@ td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric:
 
 <script src="sabzi.js"></script>
 <script src="fridge.js?v=4"></script>
-<script src="jeet.js?v=1"></script>
+<script src="tasks.js?v=1"></script>
 <script id="logic">
 /* The real date, unless a test or a link such as ?today=2026-10-27 sets it. */
 var TODAY = (function () {
@@ -1599,6 +1631,8 @@ function migrateState(o) {
   if (!o.groceries) o.groceries = [];
   if (!o.sabzi) o.sabzi = [];
   if (!o.fridge) o.fridge = [];
+  if (!o.tasks) o.tasks = [];
+  if (!o.taskTicks) o.taskTicks = [];
   o.groceries.forEach(function (g) { if (!g.forDate) g.forDate = addDays(g.date || TODAY, 1); });
   /* A board saved by the old version keeps each weekly rule on the person: turn it into a first schedule. */
   if (!o.schedules) {
@@ -1629,7 +1663,7 @@ function save() {
  * base are sent, so two people changing different things never get in each other's way.
  * Other phones' changes arrive through /api/v2/changes?since=<seq>. */
 var SYNC = { url: '', token: '', seq: 0, base: null, status: 'off', busy: false, dirty: false, timer: null, last: '' };
-var COLLS = ['people', 'schedules', 'exceptions', 'holidays', 'schoolHolidays', 'holidayPlans', 'carBookings', 'attendance', 'groceries', 'otps', 'messages', 'sabzi', 'fridge', 'settings'];
+var COLLS = ['people', 'schedules', 'exceptions', 'holidays', 'schoolHolidays', 'holidayPlans', 'carBookings', 'attendance', 'groceries', 'otps', 'messages', 'sabzi', 'fridge', 'tasks', 'taskTicks', 'settings'];
 function syncLoadCfg() {
   try {
     var q = /[?&]api=([^&#]+)/.exec(location.search);
@@ -1679,12 +1713,15 @@ function toRows(st) {
   (st.messages || []).forEach(function (m) { put('messages', m); });
   (st.fridge || []).forEach(function (r) { put('fridge', { id: r.id, v: r.v }); });
   (st.sabzi || []).forEach(function (r) { put('sabzi', { id: r.id, date: r.date, veg: r.veg, q: r.q, x: r.x, y: r.y }); });
+  (st.tasks || []).forEach(function (t) { put('tasks', JSON.parse(JSON.stringify(t))); });
+  (st.taskTicks || []).forEach(function (k) { put('taskTicks', JSON.parse(JSON.stringify(k))); });
   if (st.holidayFrom) put('settings', { id: 'holidayFrom', value: st.holidayFrom });
   return R;
 }
 function fromRows(R) {
   var list = function (c) { var m = R[c] || {}; return Object.keys(m).sort().map(function (id) { return JSON.parse(JSON.stringify(m[id])); }); };
   var o = { people: [], schedules: list('schedules'), exceptions: list('exceptions'), holidays: [], schoolHolidays: [], holidayPlans: {}, carBookings: [], attendance: {}, groceries: list('groceries'), otps: list('otps'), messages: list('messages'), sabzi: list('sabzi'), fridge: list('fridge') };
+  o.tasks = list('tasks'); o.taskTicks = list('taskTicks');
   o.people = list('people').sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).map(function (p) { delete p.sort; return p; });
   o.holidays = list('holidays').map(function (h) { return { date: h.date, name: h.name }; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
   o.schoolHolidays = list('schoolHolidays').map(function (h) { return { date: h.date, name: h.name }; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
@@ -1707,10 +1744,19 @@ function diffOps(base, cur) {
 /* If the server has not been updated for Sabzi or the Fridge yet, they stay on this phone and everything else keeps saving. */
 function pendingOps() { var o = SYNC.base ? diffOps(SYNC.base, toRows(S)) : []; var nc = SYNC.noColl || {}; return o.filter(function (x) { return !(nc[x.c] && Date.now() - nc[x.c] < 300000); }); }
 /* Put rows from the server into the board, keeping this phone's own settings and any unsent edits. */
+function tasksOnServer() { try { return localStorage.getItem('hb-tasks-onserver') === '1'; } catch (e) { return false; } }
+function markTasksOnServer() { try { localStorage.setItem('hb-tasks-onserver', '1'); } catch (e) { } }
 function syncAdoptRows(R, replace) {
   var keep = { otpHide: S.otpHide, lastBy: S.lastBy };
+  /* Tasks made on this phone stay until the server can hold them (old server, or not yet sent). */
+  var srvHas = R.tasks && Object.keys(R.tasks).length;
+  if (srvHas) markTasksOnServer();
+  if (SYNC.noTasks || (!srvHas && (S.tasks || []).length && !tasksOnServer())) {
+    var mine = toRows(S); R.tasks = mine.tasks; R.taskTicks = Object.assign({}, R.taskTicks || {}, mine.taskTicks);
+  }
   var cur = replace ? R : toRows(S);
   S = fromRows(cur); S.otpHide = !!keep.otpHide; S.lastBy = keep.lastBy || '';
+  ensureTaskSeed(true);
   try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) { }
   renderAll();
 }
@@ -1740,16 +1786,20 @@ function syncDoPush() {
   if (!syncOn() || !SYNC.base) return;
   if (SYNC.busy) { SYNC.dirty = true; return; }
   var ops = pendingOps();
-  if (!ops.length) return;
+  if (!ops.length) { if (SYNC.status === 'wait') syncSet('ok'); return; }
   SYNC.busy = true; SYNC.dirty = false; syncSet('wait');
   var batch = ops.slice(0, 400);
   syncReq('POST', '/api/v2/ops', { ops: batch }).then(function (r) {
-    var unk = r.status === 400 && /Unknown collection: (sabzi|fridge)/.exec((r.json && r.json.error) || '');
+    var unk = r.status === 400 && /Unknown collection: (sabzi|fridge|tasks|taskTicks)/.exec((r.json && r.json.error) || '');
     if (unk) {
-      (SYNC.noColl = SYNC.noColl || {})[unk[1]] = Date.now(); SYNC.dirty = true; syncToast((unk[1] === 'fridge' ? 'The fridge' : 'Sabzi') + ' is saved on this device only until the Home Board server is updated.'); return;
+      var tk = /^task/.test(unk[1]);
+      if (tk) { SYNC.noTasks = true; SYNC.noColl = SYNC.noColl || {}; SYNC.noColl.tasks = SYNC.noColl.taskTicks = Date.now(); }
+      else (SYNC.noColl = SYNC.noColl || {})[unk[1]] = Date.now();
+      SYNC.dirty = true; syncToast((tk ? 'Tasks are' : unk[1] === 'fridge' ? 'The fridge is' : 'Sabzi is') + ' saved on this device only until the Home Board server is updated.'); return;
     }
     if (r.status !== 200) return syncFail(r);
     batch.forEach(function (o) { var b = SYNC.base[o.c] || (SYNC.base[o.c] = {}); if (o.op === 'put') b[o.row.id] = o.row; else delete b[o.id]; });
+    if (batch.some(function (o) { return o.c === 'tasks'; })) { markTasksOnServer(); SYNC.noTasks = false; }
     syncSaveMeta(); syncSet('ok');
     if (ops.length > batch.length) SYNC.dirty = true;
   }, function () { syncSet('offline'); }).catch(function () { syncSet('offline'); }).then(function () {
@@ -1760,6 +1810,7 @@ function syncDoPush() {
 function syncFull() {
   return syncReq('GET', '/api/v2/state').then(function (r) {
     if (r.status !== 200) return syncFail(r);
+    SYNC.noTasks = !(r.json.rows && r.json.rows.tasks);
     var R = rowsFromServer(r.json.rows || {});
     if (!Object.keys(R.people).length && S.people.length) {
       /* An empty server: this phone's board becomes the shared board. */
@@ -1861,14 +1912,16 @@ function setTab(name) {
   document.querySelectorAll('.mr').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
   closeMore();
   document.body.classList.toggle('tab-phone', name === 'phone');
-  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'fridge', 'sabzi', 'jeet', 'display', 'phone', 'count', 'people'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
+  ['today', 'message', 'calendar', 'car', 'holidays', 'otps', 'fridge', 'sabzi', 'tasks', 'task', 'display', 'phone', 'count', 'people', 'admin'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
   if (name === 'count') renderCount();
   if (name === 'display') { renderDisplay(); }
   if (name === 'phone') { renderPhone(); }
   if (name === 'car') { renderCar(); }
   if (name === 'sabzi') { renderSabzi(); }
   if (name === 'fridge') { renderFridge(); }
-  if (name === 'jeet') { renderJeet(); }
+  if (name === 'tasks') { renderTasks(); }
+  if (name === 'task') { renderTaskView(); }
+  if (name !== 'task') TV.from = name;
 }
 
 /* ---------- Fridge: what is in the fridge (kept on this device) ---------- */
@@ -1880,24 +1933,240 @@ function renderFridge() {
   else fridgeCtl.render();
 }
 
-/* ---------- Jeet checklist: Sangeetha's list for getting ready for Jeet's session ---------- */
-function isJeet(p) { return !!p && (p.id === 'jeet' || String(p.name || '').trim().toLowerCase() === 'jeet'); }
-var jeetZoom = false;
-function renderJeet() {
-  var host = $('p-jeet'); if (!host) return;
-  if (typeof JeetList === 'undefined') { host.innerHTML = '<div class="card"><p class="muted">The Jeet checklist could not load (jeet.js missing).</p></div>'; return; }
-  host.innerHTML = '<div class="card jc"><div class="jc-top"><button class="btn sm" data-tab="phone">&larr; Back</button><button class="btn sm" data-jeet-reset="1">Start again</button></div>' +
-    '<h2 class="jc-title">Jeet checklist</h2><p class="muted small">Getting ready for the session with Jeet. Tap each step when it is done. The list starts fresh every day.</p>' +
-    JeetList.html(TODAY, 'en', jeetZoom) + '</div>';
-  if (!host._jeetBound) {
-    host._jeetBound = true;
-    host.addEventListener('click', function (e) {
-      var t = e.target.closest('button'); if (!t) return;
-      if (t.dataset.jeetItem) { JeetList.toggle(TODAY, t.dataset.jeetItem); renderJeet(); }
-      else if (t.dataset.jeetReset) { JeetList.reset(TODAY); renderJeet(); }
-      else if (t.dataset.jeetZoom) { jeetZoom = !jeetZoom; renderJeet(); }
+/* ---------- Tasks: jobs with steps (and photos), for a person, on certain days (see tasks.js) ---------- */
+var TV = { id: null, date: TODAY, from: 'phone', zoom: {} };   /* the task open on the single-task page */
+var TE = null, teErr = '', teDelArm = false, teBusy = {};       /* the task being edited */
+function tkCfg() { if (typeof Tasks !== 'undefined') Tasks.photoCfg(syncOn() ? SYNC.url : '', syncOn() ? SYNC.token : ''); }
+function taskById(id) { return (S.tasks || []).filter(function (t) { return t.id === id; })[0] || null; }
+function tkDone(t, date) { return Tasks.doneSet(S.taskTicks, date, t.id); }
+function tkChip(t, date) { return Tasks.chip(t, tkDone(t, date), 'en').replace('data-tk-open=', 'data-tk-date="' + date + '" data-tk-open='); }
+function tkDayWord(date) { return date === TODAY ? 'Today' : date === addDays(TODAY, 1) ? 'Tomorrow' : labelDate(date); }
+
+/* The first task (the Jeet checklist) is added once per phone, when the board has no tasks yet. */
+function ensureTaskSeed(fromSync) {
+  if (typeof Tasks === 'undefined' || (S.tasks || []).length) return;
+  try { if (localStorage.getItem('hb-tasks-seeded') === '1') return; } catch (e) { }
+  if (syncOn() && !SYNC.base) return;
+  var t = Tasks.seed(S.people);
+  if (!t.length) return;
+  S.tasks = t;
+  try { localStorage.setItem('hb-tasks-seeded', '1'); } catch (e) { }
+  if (!fromSync) save(); else syncPush();
+}
+
+/* Phone tab: the day's tasks inside the person's card. */
+function withTasks(html, p, date) {
+  if (typeof Tasks === 'undefined') return html;
+  var due = Tasks.dueFor(S, S.tasks, p.id, date, dayStatus);
+  if (!due.length) return html;
+  var k = html.lastIndexOf('</section>');
+  return html.slice(0, k) + '<div class="ph-tasks">' + due.map(function (t) { return tkChip(t, date); }).join('') + '</div>' + html.slice(k);
+}
+
+/* People and Tasks: each person's tasks under their schedule. */
+function personTasks(p) {
+  if (typeof Tasks === 'undefined') return '';
+  var mine = Tasks.sorted(S.tasks).filter(function (t) { return t.personId === p.id; });
+  return '<span class="pe-tasks">' + mine.map(function (t) {
+    return '<button class="pe-task" data-tk-edit="' + esc(t.id) + '"><span aria-hidden="true">' + Tasks.icon(t.icon || '📋') + '</span> ' + esc(t.title) + ' <span class="muted">· ' + esc(Tasks.ruleText(S, t, 'en')) + (t.off ? ' · paused' : '') + '</span></button>';
+  }).join('') + '<button class="pe-task add" data-te-new="1" data-te-person="' + esc(p.id) + '">+ Add a task for ' + esc(p.name) + '</button></span>';
+}
+
+/* ---------- One task on one day ---------- */
+function renderTaskView() {
+  var host = $('p-task'); if (!host) return;
+  tkCfg();
+  var t = taskById(TV.id);
+  if (!t) { host.innerHTML = '<div class="card"><p class="muted">That task is no longer on the board.</p><button class="btn" data-tab="tasks">All tasks</button></div>'; return; }
+  var who = personById(S, t.personId), due = Tasks.dueOn(S, t, TV.date, dayStatus);
+  host.innerHTML = '<div class="card jc"><div class="jc-top"><button class="btn sm" data-tk-back="1">&larr; Back</button><button class="btn sm" data-tk-reset="1">Start again</button></div>' +
+    '<h2 class="jc-title tk-title"><span aria-hidden="true">' + Tasks.icon(t.icon || '📋') + '</span> ' + esc(t.title) + '</h2>' +
+    '<p class="muted small">' + esc(tkDayWord(TV.date)) + ' · ' + esc(who ? who.name : 'Nobody') + ' · ' + esc(Tasks.ruleText(S, t, 'en')) + (due ? '' : ' · <b>not due on this day</b>') + '</p>' +
+    Tasks.view(t, tkDone(t, TV.date), { lang: 'en', zoom: TV.zoom }) +
+    '<div class="row" style="margin-top:12px"><button class="btn sm" data-tk-edit="' + esc(t.id) + '">Edit this task</button></div></div>';
+  Tasks.fillPhotos(host);
+}
+
+/* ---------- Tasks tab: what is due, and the list of all tasks ---------- */
+function renderTasks() {
+  var box = $('tasks-body'); if (!box) return;
+  tkCfg();
+  if (typeof Tasks === 'undefined') { box.innerHTML = '<div class="card"><p class="muted">Tasks could not load (tasks.js missing).</p></div>'; return; }
+  var h = '<div class="card"><h2>Due</h2>';
+  [TODAY, addDays(TODAY, 1)].forEach(function (date) {
+    var any = false, part = '';
+    S.people.forEach(function (p) {
+      var due = Tasks.dueFor(S, S.tasks, p.id, date, dayStatus);
+      if (!due.length) return;
+      any = true;
+      part += '<div class="tk-person"><b>' + esc(p.name) + '</b>' + due.map(function (t) { return tkChip(t, date); }).join('') + '</div>';
     });
+    h += '<h3 style="margin:10px 0 0">' + tkDayWord(date) + ' <span class="muted small" style="font-weight:400">' + esc(labelDate(date)) + '</span></h3>' + (any ? part : '<p class="muted small">Nothing due.</p>');
+  });
+  h += '</div><div class="card"><div class="row between"><h2>All tasks</h2><button class="btn primary" data-te-new="1">Add a task</button></div>' +
+    '<p class="muted small">A task belongs to one person and shows under them, on the phone screens, on the days its rule picks (and only when that person is working). Steps can have a photo.</p><div class="list">';
+  var all = Tasks.sorted(S.tasks);
+  h += all.map(function (t) {
+    var who = personById(S, t.personId);
+    return '<div class="tk-row"><span class="tk-ri" aria-hidden="true">' + Tasks.icon(t.icon || '📋') + '</span><span class="grow"><b>' + esc(t.title) + '</b>' + (t.titleHi ? ' <span class="muted">' + esc(t.titleHi) + '</span>' : '') +
+      (t.off ? ' <span class="pill">paused</span>' : '') + '<br><span class="small">' + esc(who ? who.name : 'Nobody') + ' · ' + esc(Tasks.ruleText(S, t, 'en')) + ' · ' + (t.steps || []).length + ((t.steps || []).length === 1 ? ' step' : ' steps') + '</span></span>' +
+      '<button class="btn sm" data-tk-date="' + TODAY + '" data-tk-open="' + esc(t.id) + '">Open</button><button class="btn sm" data-tk-edit="' + esc(t.id) + '">Edit</button></div>';
+  }).join('') || '<p class="muted">No tasks yet.</p>';
+  box.innerHTML = h + '</div></div>';
+  Tasks.fillPhotos(box);
+}
+
+/* ---------- Adding and changing a task ---------- */
+function openTaskForm(id, personId) {
+  var t = id === 'new' ? null : taskById(id);
+  if (id !== 'new' && !t) return;
+  TE = t ? JSON.parse(JSON.stringify(t)) : { id: 'new', title: '', titleHi: '', icon: '📋', personId: personId || '', note: '', noteHi: '', rule: { kind: 'days', days: [1, 2, 3, 4, 5] }, steps: [{ id: Tasks.uid('s'), en: '', hi: '', ico: '' }] };
+  TE.rule = TE.rule || { kind: 'days', days: [] };
+  teErr = ''; teDelArm = false; teBusy = {};
+  if ($('p-tasks').hidden) setTab('tasks');
+  renderTaskForm();
+  try { $('task-form').scrollIntoView({ block: 'start' }); } catch (e) { }
+}
+function closeTaskForm() { TE = null; var f = $('task-form'); f.hidden = true; f.innerHTML = ''; }
+function teOpts(sel, blank) {
+  return (blank ? '<option value="">' + blank + '</option>' : '') + S.people.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === sel ? ' selected' : '') + '>' + esc(p.name) + (p.role ? ' (' + esc(p.role) + ')' : '') + '</option>'; }).join('');
+}
+function renderTaskForm() {
+  var f = $('task-form'); if (!f || !TE) return;
+  tkCfg();
+  var r = TE.rule, isNew = TE.id === 'new', svgIcon = /^<svg/.test(TE.icon || '');
+  var h = '<div class="row between"><h2>' + (isNew ? 'Add a task' : 'Edit task') + '</h2><button class="btn sm" data-te-cancel="1">Close</button></div>' +
+    '<div class="otp-form">' +
+    '<div><label for="te-title">Task name</label><input type="text" id="te-title" autocomplete="off" value="' + esc(TE.title || '') + '" placeholder="e.g. Get ready for Jeet"></div>' +
+    '<div><label for="te-titlehi">Name in Hindi (staff screen)</label><input type="text" id="te-titlehi" lang="hi" autocomplete="off" value="' + esc(TE.titleHi || '') + '" placeholder="e.g. जीत की तैयारी"></div>' +
+    '<div><label for="te-icon">Icon (an emoji)</label><input type="text" id="te-icon" autocomplete="off" value="' + (svgIcon ? '' : esc(TE.icon || '')) + '" placeholder="' + (svgIcon ? '(drawn icon)' : 'e.g. 🧸') + '"></div>' +
+    '<div><label for="te-person">Done by</label><select id="te-person">' + teOpts(TE.personId, 'Choose a person') + '</select></div>' +
+    '</div>' +
+    '<div class="otp-form"><div><label for="te-note">Instructions (optional)</label><textarea id="te-note" rows="2">' + esc(TE.note || '') + '</textarea></div>' +
+    '<div><label for="te-notehi">Instructions in Hindi</label><textarea id="te-notehi" rows="2" lang="hi">' + esc(TE.noteHi || '') + '</textarea></div></div>' +
+    '<h3 style="margin:6px 0 0">When</h3>' +
+    '<div class="otp-form"><div><label for="te-kind">Repeats</label><select id="te-kind">' +
+      [['with', 'Whenever someone comes'], ['days', 'On certain weekdays'], ['date', 'On one date']].map(function (o) { return '<option value="' + o[0] + '"' + (r.kind === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div><div>';
+  if (r.kind === 'with') h += '<label for="te-with">Whenever this person comes</label><select id="te-with">' + teOpts(r.personId, 'Choose a person') + '</select>';
+  if (r.kind === 'date') h += '<label for="te-date">Date</label><input type="date" id="te-date" value="' + esc(r.date || '') + '">';
+  h += '</div></div>';
+  if (r.kind === 'days') h += '<div><label>Days</label><div class="row te-days">' + PE_ORDER.map(function (n) { return '<button class="btn" data-te-day="' + n + '" aria-pressed="' + ((r.days || []).indexOf(n) >= 0) + '">' + DAYN[n] + '</button>'; }).join('') + '</div></div>';
+  h += '<div class="row"><label class="te-check"><input type="checkbox" id="te-hol"' + (r.skipHolidays ? ' checked' : '') + '> Not on public holidays</label>' +
+    '<label class="te-check"><input type="checkbox" id="te-off"' + (TE.off ? ' checked' : '') + '> Paused (hidden everywhere)</label></div>' +
+    '<p class="muted small">It only shows on days the person doing it is working.</p>' +
+    '<h3 style="margin:6px 0 0">Steps</h3>';
+  TE.steps.forEach(function (st, i) {
+    var sv = /^<svg/.test(st.ico || '');
+    h += '<div class="te-step" data-te-step="' + esc(st.id) + '"><div class="row between"><b>Step ' + (i + 1) + '</b><span class="row" style="gap:6px">' +
+      '<button class="btn sm" data-te-up="' + i + '"' + (i ? '' : ' disabled') + ' aria-label="Move up">&uarr;</button><button class="btn sm" data-te-down="' + i + '"' + (i < TE.steps.length - 1 ? '' : ' disabled') + ' aria-label="Move down">&darr;</button>' +
+      '<button class="btn sm" data-te-rm="' + i + '">Remove</button></span></div>' +
+      '<div class="te-grid"><div><label>Icon</label><div class="row" style="gap:6px;flex-wrap:nowrap">' + (sv ? '<span class="te-svg" aria-hidden="true">' + Tasks.icon(st.ico) + '</span><button class="btn sm" data-te-noico="' + i + '">No icon</button>' : '<input type="text" data-te-f="ico" data-i="' + i + '" autocomplete="off" value="' + esc(st.ico || '') + '" placeholder="emoji">') + '</div></div>' +
+      '<div><label>What to do</label><input type="text" data-te-f="en" data-i="' + i + '" autocomplete="off" value="' + esc(st.en || '') + '"></div>' +
+      '<div><label>In Hindi</label><input type="text" data-te-f="hi" data-i="' + i + '" lang="hi" autocomplete="off" value="' + esc(st.hi || '') + '"></div></div>' +
+      '<div class="te-photo">' + (st.photo ? Tasks.photoImg(st.photo, 'Photo for step ' + (i + 1), 'te-thumb') : '') +
+      '<label class="btn sm">' + (st.photo ? 'Change photo' : 'Add photo') + '<input type="file" accept="image/*" data-te-photo="' + esc(st.id) + '" hidden></label>' +
+      (st.photo ? '<button class="btn sm" data-te-nophoto="' + i + '">Remove photo</button>' : '') +
+      (teBusy[st.id] ? '<span class="small">' + esc(teBusy[st.id]) + '</span>' : '') + '</div></div>';
+  });
+  h += '<div class="row"><button class="btn" data-te-add="1">+ Add a step</button></div>' +
+    (teErr ? '<p class="small" style="color:var(--bad)">' + esc(teErr) + '</p>' : '') +
+    '<div class="row between"><button class="btn primary" data-te-save="1">Save task</button>' + (isNew ? '' : '<button class="btn" data-te-del="1">' + (teDelArm ? 'Tap again to delete' : 'Delete task') + '</button>') + '</div>';
+  f.innerHTML = h; f.hidden = false;
+  Tasks.fillPhotos(f);
+}
+/* Read what has been typed into the form back into TE. */
+function teCollect() {
+  if (!TE || !$('te-title')) return;
+  var v = function (id) { var e = $(id); return e ? e.value.trim() : ''; };
+  TE.title = v('te-title'); TE.titleHi = v('te-titlehi'); TE.personId = v('te-person'); TE.note = v('te-note'); TE.noteHi = v('te-notehi');
+  var ic = v('te-icon'); if (ic || !/^<svg/.test(TE.icon || '')) TE.icon = ic;
+  TE.rule.kind = v('te-kind') || TE.rule.kind;
+  if ($('te-with')) TE.rule.personId = v('te-with');
+  if ($('te-date')) TE.rule.date = v('te-date');
+  TE.rule.skipHolidays = !!($('te-hol') && $('te-hol').checked);
+  TE.off = !!($('te-off') && $('te-off').checked);
+  document.querySelectorAll('#task-form [data-te-f]').forEach(function (e) { var st = TE.steps[+e.dataset.i]; if (st) st[e.dataset.teF] = e.value.trim(); });
+}
+function teSave() {
+  teCollect();
+  var r = TE.rule, err = '';
+  var steps = TE.steps.filter(function (s) { return s.en || s.hi; }).map(function (s) {
+    var o = { id: /^[A-Za-z0-9_-]{1,40}$/.test(s.id) ? s.id : Tasks.uid('s'), en: s.en || s.hi };
+    if (s.hi) o.hi = s.hi; if (s.ico) o.ico = s.ico; if (s.photo) o.photo = s.photo;
+    return o;
+  });
+  if (!TE.title) err = 'Give the task a name.';
+  else if (!personById(S, TE.personId)) err = 'Choose who does it.';
+  else if (r.kind === 'with' && !personById(S, r.personId)) err = 'Choose whose visit it goes with.';
+  else if (r.kind === 'days' && !(r.days || []).length) err = 'Choose at least one day.';
+  else if (r.kind === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(r.date || '')) err = 'Choose the date.';
+  else if (!steps.length) err = 'Add at least one step.';
+  var rule = { kind: r.kind };
+  if (r.kind === 'with') rule.personId = r.personId;
+  if (r.kind === 'days') rule.days = (r.days || []).slice().sort();
+  if (r.kind === 'date') rule.date = r.date;
+  if (r.skipHolidays) rule.skipHolidays = true;
+  var isNew = TE.id === 'new', t = { id: isNew ? Tasks.uid('t') : TE.id, title: TE.title, personId: TE.personId, rule: rule, steps: steps,
+    sort: isNew ? (S.tasks || []).reduce(function (m, x) { return Math.max(m, x.sort || 0); }, 0) + 1 : (TE.sort || 0) };
+  ['titleHi', 'icon', 'note', 'noteHi'].forEach(function (k) { if (TE[k]) t[k] = TE[k]; });
+  if (TE.off) t.off = true;
+  if (!err && JSON.stringify(t).length > 30000) err = 'This task is too long to save. Use fewer or shorter steps.';
+  if (err) { teErr = err; renderTaskForm(); return; }
+  S.tasks = (S.tasks || []).filter(function (x) { return x.id !== t.id; }).concat([t]);
+  save(); closeTaskForm(); renderAll();
+}
+function teUpload(input) {
+  var file = input.files && input.files[0], sid = input.dataset.tePhoto;
+  if (!file) return;
+  teCollect(); teErr = ''; teBusy[sid] = 'Uploading…'; renderTaskForm();
+  tkCfg();
+  Tasks.uploadPhoto(file).then(function (pid) {
+    if (!TE) return;
+    teCollect(); delete teBusy[sid];
+    TE.steps.forEach(function (s) { if (s.id === sid) s.photo = pid; });
+    renderTaskForm();
+  }, function (e) { if (!TE) return; teCollect(); delete teBusy[sid]; teErr = e.message; renderTaskForm(); });
+}
+function taskChange(e) {
+  var t = e.target; if (!t || !TE) return;
+  if (t.id === 'te-kind') { teCollect(); if (TE.rule.kind === 'days' && !TE.rule.days) TE.rule.days = []; renderTaskForm(); }
+  else if (t.dataset && t.dataset.tePhoto) teUpload(t);
+}
+/* Every task button on any tab. Returns true when the click was for tasks. */
+function taskClick(b) {
+  var d = b.dataset;
+  if (d.tkOpen) { TV = { id: d.tkOpen, date: d.tkDate || TODAY, from: TV.from, zoom: {} }; setTab('task'); try { window.scrollTo(0, 0); } catch (e) { } return true; }
+  if (d.tkBack) { setTab(TV.from && TV.from !== 'task' ? TV.from : 'phone'); return true; }
+  if (d.tkStep && b.closest('#p-task')) {
+    var id = Tasks.tickId(TV.date, TV.id, d.tkStep), had = (S.taskTicks || []).some(function (k) { return k.id === id; });
+    S.taskTicks = (S.taskTicks || []).filter(function (k) { return k.id !== id; });
+    if (!had) S.taskTicks.push({ id: id, date: TV.date, taskId: TV.id, stepId: d.tkStep });
+    save(); renderTaskView(); return true;
   }
+  if (d.tkZoom && b.closest('#p-task')) { TV.zoom[d.tkZoom] = !TV.zoom[d.tkZoom]; renderTaskView(); return true; }
+  if (d.tkReset) { S.taskTicks = (S.taskTicks || []).filter(function (k) { return !(k.date === TV.date && k.taskId === TV.id); }); save(); renderTaskView(); return true; }
+  if (d.tkEdit) { openTaskForm(d.tkEdit); return true; }
+  if (d.teNew) { openTaskForm('new', d.tePerson || ''); return true; }
+  if (!TE || !b.closest('#task-form')) return false;
+  if (d.teCancel) { closeTaskForm(); return true; }
+  teCollect();
+  if (d.teDay) { var n = +d.teDay, ds = TE.rule.days = TE.rule.days || [], k = ds.indexOf(n); if (k >= 0) ds.splice(k, 1); else ds.push(n); }
+  else if (d.teAdd) TE.steps.push({ id: Tasks.uid('s'), en: '', hi: '', ico: '' });
+  else if (d.teRm) TE.steps.splice(+d.teRm, 1);
+  else if (d.teUp) { var i = +d.teUp; TE.steps.splice(i - 1, 0, TE.steps.splice(i, 1)[0]); }
+  else if (d.teDown) { var j = +d.teDown; TE.steps.splice(j + 1, 0, TE.steps.splice(j, 1)[0]); }
+  else if (d.teNophoto) delete TE.steps[+d.teNophoto].photo;
+  else if (d.teNoico) TE.steps[+d.teNoico].ico = '';
+  else if (d.teSave) { teSave(); return true; }
+  else if (d.teDel) {
+    if (!teDelArm) { teDelArm = true; renderTaskForm(); return true; }
+    var gone = TE.id;
+    S.tasks = (S.tasks || []).filter(function (x) { return x.id !== gone; });
+    S.taskTicks = (S.taskTicks || []).filter(function (k) { return k.taskId !== gone; });
+    save(); closeTaskForm(); renderAll(); return true;
+  }
+  else return false;
+  teDelArm = false; renderTaskForm(); return true;
 }
 
 /* ---------- Sabzi: vegetables wanted today and tomorrow ---------- */
@@ -2170,7 +2439,6 @@ function phPerson(p) {
     acts = '<div class="ph-acts">';
     if (st.state !== 'absent' && st.state !== 'off') acts += '<button class="ph-btn" data-ph-absent="' + p.id + '">Not coming ' + word + '</button>';
     acts += '<button class="ph-btn" data-ph-edit="' + p.id + '">' + (st.state === 'off' ? 'Coming ' + word : 'Change time') + '</button>';
-    if (isJeet(p)) acts += '<button class="ph-btn pri" data-tab="jeet">&#9989; Jeet checklist</button>';
     if (reported) acts += '<button class="ph-btn" data-ph-restore="' + p.id + '">Back to normal</button>';
     acts += '</div>';
   }
@@ -2212,8 +2480,8 @@ function renderPhone() {
   var h = '<div class="ph"><div class="ph-head"><div class="ph-titlebox"><h2 class="ph-title"><span class="ph-lab ' + (tom ? 'd1' : 'd0') + '">' + (tom ? 'Tomorrow:' : 'Today:') + '</span> ' + DAYFULL[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MONFULL[dt.getUTCMonth()] + '</h2><div class="ph-upd">Updated ' + esc(fmt12(nowHM() || '00:00')) + ' · <span id="ph-sync">' + esc(syncLabel()) + '</span></div></div>' +
     '<button class="ph-nav ' + (tom ? 'd0' : 'd1') + '" data-ph-view="' + (tom ? 'today' : 'tomorrow') + '" aria-label="' + (tom ? 'Back to today' : 'See info for tomorrow') + '"><span class="ph-nav-lab">' + (tom ? 'Today' : 'Tomorrow') + '</span><span class="ph-nav-arr" aria-hidden="true">' + (tom ? '←' : '→') + '</span></button></div>';
   h += phSchool();
-  trackedPeople(vd).forEach(function (p) { h += phPerson(p); });
-  staffPeople(vd).forEach(function (p) { h += phStaff(p); });
+  trackedPeople(vd).forEach(function (p) { h += withTasks(phPerson(p), p, vd); });
+  staffPeople(vd).forEach(function (p) { h += withTasks(phStaff(p), p, vd); });
   h += phSabzi(vd, tom);
   if (!tom) h += phFridge();
   h += phCar();
@@ -2252,6 +2520,7 @@ function renderPhone() {
   h += '<details class="ph-sync"><summary>Shared board</summary>' + syncFormHTML() + '</details>';
   h += '<div class="ph-foot">' + (PHONE_ONLY ? '<a href="' + esc(location.pathname) + '">Open the full board</a>' : 'Tip: add <b>?view=phone</b> to the page address to show only this screen.') + '</div></div>';
   $('p-phone').innerHTML = h;
+  Tasks.fillPhotos($('p-phone'));
 }
 var PHONE_ONLY = false;
 try { PHONE_ONLY = /[?&]view=phone\b/.test(location.search); } catch (e) { }
@@ -2442,7 +2711,8 @@ function renderPeople() {
     return '<div class="pe-row"><span class="dot" style="--pc:' + pc(p) + ';align-self:center"></span>' +
       '<span class="grow"><b>' + esc(p.name) + '</b>' + (p.nameHi ? ' <span class="muted">' + esc(p.nameHi) + '</span>' : '') + ' <span class="muted small">' + esc(p.role || '') + (p.simple ? ' · days off only' : '') + '</span>' +
       '<br><span class="small">' + esc(ruleText(cur, p.simple)) + (!p.simple && cur ? (p.holidays ? ' · public holidays off' : ' · works public holidays') : '') + '</span>' +
-      later.map(function (v) { return '<br><span class="pe-ver">From <b>' + esc(labelDate(v.from)) + '</b>: ' + esc(ruleText(v, p.simple)) + '</span>'; }).join('') + '</span>' +
+      later.map(function (v) { return '<br><span class="pe-ver">From <b>' + esc(labelDate(v.from)) + '</b>: ' + esc(ruleText(v, p.simple)) + '</span>'; }).join('') +
+      personTasks(p) + '</span>' +
       personState(p) + '<button class="btn sm" data-pe-edit="' + esc(p.id) + '">Edit</button></div>';
   }).join('') || '<p class="muted">Nobody yet.</p>';
 }
@@ -2558,7 +2828,7 @@ function initPeople() {
       save(); renderAll(); return openPersonForm(peEdit);
     }
   });
-  document.addEventListener('change', function (e) { if (e.target && e.target.id === 'pe-kind') peSyncKind(); });
+  document.addEventListener('change', function (e) { if (e.target && e.target.id === 'pe-kind') peSyncKind(); taskChange(e); });
 }
 
 var HOL_MODES = [['off', 'Not working'], ['working', 'Working'], ['sub', 'Working, substitute day off'], ['pay', 'Working, extra day-off pay']];
@@ -2660,18 +2930,21 @@ function setPlan(key, patch) {
   save(); renderAll();
 }
 
+function purgeTicks(S) { var keep = addDays(TODAY, -30); S.taskTicks = (S.taskTicks || []).filter(function (k) { return k.date >= keep; }); }
 function purgeSabzi(S) { var keep = addDays(TODAY, -1); S.sabzi = (S.sabzi || []).filter(function (r) { return r.date >= keep; }); }
-function renderAll() { purgeOtps(S); purgeGroceries(S); purgeSabzi(S); renderToday(); renderSabzi(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderFridge(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); }
+function renderAll() { purgeOtps(S); purgeGroceries(S); purgeSabzi(S); purgeTicks(S); renderToday(); renderSabzi(); renderMessage(); renderCalendar(); renderHolidays(); renderOtps(); renderFridge(); renderCar(); renderDisplay(); renderPhone(); renderCount(); renderPeople(); if (!$('p-tasks').hidden) renderTasks(); if (!$('p-task').hidden) renderTaskView(); }
 
 function init() {
   S = load();
   syncLoadCfg();
+  ensureTaskSeed(false);
   $('dateline').textContent = DAYFULL[dow(TODAY)] + ' ' + pd(TODAY).getUTCDate() + ' ' + MONFULL[pd(TODAY).getUTCMonth()] + ' ' + TODAY.slice(0, 4);
   document.addEventListener('click', function (e) {
     var t = e.target.closest('button');
     if (!t) return;
     if (t.dataset.more === 'close') return closeMore();
     if (t.dataset.more === 'toggle') { var mm = $('more'); mm.hidden = !mm.hidden; t.setAttribute('aria-expanded', mm.hidden ? 'false' : 'true'); return; }
+    if (taskClick(t)) return;
     if (t.dataset.tab) { otpClearArm = false; grocClearArm = false; resetArm = false; setTab(t.dataset.tab); try { window.scrollTo(0, 0); } catch (e) { } return; }
     if (t.dataset.act) {
       var key = t.dataset.pid + '|' + TODAY;

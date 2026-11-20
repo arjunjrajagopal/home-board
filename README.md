@@ -26,6 +26,16 @@ The Fridge tab is a picture board of what is in the fridge: eggs (18), Maya's mi
 
 The fridge is saved in a `fridge` collection (one row per shelf, `{id, v: [slot amounts]}`). The Worker needs the small update in `worker/` (run `python3 worker/patch-fridge.py worker.js`, then deploy): it adds the table, lets the staff key read it, and lets the staff key save fridge rows only (`POST /api/staff/fridge`). Until then the fridge is kept on the phone that made the change and everything else keeps syncing.
 
-## Jeet checklist
+## Tasks
 
-The Jeet checklist tab (also under More on the phone) is Sangeetha's step-by-step list for getting ready for Jeet's session: prepare baby treat food, bring a glass of warm water, arrange furniture, bring the bowl of small toys, arrange large toys. Each step is a big tap-to-tick card, with a progress bar. A "Jeet checklist" button appears inside Jeet's tile on the Phone tab. On the staff screen (`staff.html`) the same list, in Hindi, opens from a "जीत की तैयारी" button under Jeet's row in "कौन कब आएगा" (shown on days Jeet is coming). The list and its icons are in `jeet.js`, shared by both pages. Ticks are kept on the phone and reset each day. The photo for "Arrange large toys" is `jeet-toys.jpg`; replace that file to change the picture.
+The Tasks tab holds jobs like getting ready for Jeet's session. Each task has a name (English and Hindi), an icon, the person who does it, a rule for when it appears, optional instructions, and steps. Each step can have an icon, Hindi text and a photo.
+
+- **When:** whenever another person comes (for example, whenever Jeet comes), on chosen weekdays, or on one date. It can skip public holidays. A task only appears on days its person is working.
+- **Where it shows:** under its person on the Phone tab and on the staff screen (`staff.html`, in Hindi). Tapping it opens a single full-screen checklist with photos.
+- **People and Tasks:** each person's tasks are listed under them, with "+ Add a task".
+- **Admin:** sharing (server address and passphrase) and "Start again" now live here.
+- **Ticks** are shared between phones through the server (one row per ticked step per day). Staff can tick only yesterday, today and tomorrow.
+- **Photos** are shrunk on the phone (longest side 1280 px, JPEG) and saved in the server's `photos` table. Adding one needs the family board connected.
+- `tasks.js` has the shared logic: rules, the checklist view, photo loading and upload. The first task is made from the old Jeet checklist; its large-toys picture is `jeet-toys.jpg`.
+
+Until the server is updated, tasks stay on the phone that made them and the staff screen shows the built-in Jeet task with ticks kept on the phone.
